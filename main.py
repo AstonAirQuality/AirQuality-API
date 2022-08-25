@@ -10,13 +10,15 @@ from geoalchemy2 import functions  # used to convert WKBE geometry to GEOSJON
 from geoalchemy2.shape import to_shape  # used to convert WKBE geometry to WKT string
 from sqlalchemy.exc import IntegrityError
 
-from api_wrappers import plume
+# from api_wrappers import plume
 from models import Sensors
 from models import Sensors as ModelSensor
 from models import SensorSummaries
 from models import SensorSummaries as ModelSensorSummary
 from models import SensorTypes
 from models import SensorTypes as ModelSensorType
+from nomans_functions import Nomans
+from schema import PlumePlatform as SchemaPlumePlatform
 from schema import Sensor as SchemaSensor
 from schema import SensorSummary as SchemaSensorSummary
 from schema import SensorType as SchemaSensorType
@@ -30,7 +32,8 @@ app.add_middleware(DBSessionMiddleware, db_url=env["DATABASE_URL"])
 
 @app.get("/")
 async def root():
-    sensor = plume.Plume(1, "test", 1, 1)
+    # sensor = plume.Plume(1, "test", 1, 1)
+    sensor = "test"
     return {"message": sensor}
 
 
@@ -92,6 +95,21 @@ def add_sensor(sensor: SchemaSensor):
     db.session.add(sensor)
     db.session.commit()
     return sensor
+
+
+@app.post("/add-plume-platform/", response_model=SchemaPlumePlatform)
+def add_plume_sensors(plumeSensors: SchemaPlumePlatform):
+    """Example call of adding a plume platform to the database
+    response_model = {"serial_numbers": ["02:00:00:00:49:fd","02:00:00:00:4b:94"]}
+    """
+    api = Nomans()
+
+    sensors = list(api.generate_plume_platform(plumeSensors.serial_numbers))
+
+    for sensor in sensors:
+        add_sensor(sensor)
+
+    return plumeSensors
 
 
 @app.post("/add-sensorSummary/", response_model=SchemaSensorSummary)
