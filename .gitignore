@@ -129,4 +129,7 @@ dmypy.json
 .pyre/
 
 #database migrations
-alembic/versions/
+alembic/versions/*.py
+.devcontainer/devcontainer.json
+.vscode/launch.json
+.vscode/tasks.json

@@ -9,8 +9,11 @@ from dotenv import load_dotenv
 
 from api_wrappers.plume_api_wrapper import PlumeWrapper
 from api_wrappers.Sensor_DTO import SensorDTO
-from models import Sensors
-from schema import Sensor as SchemaSensor
+from core.models import Sensors
+
+# sensor summary
+from core.schema import Sensor as SchemaSensor
+from core.schema import SensorSummary as SchemaSensorSummary
 
 
 class Nomans:
@@ -32,3 +35,9 @@ class Nomans:
 
         for sensor in sensors:
             yield sensor
+
+    def fetch_plume_data(self, start: dt.datetime, end: dt.datetime, sensorList: str) -> Iterator[SchemaSensorSummary]:
+        """param sensorList: list of lookup_ids"""
+        for sensor in self.pw.get_sensors(sensorList, start, end):
+            if sensor is not None:
+                yield from sensor.create_sensor_summaries()

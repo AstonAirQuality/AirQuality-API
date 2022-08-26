@@ -1,11 +1,11 @@
 # dependacies
 import json
 import math
-from typing import Any
+from typing import Any, Iterator
 
 import pandas as pd
-from models import SensorSummaries as ModelSensorSummary
-from schema import SensorSummary as SchemaSensorSummary
+from core.models import SensorSummaries as ModelSensorSummary
+from core.schema import SensorSummary as SchemaSensorSummary
 
 
 class SensorDTO:
@@ -26,10 +26,10 @@ class SensorDTO:
         """Converts the dataframe to a json string."""
         return df.to_json(orient="index")
 
-    def create_sensor_summaries(self) -> list[SchemaSensorSummary]:
+    def create_sensor_summaries(self) -> Iterator[SchemaSensorSummary]:
         """Creates a summary of the sensor data to be written to the database."""
         data_dict = self.dataframe_to_dict(self.df)
-        sensor_summaries = []
+        # sensor_summaries = []
 
         for timestampKey in data_dict:
             try:
@@ -62,9 +62,9 @@ class SensorDTO:
                 measurement_count=len(df.index.values),
                 measurement_data=self.to_json(df),
             )  # inserting row into temp array
-            sensor_summaries.append = sensorSummary  # assign new dataframe to coressponding key
+            yield sensorSummary  # assign new dataframe to coressponding key
 
-        return sensor_summaries
+        # return sensor_summaries
 
     def dataframe_to_dict(self, df: pd.DataFrame) -> dict[str, pd.DataFrame]:
         """converts a dataframe to a dictionary of dataframes with timestamp keys."""
@@ -97,6 +97,7 @@ class SensorDTO:
                 data[timestampKey] = df_day_subset
 
             except KeyError as e:
+                # TODO raise exception? or continue?
                 print(e)
 
         return data

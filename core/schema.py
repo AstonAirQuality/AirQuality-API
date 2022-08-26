@@ -1,8 +1,14 @@
 import json
-from typing import Optional
+from typing import List, Optional
 
 from geoalchemy2.elements import WKTElement
-from pydantic import BaseModel, validator
+from pydantic import BaseModel, constr, validator
+
+# TODO add validation for fields
+
+
+class PlumePlatform(BaseModel):
+    serial_numbers: List[constr(max_length=255)]
 
 
 class SensorSummary(BaseModel):

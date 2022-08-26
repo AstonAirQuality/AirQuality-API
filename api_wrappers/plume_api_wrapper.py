@@ -10,8 +10,8 @@ from typing import Iterator, List
 import requests
 
 # class dependancies
-from base_wrapper import BaseWrapper
-from plume_sensor import PlumeSensor
+from api_wrappers.base_wrapper import BaseWrapper
+from api_wrappers.plume_sensor import PlumeSensor
 
 
 class APITimeoutException(IOError):
@@ -98,7 +98,7 @@ class PlumeWrapper(BaseWrapper):
     ###################################################################################################################
 
     def get_sensors(self, sensors: List[str], start: dt.datetime, end: dt.datetime) -> Iterator[PlumeSensor]:
-        """Fetches data from the Plume API for a given list of sensors in the specified timeframe."""
+        """Fetches data from the Plume API for a given list of sensor lookup ids in the specified timeframe."""
         try:
             for sensor in self.get_sensor_location_data(sensors, start, end):
                 sensor.add_measurements_json(self.get_sensor_measurement_data(sensor.id, start, end))

@@ -18,9 +18,9 @@ config.set_main_option("sqlalchemy.url", os.environ["DATABASE_URL"])
 
 fileConfig(config.config_file_name)
 
-import models
+import core.models
 
-target_metadata = models.Base.metadata
+target_metadata = core.models.Base.metadata
 
 exclude_tables = config.get_section("alembic:exclude").get("tables", "").split(",")
 

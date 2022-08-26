@@ -6,7 +6,7 @@ from typing import Any, List
 
 import pandas as pd
 
-from Sensor_DTO import SensorDTO
+from api_wrappers.Sensor_DTO import SensorDTO
 
 
 class PlumeSensor(SensorDTO):
