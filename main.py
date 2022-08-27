@@ -1,16 +1,14 @@
 # import uvicorn
-from fastapi import FastAPI
+from fastapi import Body, FastAPI
 
 # routers
 from routers.sensors import sensorsRouter
 from routers.sensorSummaries import sensorSummariesRouter
 from routers.sensorTypes import sensorsTypesRouter
-
-# from fastapi_sqlalchemy import DBSessionMiddleware, db  # TODO uninstall
+from tasks import add
 
 app = FastAPI()
 
-# app.add_middleware(DBSessionMiddleware, db_url=env["DATABASE_URL"])
 app.include_router(sensorsRouter)
 app.include_router(sensorsTypesRouter)
 app.include_router(sensorSummariesRouter)
@@ -20,6 +18,15 @@ app.include_router(sensorSummariesRouter)
 async def root():
     message = "test"
     return {"message": message}
+
+
+# {"x": 100, "y": 123}
+@app.post("/ex1")
+def run_task(data=Body(...)):
+    x = data["x"]
+    y = data["y"]
+    task = add.delay(x, y)
+    return {"result": task.get()}
 
 
 # this is for testing purposes only

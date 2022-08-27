@@ -1,7 +1,6 @@
 FROM python:3.10.6-slim-buster
 ENV PYTHONUNBUFFERED=1
-# RUN apk update && apk add postgresql-dev gcc python3-dev musl-dev
-ENV PYTHONUNBUFFERED=1
+# TODO remove env folder,env file, docker/docker-db and sql files, and docker-compose.yml
 WORKDIR /app
 COPY requirements.txt requirements.txt
 RUN pip3 install --upgrade pip

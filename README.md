@@ -3,17 +3,20 @@ Fast API project to fetch/scrape data from Aston's air quality sensors
 
 # Tutorial
 
+
 ## setup python virtual env
 -   python -m venv env
+-   python.exe -m pip install --upgrade pip
 -   cd env/scripts && activate && cd..\..
 -   pip install -r requirements.txt
--   pip install fastapi fastapi-sqlalchemy pydantic alembic psycopg2-binary uvicorn python-dotenv
+-   pip install fastapi fastapi-sqlalchemy pydantic alembic psycopg2-binary uvicorn python-dotenv celery geoalchemy black shapely
 
 
 
 
 
-
+## save dependacies
+pip freeze > requirements.txt
 
 # Docker commands 
 docker-compose build
