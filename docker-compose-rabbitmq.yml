@@ -59,5 +59,6 @@ services:
       - app
       - rabbitmq
     environment:
-      - CELERY_BROKER_URL=${CELERY_BROKER_URL}
-      - CELERY_RESULT_BACKEND=${CELERY_RESULT_BACKEND}
+      CELERY_BROKER_URL: "amqp://rabbitmq"
+      CELERY_RESULT_BACKEND: "db+postgresql://postgres:password@db:5432/air_quality_db"
+      # CELERY_RESULT_BACKEND : "rpc://"

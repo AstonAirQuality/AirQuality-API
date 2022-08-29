@@ -65,25 +65,25 @@ services:
       PLUME_FIREBASE_API_KEY: "${PLUME_FIREBASE_API_KEY}"
       PLUME_ORG_NUM: "${PLUME_ORG_NUM}"
 
-  # celery beat process for cron job tasks
-  celery-beat:
-    container_name: celery-beat
-    build: .
-    command: celery -A tasks worker -B --loglevel=INFO
-    volumes:
-      - .:/app
-    environment:
-      CELERY_BROKER_URL: ${CELERY_BROKER_URL}
-      CELERY_RESULT_BACKEND: ${CELERY_RESULT_BACKEND}
-      PLUME_EMAIL: "${PLUME_EMAIL}"
-      PLUME_PASSWORD: "${PLUME_PASSWORD}"
-      PLUME_FIREBASE_API_KEY: "${PLUME_FIREBASE_API_KEY}"
-      PLUME_ORG_NUM: "${PLUME_ORG_NUM}"
+  # # celery beat process for cron job tasks
+  # celery-beat:
+  #   container_name: celery-beat
+  #   build: .
+  #   command: celery -A tasks worker -B --loglevel=INFO
+  #   volumes:
+  #     - .:/app
+  #   environment:
+  #     CELERY_BROKER_URL: ${CELERY_BROKER_URL}
+  #     CELERY_RESULT_BACKEND: ${CELERY_RESULT_BACKEND}
+  #     PLUME_EMAIL: "${PLUME_EMAIL}"
+  #     PLUME_PASSWORD: "${PLUME_PASSWORD}"
+  #     PLUME_FIREBASE_API_KEY: "${PLUME_FIREBASE_API_KEY}"
+  #     PLUME_ORG_NUM: "${PLUME_ORG_NUM}"
 
-    depends_on:
-      - app
-      - db
-      - redis
+  #   depends_on:
+  #     - app
+  #     - db
+  #     - redis
 
   # celery flower to monitor celery tasks
   flower:
