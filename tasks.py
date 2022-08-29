@@ -6,6 +6,7 @@ from os import environ as env
 from typing import Tuple  # TODO REMOVE
 
 from celery import Celery
+from celery.schedules import crontab
 from dotenv import load_dotenv
 from fastapi.encoders import jsonable_encoder  # encode model to json
 
@@ -38,7 +39,7 @@ celeryapp.conf.update(result_expires=3600, enable_utc=True, timezone="UTC")
 # TODO delete this function
 @celeryapp.task(name="tasks.add")
 def add(x, y):
-    time.sleep(5)
+    # time.sleep(5)
     return x + y
 
 
@@ -93,14 +94,18 @@ def scheduled_upsert_sensorSummary(startDate: str, endDate: str):
 #################################################################################################################################
 
 
-# @celeryapp.on_after_configure.connect
-# def setup_periodic_tasks(sender, **kwargs):
-#     """
-#     Daily tasks to retrieve sensor data.
-#     """
-#     sender.add_periodic_task(crontab(hour=0, minute=0), daily_plume_ingest.s())
-#     sender.add_periodic_task(crontab(hour=0, minute=0), daily_zephyr_ingest.s())
-#     sender.add_periodic_task(crontab(hour=0, minute=0), daily_sensor_community_ingest.s())
+@celeryapp.on_after_configure.connect
+def setup_periodic_tasks(sender, **kwargs):
+    """
+    cronjobs to retrieve sensor data.
+    """
+    sender.add_periodic_task(10.0, add.s(5, 10), name="test")
+
+    # #schedule a task to run every day at 2am
+    # sender.add_periodic_task(crontab(hour=2, minute=0), scheduled_upsert_sensorSummary.s(), name="daily_upsert_sensorSummary")
+
+    # #schedule a task to run every 10 minutes
+    # sender.add_periodic_task(600, scheduled_upsert_sensorSummary.s() name="upsert_sensorSummary")
 
 
 def get_lookupids_of_active_sensors_by_type() -> dict[int, list[str]]:
