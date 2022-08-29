@@ -1,10 +1,10 @@
 # dependancies:
+from celeryWrapper import CeleryWrapper
 from core.models import Sensors as ModelSensor
 from core.schema import PlumePlatform as SchemaPlumePlatform
 from core.schema import Sensor as SchemaSensor
 from database import SessionLocal
 from fastapi import APIRouter, HTTPException, status
-from nomans_functions import Nomans
 
 # error handling
 from sqlalchemy.exc import IntegrityError
@@ -76,7 +76,7 @@ def delete_sensor(sensor_id: int):
 @sensorsRouter.post("/add-plume-platform/", response_model=SchemaPlumePlatform)
 def add_plume_sensors(plumeSensors: SchemaPlumePlatform):
     """Adds plume sensor platforms by scraping the plume dashboard to fetch the lookupids of the inputted serial numbers"""
-    api = Nomans()
+    api = CeleryWrapper()
 
     sensors = list(api.generate_plume_platform(plumeSensors.serial_numbers))
 
@@ -108,7 +108,7 @@ def set_active_sensors(sensors: SchemaPlumePlatform):
     return sensors
 
 
-# other functions
+# functions for celery tasks
 @sensorsRouter.get("/get-id-from-lookup/")
 def sensor_id_from_lookup_id(lookup_id: str):
     sensor_id = db.query(ModelSensor.id).filter(ModelSensor.lookup_id == lookup_id).first()

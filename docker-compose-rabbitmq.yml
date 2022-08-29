@@ -38,11 +38,16 @@ services:
       - db
     restart: always
 
-  redis:
-    container_name: redis
-    image: redis:alpine
+  # #celerystuff #user:guest password:guest
+  rabbitmq:
+    image: rabbitmq:3-management-alpine
+    container_name: 'rabbitmq'
     ports:
-      - 6379:6379
+      - 5672:5672
+      - 15672:15672
+    volumes:
+      - ~/.docker-conf/rabbitmq/data/:/var/lib/rabbitmq/
+      - ~/.docker-conf/rabbitmq/log/:/var/log/rabbitmq
 
   celery-worker:
     container_name: celery-worker

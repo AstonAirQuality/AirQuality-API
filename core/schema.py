@@ -1,11 +1,10 @@
 import json
-from typing import List, Optional
+from typing import Dict, List, Optional
 
 from geoalchemy2.elements import WKTElement
 from pydantic import BaseModel, constr, validator
 
 # TODO add validation for fields
-
 
 class PlumePlatform(BaseModel):
     serial_numbers: List[constr(max_length=255)]
@@ -20,6 +19,18 @@ class SensorSummary(BaseModel):
 
     class Config:
         orm_mode = True
+        # TODO example schema
+        schema_extra = {
+            "examples": [
+                {
+                    "timestamp": 0,
+                    "geom": None,
+                    "measurement_count": 0,
+                    "measurement_data": '{"name":"Riyad","age":22,"course":"CS"}',
+                    "sensor_id": 51,
+                }
+            ]
+        }
 
     @validator("geom", pre=True, always=True)
     def geom_must_contain(cls, v):
@@ -29,6 +40,7 @@ class SensorSummary(BaseModel):
             raise ValueError(f"geom must be a valid WKTE geometry: {e}")
         return v
 
+    # TODO add validation - load to dataframe and check if timestamp is included
     @validator("measurement_data", pre=True, always=True)
     def measurement_data_must_be_json(cls, v):
         try:
@@ -54,17 +66,3 @@ class SensorType(BaseModel):
 
     class Config:
         orm_mode = True
-
-
-# https://pydantic-docs.helpmanual.io/usage/validators/
-
-
-# ss = SensorSummary(
-# **{
-#   "timestamp": 62,
-#   "geom": null,
-#   "measurement_count": 1,
-#   "measurement_data": "{\"action\": {\"name\": \"test\"}, \"reaction\": {\"name2\": \"test2\"}}",
-#   "sensor_id": 1
-# }
-# )

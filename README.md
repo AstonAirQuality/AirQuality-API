@@ -36,8 +36,9 @@ docker-compose exec app alembic upgrade head
 
 
 
-
+# https://pydantic-docs.helpmanual.io/usage/validators/
 # links
-
+- error handling: https://stackoverflow.com/questions/11587223/how-to-handle-assertionerror-in-python-and-find-out-which-line-or-statement-it-o
+https://betterprogramming.pub/python-celery-best-practices-ae182730bb81
 https://blog.frank-mich.com/creating-a-pydantic-model-for-gis-polygons/
 

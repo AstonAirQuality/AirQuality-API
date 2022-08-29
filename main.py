@@ -1,17 +1,18 @@
-# import uvicorn
-from fastapi import Body, FastAPI
+from fastapi import FastAPI, HTTPException, status  # TODO remove body
+
+from routers.celerytasks import celeryTasksRouter
 
 # routers
 from routers.sensors import sensorsRouter
 from routers.sensorSummaries import sensorSummariesRouter
 from routers.sensorTypes import sensorsTypesRouter
-from tasks import add
 
 app = FastAPI()
 
 app.include_router(sensorsRouter)
 app.include_router(sensorsTypesRouter)
 app.include_router(sensorSummariesRouter)
+app.include_router(celeryTasksRouter)
 
 
 @app.get("/")
@@ -20,13 +21,7 @@ async def root():
     return {"message": message}
 
 
-# {"x": 100, "y": 123}
-@app.post("/ex1")
-def run_task(data=Body(...)):
-    x = data["x"]
-    y = data["y"]
-    task = add.delay(x, y)
-    return {"result": task.get()}
+# TODO add login and auth
 
 
 # this is for testing purposes only

@@ -5,8 +5,6 @@ from sqlalchemy import JSON, Boolean, Column, DateTime, ForeignKey, Integer, Str
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 
-# Base = declarative_base()
-
 # TODO avoid names with '_'
 
 
@@ -44,43 +42,6 @@ class SensorSummaries(Base):
 
     # relationship to sensors table
     SensorId_fk = relationship("Sensors")
-
-
-# class Sensors(Base):
-#     __tablename__ = "sensors"
-#     # auto increment primary key index = true
-#     id = Column(Integer, primary_key=True, index=True, nullable=False)
-#     lookup_id = Column(String(50), nullable=True)
-#     serial_number = Column(String(50), unique=True)
-#     active = Column(Boolean, nullable=False)
-#     last_updated = Column(DateTime, nullable=True)
-#     type_id = Column(Integer, ForeignKey("sensor_types.id"), nullable=False)
-
-#     # relationship to sensor_types table
-#     sensor_type_fk = relationship("sensor_types")
-
-
-# class Sensor_types(Base):
-#     __tablename__ = "sensor_types"
-#     id = Column(Integer, primary_key=True, nullable=False)
-#     name = Column(String(50), nullable=False)
-#     description = Column(String(50), nullable=False)
-
-
-# class Sensor_summaries(Base):
-
-#     __tablename__ = "sensor_summaries"
-
-#     timestamp = Column(Integer, primary_key=True, nullable=False)
-#     sensor_id = Column(Integer, ForeignKey("sensors.id"), primary_key=True, nullable=False)
-#     geom = Column(
-#         Geometry(geometry_type="POLYGON", srid=4326), unique=False, nullable=True
-#     )  # here your Geometry column
-#     measurement_count = Column(Integer, nullable=False)
-#     measurement_data = Column(JSON, nullable=False)
-
-#     # relationship to sensors table
-#     sensor_id_fk = relationship("sensors")
 
 
 # class Book(Base):

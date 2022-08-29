@@ -16,7 +16,7 @@ from core.schema import Sensor as SchemaSensor
 from core.schema import SensorSummary as SchemaSensorSummary
 
 
-class Nomans:
+class CeleryWrapper:
     def __init__(self):
         load_dotenv()
         self.pw = PlumeWrapper(
