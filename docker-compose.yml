@@ -41,12 +41,6 @@ services:
     environment:
       - name=value
 
-  redis:
-    container_name: redis
-    image: redis:alpine
-    ports:
-      - 6379:6379
-
   celery-worker:
     container_name: celery-worker
     build: .
@@ -56,7 +50,6 @@ services:
     depends_on:
       - app
       - db
-      - redis
     environment:
       CELERY_BROKER_URL: ${CELERY_BROKER_URL}
       CELERY_RESULT_BACKEND: ${CELERY_RESULT_BACKEND}
@@ -84,12 +77,11 @@ services:
       - app
       - db
       - redis
-
-  # celery flower to monitor celery tasks
-  flower:
-    image: mher/flower
-    command: [ "celery", "flower" ]
-    environment:
-      CELERY_BROKER_URL: ${CELERY_BROKER_URL}
-    ports:
-      - "5555:5555"
+  # # celery flower to monitor celery tasks
+  # flower:
+  #   image: mher/flower
+  #   command: [ "celery", "flower" ]
+  #   environment:
+  #     CELERY_BROKER_URL: ${CELERY_BROKER_URL}
+  #   ports:
+  #     - "5555:5555"

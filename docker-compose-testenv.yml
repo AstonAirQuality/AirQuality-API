@@ -11,20 +11,20 @@ services:
     ports:
       - 5432:5432
     environment:
-      - POSTGRES_USER=${DB_USER}
-      - POSTGRES_PASSWORD=${DB_PASSWORD}
-      - POSTGRES_DB=${DB_NAME}
+      - POSTGRES_USER=${DB_USER_TEST}
+      - POSTGRES_PASSWORD=${DB_PASSWORD_TEST}
+      - POSTGRES_DB=${DB_NAME_TEST}
 
-  pgadmin:
-    container_name: pgadmin
-    image: dpage/pgadmin4
-    environment:
-      - PGADMIN_DEFAULT_EMAIL=${PGADMIN_EMAIL}
-      - PGADMIN_DEFAULT_PASSWORD=${PGADMIN_PASSWORD}
-    ports:
-      - 5050:80
-    depends_on:
-      - db
+  # pgadmin:
+  #   container_name: pgadmin
+  #   image: dpage/pgadmin4
+  #   environment:
+  #     - PGADMIN_DEFAULT_EMAIL=${PGADMIN_EMAIL_TEST}
+  #     - PGADMIN_DEFAULT_PASSWORD=${PGADMIN_PASSWORD_TEST}
+  #   ports:
+  #     - 5050:80
+  #   depends_on:
+  #     - db
 
   app:
     container_name: app
@@ -41,11 +41,11 @@ services:
     environment:
       - name=value
 
-  redis:
-    container_name: redis
-    image: redis:alpine
-    ports:
-      - 6379:6379
+  # redis:
+  #   container_name: redis
+  #   image: redis:alpine
+  #   ports:
+  #     - 6379:6379
 
   celery-worker:
     container_name: celery-worker
@@ -55,16 +55,15 @@ services:
       - .:/app
     depends_on:
       - app
-      - db
-      - redis
+      # - db
+      # - redis
     environment:
-      CELERY_BROKER_URL: ${CELERY_BROKER_URL}
-      CELERY_RESULT_BACKEND: ${CELERY_RESULT_BACKEND}
-      PLUME_EMAIL: "${PLUME_EMAIL}"
-      PLUME_PASSWORD: "${PLUME_PASSWORD}"
+      CELERY_BROKER_URL: ${CELERY_BROKER_URL_TEST}
+      CELERY_RESULT_BACKEND: ${CELERY_RESULT_BACKEND_TEST}
+      PLUME_EMAIL: "${PLUME_EMAIL_TEST}"
+      PLUME_PASSWORD: "${PLUME_PASSWORD_TEST}"
       PLUME_FIREBASE_API_KEY: "${PLUME_FIREBASE_API_KEY}"
       PLUME_ORG_NUM: "${PLUME_ORG_NUM}"
-
   # # celery beat process for cron job tasks
   # celery-beat:
   #   container_name: celery-beat
@@ -73,10 +72,10 @@ services:
   #   volumes:
   #     - .:/app
   #   environment:
-  #     CELERY_BROKER_URL: ${CELERY_BROKER_URL}
-  #     CELERY_RESULT_BACKEND: ${CELERY_RESULT_BACKEND}
-  #     PLUME_EMAIL: "${PLUME_EMAIL}"
-  #     PLUME_PASSWORD: "${PLUME_PASSWORD}"
+  #     CELERY_BROKER_URL: ${CELERY_BROKER_URL_TEST}
+  #     CELERY_RESULT_BACKEND: ${CELERY_RESULT_BACKEND_TEST}
+  #     PLUME_EMAIL: "${PLUME_EMAIL_TEST}"
+  #     PLUME_PASSWORD: "${PLUME_PASSWORD_TEST}"
   #     PLUME_FIREBASE_API_KEY: "${PLUME_FIREBASE_API_KEY}"
   #     PLUME_ORG_NUM: "${PLUME_ORG_NUM}"
 
@@ -85,11 +84,11 @@ services:
   #     - db
   #     - redis
 
-  # celery flower to monitor celery tasks
-  flower:
-    image: mher/flower
-    command: [ "celery", "flower" ]
-    environment:
-      CELERY_BROKER_URL: ${CELERY_BROKER_URL}
-    ports:
-      - "5555:5555"
+  # # celery flower to monitor celery tasks
+  # flower:
+  #   image: mher/flower
+  #   command: [ "celery", "flower" ]
+  #   environment:
+  #     CELERY_BROKER_URL: ${CELERY_BROKER_URL}
+  #   ports:
+  #     - "5555:5555"
