@@ -20,7 +20,7 @@ pip freeze > requirements.txt
 
 # Docker commands 
 docker-compose build
-docker-compose -f docker-compose-testenv.yml up- BUILD FROM TEST ENV
+docker-compose -f docker-compose-testenv.yml up  - BUILD FROM TEST ENV
 docker-compose up
 
 ## run migration

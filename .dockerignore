@@ -6,7 +6,6 @@
 *.yml
 *.txt
 !requirements.txt
-*.sql
 */.vscode*
 */env*
 */.devcontainer*
