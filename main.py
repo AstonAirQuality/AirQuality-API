@@ -21,9 +21,10 @@ app.include_router(sensorSummariesRouter)
 app.include_router(celeryTasksRouter)
 
 
-@app.get("/sentry-debug")
-async def trigger_error():
-    division_by_zero = 1 / 0
+# # TODO remove this
+# @app.get("/sentry-debug")
+# async def trigger_error():
+#     division_by_zero = 1 / 0
 
 
 @app.get("/")

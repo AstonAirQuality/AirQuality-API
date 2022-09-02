@@ -129,6 +129,8 @@ def setup_periodic_tasks(sender, **kwargs):
     cronjobs to retrieve sensor data.
     """
 
+    # sender.add_periodic_task(5, add.s(5, 15), name="test")
+
     # TODO add daily cronjob to add json logs to firebase db if is not empty
     # log results and email if there are errors DAILY just before midnight
     sender.add_periodic_task(crontab(hour=23, minute=59), check_error_logs.s(), name="check_error_logs")
