@@ -34,14 +34,19 @@ def get_task_result(task_id: str, timeoutSeconds: int = Query(default=60)):
 
 # TODO validate query params here rather than in celery task
 @celeryTasksRouter.put("/api/upsert-scheduled-ingest-active-sensors/{start}/{end}")
-def upsert_scheduled_ingest_active_sensors(start: str = Query(regex=dateRegex), end: str = Query(regex=dateRegex)):
+def upsert_scheduled_ingest_active_sensors(
+    start: str = Query(regex=dateRegex),
+    end: str = Query(regex=dateRegex),
+    sensor_type_ids: list[int] = Query(default=[]),
+):
     """create a scheduled ingest task of the active sensors.
     params: must be valid date string e.g. 20-08-2022,26-08-2022"""
 
     # route task to celery
-    task = CeleryWorker.scheduled_upsert_sensorSummary.delay(start, end)
+    task = CeleryWorker.scheduled_upsert_sensorSummary.delay(start, end, sensor_type_ids)
 
-    return {"task_id": task.id}
+    return get_task_result(task.id, 60 * 5)
+    # return {"task_id": task.id}
 
 
 # TODO validate query params here rather than in celery task

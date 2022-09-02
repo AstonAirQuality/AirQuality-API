@@ -121,7 +121,7 @@ class PlumeSensor(SensorDTO):
         df = df.rolling("1Min").median().loc[~df.index.duplicated(keep="last")]
         df.drop(["timestamp"], axis=1, inplace=True)
 
-        # drop all rows with no location data
+        # drop all null rows with no location data
         df = df[df["latitude"].notna()]
 
         if df.empty:

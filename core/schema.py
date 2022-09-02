@@ -4,12 +4,8 @@ from typing import Dict, List, Optional
 from geoalchemy2.elements import WKTElement
 from pydantic import BaseModel, constr, validator
 
+
 # TODO add validation for fields
-
-class PlumePlatform(BaseModel):
-    serial_numbers: List[constr(max_length=255)]
-
-
 class SensorSummary(BaseModel):
     timestamp: int
     geom: Optional[str] = None

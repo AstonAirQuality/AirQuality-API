@@ -13,14 +13,11 @@ Fast API project to fetch/scrape data from Aston's air quality sensors
 
 
 
-
-
 ## save dependacies
 pip freeze > requirements.txt
 
-# Docker commands 
+# Docker commands - test enviornment
 docker-compose build
-docker-compose -f docker-compose-testenv.yml up  - BUILD FROM TEST ENV
 docker-compose up
 
 ## run migration
@@ -33,7 +30,6 @@ docker-compose exec app alembic upgrade head
 ### Check migration file
 - remove the create_index statement in the upgrade() function.
 - remove the drop_index statement in the downgrade() function.
-
 
 
 

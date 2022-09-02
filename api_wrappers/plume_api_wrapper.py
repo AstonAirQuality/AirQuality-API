@@ -99,11 +99,14 @@ class PlumeWrapper(BaseWrapper):
 
     def get_sensors(self, sensors: List[str], start: dt.datetime, end: dt.datetime) -> Iterator[PlumeSensor]:
         """Fetches data from the Plume API for a given list of sensor lookup ids in the specified timeframe."""
+        # TODO if assert fails then add error message to sensorDTO so that we can log it and add locations at a later date
         try:
-            for sensor in self.get_sensor_location_data(sensors, start, end):
+            sensor_locations = list(self.get_sensor_location_data(sensors, start, end))
+            assert sensor_locations != []
+            for sensor in sensor_locations:
                 sensor.add_measurements_json(self.get_sensor_measurement_data(sensor.id, start, end))
                 yield sensor
-        except zipfile.BadZipFile:
+        except (zipfile.BadZipFile, AssertionError):
             # if the zip file is corrupt, try get measurments only
             yield from self.get_sensors_m_only(sensors, start, end)
 

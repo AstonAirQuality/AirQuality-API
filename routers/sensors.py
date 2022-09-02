@@ -1,10 +1,11 @@
 # dependancies:
+import datetime as dt
+
 from celeryWrapper import CeleryWrapper
 from core.models import Sensors as ModelSensor
-from core.schema import PlumePlatform as SchemaPlumePlatform
 from core.schema import Sensor as SchemaSensor
 from database import SessionLocal
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, HTTPException, Query, status
 
 # error handling
 from sqlalchemy.exc import IntegrityError
@@ -73,39 +74,62 @@ def delete_sensor(sensor_id: int):
         return None
 
 
-@sensorsRouter.post("/add-plume-platform/", response_model=SchemaPlumePlatform)
-def add_plume_sensors(plumeSensors: SchemaPlumePlatform):
+@sensorsRouter.post("/add-plume-platform/")
+def add_plume_sensors(sensor_serialnumbers: list[str] = Query(default=[])):
     """Adds plume sensor platforms by scraping the plume dashboard to fetch the lookupids of the inputted serial numbers"""
     api = CeleryWrapper()
 
-    sensors = list(api.generate_plume_platform(plumeSensors.serial_numbers))
+    sensors = list(api.generate_plume_platform(sensor_serialnumbers))
+
+    addedSensors = {}
 
     for sensor in sensors:
+        addedSensors[sensor.serial_number] = sensor.lookup_id
         add_sensor(sensor)
 
-    return plumeSensors
+    return addedSensors
 
 
 @sensorsRouter.get("/read-active-sensors/")
-def get_active_sensors():
-    sensors = db.query(ModelSensor.type_id, ModelSensor.lookup_id).filter(ModelSensor.active == True).all()
+def get_active_sensors(type_ids: list[int] = Query(default=[])):
+    sensors = (
+        db.query(ModelSensor.type_id, ModelSensor.lookup_id)
+        .filter(ModelSensor.active == True, ModelSensor.type_id.in_(type_ids))
+        .all()
+    )
     return sensors
 
 
-@sensorsRouter.patch("/set-active-sensors/", response_model=SchemaPlumePlatform)
-def set_active_sensors(sensors: SchemaPlumePlatform):
+@sensorsRouter.patch("/set-active-sensors/")
+def set_active_sensors(sensor_serialnumbers: list[str] | None = Query(None), active_state: bool = True):
     """Sets all sensors whose serialnumber matches to active"""
 
     try:
-        db.query(ModelSensor).filter(ModelSensor.serial_number.in_(sensors.serial_numbers)).update(
-            {ModelSensor.active: True}
+        db.query(ModelSensor).filter(ModelSensor.serial_number.in_(sensor_serialnumbers)).update(
+            {ModelSensor.active: active_state}
         )
         db.commit()
     except Exception as e:
         db.rollback()
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
 
-    return sensors
+    return dict.fromkeys(sensor_serialnumbers, active_state)
+
+
+@sensorsRouter.patch("/set-lastUpdated/{sensor_id}/{timestamp}")
+def set_last_updated(sensor_id: int, timestamp: int):
+    """Sets all sensors whose serialnumber matches to active"""
+
+    try:
+        db.query(ModelSensor).filter(ModelSensor.id == sensor_id).update(
+            {ModelSensor.time_updated: dt.datetime.fromtimestamp(timestamp)}
+        )
+        db.commit()
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
+
+    return {sensor_id: timestamp}
 
 
 # functions for celery tasks
