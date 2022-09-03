@@ -5,7 +5,7 @@ from typing import Tuple
 # from celeryWrapper import CeleryWrapper
 from core.models import SensorSummaries as ModelSensorSummary
 from core.schema import SensorSummary as SchemaSensorSummary
-from database import SessionLocal
+from db.database import SessionLocal
 from fastapi import APIRouter, HTTPException, Query, status
 from geoalchemy2 import functions  # used to convert WKBE geometry to GEOSJON
 from geoalchemy2.shape import to_shape  # used to convert WKBE geometry to WKT string

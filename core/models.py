@@ -1,5 +1,5 @@
 # from sqlalchemy.ext.declarative import declarative_base
-from database import Base
+from db.database import Base
 from geoalchemy2 import Geometry
 from sqlalchemy import JSON, Boolean, Column, DateTime, ForeignKey, Integer, String
 from sqlalchemy.orm import relationship

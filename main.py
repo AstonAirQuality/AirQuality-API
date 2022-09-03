@@ -4,7 +4,7 @@ from os import environ as env
 from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException, status  # TODO remove body
 
-from routers.celerytasks import celeryTasksRouter
+from routers.bgtasks import backgroundTasksRouter
 
 # routers
 from routers.sensors import sensorsRouter
@@ -18,7 +18,7 @@ app = FastAPI()
 app.include_router(sensorsRouter)
 app.include_router(sensorsTypesRouter)
 app.include_router(sensorSummariesRouter)
-app.include_router(celeryTasksRouter)
+app.include_router(backgroundTasksRouter)
 
 
 # # TODO remove this

@@ -1,9 +1,0 @@
-
-sensor summary
-# {
-#   "timestamp": 0,
-#   "geom": null,
-#   "measurement_count": 0,
-#   "measurement_data": "{\"name\":\"john\",\"age\":22,\"class\":\"mca\"}",
-#   "sensor_id": 51
-# }

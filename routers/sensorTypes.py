@@ -1,8 +1,7 @@
 # dependancies:
-from celeryWrapper import CeleryWrapper
 from core.models import SensorTypes as ModelSensorType
 from core.schema import SensorType as SchemaSensorType
-from database import SessionLocal
+from db.database import SessionLocal
 from fastapi import APIRouter
 
 sensorsTypesRouter = APIRouter()

@@ -4,9 +4,7 @@ services:
 
   db:
     container_name: postgresql_db
-    build:
-      context: .
-      dockerfile: Dockerfile-db
+    build: ./db
     restart: always
     ports:
       - 5432:5432
@@ -29,8 +27,8 @@ services:
   app:
     container_name: app
     build: .
-    command: bash -c "alembic upgrade head && gunicorn main:app --workers 3 --worker-class uvicorn.workers.UvicornWorker --bind 0.0.0.0:8000 --reload"
-    # command: bash -c "alembic upgrade head && uvicorn main:app --host 0.0.0.0 --port 8000 --reload"
+    #command: bash -c "alembic upgrade head && gunicorn main:app --workers 3 --worker-class uvicorn.workers.UvicornWorker --bind 0.0.0.0:8000 --reload"
+    command: bash -c "alembic upgrade head && uvicorn main:app --host 0.0.0.0 --port 8000 --reload"
     volumes:
       - .:/app
     ports:
@@ -48,64 +46,3 @@ services:
       PLUME_ORG_NUM: "${PLUME_ORG_NUM}"
       FASTAPI_SENTRY_DSN: "${FASTAPI_SENTRY_DSN}"
       PRODUCTION_MODE: "${PRODUCTION_MODE}"
-
-  redis:
-    container_name: redis
-    image: redis:alpine
-    ports:
-      - 6379:6379
-
-  celery-worker:
-    container_name: celery-worker
-    build: .
-    command: celery -A tasks worker -B --loglevel=INFO
-    volumes:
-      - .:/app
-    depends_on:
-      - app
-      # - db
-      # - redis
-    environment:
-      DATABASE_URL_ALT: ${DATABASE_URL_ALT_TEST}
-      CELERY_BROKER_URL: ${CELERY_BROKER_URL_TEST}
-      CELERY_RESULT_BACKEND: ${CELERY_RESULT_BACKEND_TEST}
-      PLUME_EMAIL: "${PLUME_EMAIL_TEST}"
-      PLUME_PASSWORD: "${PLUME_PASSWORD_TEST}"
-      PLUME_FIREBASE_API_KEY: "${PLUME_FIREBASE_API_KEY}"
-      PLUME_ORG_NUM: "${PLUME_ORG_NUM}"
-      CELERY_SENTRY_DSN: "${CELERY_SENTRY_DSN}"
-      CELERY_SENTRY_SAMPLE_RATE: "${CELERY_SENTRY_SAMPLE_RATE}"
-      PRODUCTION_MODE: "${PRODUCTION_MODE}"
-
-  # # celery beat process for cron job tasks
-  # celery-beat:
-  #   container_name: celery-beat
-  #   build: .
-  #   command: celery -A tasks worker -B --loglevel=INFO
-  #   volumes:
-  #     - .:/app
-  #   environment:
-  #     DATABASE_URL_ALT: ${DATABASE_URL_ALT_TEST}
-  #     CELERY_BROKER_URL: ${CELERY_BROKER_URL_TEST}
-  #     CELERY_RESULT_BACKEND: ${CELERY_RESULT_BACKEND_TEST}
-  #     PLUME_EMAIL: "${PLUME_EMAIL_TEST}"
-  #     PLUME_PASSWORD: "${PLUME_PASSWORD_TEST}"
-  #     PLUME_FIREBASE_API_KEY: "${PLUME_FIREBASE_API_KEY}"
-  #     PLUME_ORG_NUM: "${PLUME_ORG_NUM}"
-  #     CELERY_SENTRY_DSN: "${CELERY_SENTRY_DSN}"
-  #     CELERY_SENTRY_SAMPLE_RATE: "${CELERY_SENTRY_SAMPLE_RATE}"
-  #     PRODUCTION_MODE: "${PRODUCTION_MODE}"
-
-  #   depends_on:
-  #     - app
-  #     - db
-  #     - redis
-
-  # celery flower to monitor celery tasks
-  flower:
-    image: mher/flower
-    command: [ "celery", "flower" ]
-    environment:
-      CELERY_BROKER_URL: ${CELERY_BROKER_URL_TEST}
-    ports:
-      - "5555:5555"
