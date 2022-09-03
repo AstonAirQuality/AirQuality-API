@@ -101,7 +101,7 @@ def get_active_sensors(type_ids: list[int] = Query(default=[])):
 
 
 @sensorsRouter.patch("/set-active-sensors/")
-def set_active_sensors(sensor_serialnumbers: list[str] | None = Query(None), active_state: bool = True):
+def set_active_sensors(sensor_serialnumbers: list[str] = Query(default=[]), active_state: bool = True):
     """Sets all sensors whose serialnumber matches to active"""
 
     try:
