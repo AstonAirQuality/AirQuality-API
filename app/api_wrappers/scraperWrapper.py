@@ -1,6 +1,5 @@
 # TODO check postgres sensors table for active sensors. Then only write to the currently active sensors
 # TODO add zephyr and other sensors to api functions and wrappers
-
 import datetime as dt
 from os import environ as env
 from typing import Iterator
@@ -16,7 +15,7 @@ from core.schema import Sensor as SchemaSensor
 from core.schema import SensorSummary as SchemaSensorSummary
 
 
-class CeleryWrapper:
+class ScraperWrapper:
     def __init__(self):
         load_dotenv()
         self.pw = PlumeWrapper(

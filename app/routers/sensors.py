@@ -1,10 +1,10 @@
 # dependancies:
 import datetime as dt
 
-from celeryWrapper import CeleryWrapper
+from api_wrappers.scraperWrapper import ScraperWrapper
 from core.models import Sensors as ModelSensor
 from core.schema import Sensor as SchemaSensor
-from database import SessionLocal
+from db.database import SessionLocal
 from fastapi import APIRouter, HTTPException, Query, status
 
 # error handling
@@ -77,7 +77,7 @@ def delete_sensor(sensor_id: int):
 @sensorsRouter.post("/add-plume-platform/")
 def add_plume_sensors(sensor_serialnumbers: list[str] = Query(default=[])):
     """Adds plume sensor platforms by scraping the plume dashboard to fetch the lookupids of the inputted serial numbers"""
-    api = CeleryWrapper()
+    api = ScraperWrapper()
 
     sensors = list(api.generate_plume_platform(sensor_serialnumbers))
 
