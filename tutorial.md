@@ -7,24 +7,14 @@ Fast API project to fetch/scrape data from Aston's air quality sensors
 ## setup python virtual env
 -   python -m venv env
 -   python.exe -m pip install --upgrade pip
-
-## activate env
 -   cd env/scripts && activate && cd..\..
 -   pip install -r requirements.txt
-
-## aws env
--   pip install fastapi fastapi-sqlalchemy pydantic alembic psycopg2-binary uvicorn python-dotenv geoalchemy geoalchemy2 shapely pandas requests sentry-sdk mangum black 
-
-## heroku celery env
--   pip install fastapi fastapi-sqlalchemy celery redis pydantic alembic psycopg2-binary uvicorn python-dotenv geoalchemy geoalchemy2 shapely pandas requests sentry-sdk black 
+-   pip install fastapi fastapi-sqlalchemy pydantic alembic psycopg2-binary uvicorn python-dotenv celery geoalchemy black shapely
 
 
 
 ## save dependacies
 pip freeze > requirements.txt
-
-## uninstall dependancies
-pip uninstall -r requirements.txt 
 
 # Docker commands - test enviornment
 docker-compose build

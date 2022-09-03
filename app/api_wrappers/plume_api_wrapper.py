@@ -155,7 +155,7 @@ class PlumeWrapper(BaseWrapper):
         for sensor, buffer in self.extract_zip(self.get_zip_file_link(sensors, start, end)):
             yield PlumeSensor.from_csv(sensor, buffer)
 
-    def get_zip_file_link(self, sensors: List[str], start: dt.datetime, end: dt.datetime, timeout=300) -> str:
+    def get_zip_file_link(self, sensors: List[str], start: dt.datetime, end: dt.datetime, timeout=150) -> str:
         task_id = self.__session.post(
             f"https://api-preprod.plumelabs.com/2.0/user/organizations/" f"{self.org}/sensors/export",
             json={
