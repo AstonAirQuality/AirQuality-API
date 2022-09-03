@@ -24,9 +24,9 @@ def get_sensorSummaries(
     start: str,
     end: str,
     raw_data: bool,
-    geom_type: str | None = None,
-    geom: str | None = None,
-    sensor_ids: list[int] | None = Query(None),
+    geom_type: str = Query(None),
+    geom: str = Query(None),
+    sensor_ids: list[int] = Query(default=[]),
 ):
     """read sensor summaries e.g /read-sensorSummaries/20-08-2022/26-08-2022/false"""
 
@@ -148,7 +148,7 @@ def convertWKBtoWKT(element: any) -> str:
 
 def searchQueryFilters(query: any, geom_type: str, geom: str, sensor_ids: list[str]) -> any:
 
-    if sensor_ids is not None:
+    if sensor_ids:
         query = query.filter(ModelSensorSummary.sensor_id.in_(sensor_ids))
 
     # TODO add geom validation to ensure it is a valid geom and raise error if not
