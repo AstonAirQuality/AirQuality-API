@@ -154,24 +154,23 @@ def searchQueryFilters(query: any, geom_type: str, geom: str, sensor_ids: list[s
     # TODO add geom validation to ensure it is a valid geom and raise error if not
 
     if geom_type and geom is not None:
-        match geom_type:
-            case "point-intersect":
-                query = query.filter(functions.ST_Intersects(geom))
-            case "point-within":
-                query = query.filter(functions.ST_Within(geom))
-            case "point-contains":
-                query = query.filter(functions.ST_Contains(geom))
-            case "point-overlaps":
-                query = query.filter(functions.ST_Overlaps(geom))
-            case "point-equals":
-                query = query.filter(functions.ST_Equals(geom))
-            case "point-disjoint":
-                query = query.filter(functions.ST_Disjoint(geom))
-            case "point-touches":
-                query = query.filter(functions.ST_Touches(geom))
-            case "point-crosses":
-                query = query.filter(functions.ST_Crosses(geom))
-            case _:
-                raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid geom_type")
+        if geom_type == "point-intersect":
+            query = query.filter(functions.ST_Intersects(geom))
+        elif geom_type == "point-within":
+            query = query.filter(functions.ST_Within(geom))
+        elif geom_type == "point-contains":
+            query = query.filter(functions.ST_Contains(geom))
+        elif geom_type == "point-overlaps":
+            query = query.filter(functions.ST_Overlaps(geom))
+        elif geom_type == "point-equals":
+            query = query.filter(functions.ST_Equals(geom))
+        elif geom_type == "point-disjoint":
+            query = query.filter(functions.ST_Disjoint(geom))
+        elif geom_type == "point-touches":
+            query = query.filter(functions.ST_Touches(geom))
+        elif geom_type == "point-crosses":
+            query = query.filter(functions.ST_Crosses(geom))
+        else:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid geom_type")
 
     return query
