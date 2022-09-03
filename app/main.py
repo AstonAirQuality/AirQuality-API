@@ -1,8 +1,8 @@
-# sentry dependancies
 from os import environ as env
 
 from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException, status  # TODO remove body
+from mangum import Mangum
 
 from routers.bgtasks import backgroundTasksRouter
 
@@ -54,7 +54,7 @@ if env["PRODUCTION_MODE"] == "TRUE":
         traces_sample_rate=env["FASTAPI_SENTRY_SAMPLE_RATE"],
     )
 
-
+handler = Mangum(app=app)
 # this is for testing purposes only
 # import uvicorn
 

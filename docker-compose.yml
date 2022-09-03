@@ -26,11 +26,10 @@ services:
 
   app:
     container_name: app
-    build: .
-    #command: bash -c "alembic upgrade head && gunicorn main:app --workers 3 --worker-class uvicorn.workers.UvicornWorker --bind 0.0.0.0:8000 --reload"
+    build: ./app
     command: bash -c "alembic upgrade head && uvicorn main:app --host 0.0.0.0 --port 8000 --reload"
     volumes:
-      - .:/app
+      - ./app:/app
     ports:
       - 8000:8000
     depends_on:

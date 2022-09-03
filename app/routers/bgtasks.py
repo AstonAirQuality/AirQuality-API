@@ -46,28 +46,27 @@ async def upsert_scheduled_ingest_active_sensors(
         summary_insert_log = {}
         # for each sensor type, fetch the data from the api and write to the database
         for (key, value) in sensor_dict.items():
-            match key:
-                case 1:
-                    for sensorSummary in api.fetch_plume_data(startDate, endDate, value):
-                        try:
-                            lookupid = sensorSummary.sensor_id
-                            (sensorSummary.sensor_id,) = sensor_id_from_lookup_id(str(lookupid))
+            if key == 1:
+                for sensorSummary in api.fetch_plume_data(startDate, endDate, value):
+                    try:
+                        lookupid = sensorSummary.sensor_id
+                        (sensorSummary.sensor_id,) = sensor_id_from_lookup_id(str(lookupid))
 
-                            upsert_sensorSummary(sensorSummary)
+                        upsert_sensorSummary(sensorSummary)
 
-                            summary_insert_log[sensorSummary.sensor_id] = (
-                                True,
-                                sensorSummary.timestamp,
-                                "no errors",
-                            )
-                        except Exception as e:
-                            summary_insert_log[sensorSummary.sensor_id] = (False, sensorSummary.timestamp, str(e))
-                case 2:
-                    # TODO add api call for sensor type 2
-                    continue
-                case 3:
-                    # TODO add api call for sensor type 3
-                    continue
+                        summary_insert_log[sensorSummary.sensor_id] = (
+                            True,
+                            sensorSummary.timestamp,
+                            "no errors",
+                        )
+                    except Exception as e:
+                        summary_insert_log[sensorSummary.sensor_id] = (False, sensorSummary.timestamp, str(e))
+            elif key == 2:
+                # TODO add api call for sensor type 2
+                continue
+            elif key == 3:
+                # TODO add api call for sensor type 3
+                continue
 
         # return timestamp and sensor id of the summaries that were successfully written to the database
         return update_sensor_last_updated(summary_insert_log)
