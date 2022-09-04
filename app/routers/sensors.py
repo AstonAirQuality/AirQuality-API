@@ -16,7 +16,7 @@ sensorsRouter = APIRouter()
 db = SessionLocal()
 
 
-@sensorsRouter.post("/add-sensor-platform/", response_model=SchemaSensor)
+@sensorsRouter.post("/create", response_model=SchemaSensor)
 def add_sensor(sensor: SchemaSensor):
     sensor = ModelSensor(
         lookup_id=sensor.lookup_id,
@@ -40,13 +40,13 @@ def add_sensor(sensor: SchemaSensor):
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
 
 
-@sensorsRouter.get("/")
+@sensorsRouter.get("")
 def get_sensors():
     sensors = db.query(ModelSensor).all()
     return sensors
 
 
-@sensorsRouter.put("/update-sensor-platform/{sensor_id}", response_model=SchemaSensor)
+@sensorsRouter.put("/update/{sensor_id}", response_model=SchemaSensor)
 def update_sensor(sensor_id: int, sensor: SchemaSensor):
 
     sensor_updated = db.query(ModelSensor).filter(ModelSensor.id == sensor_id).first()
@@ -63,7 +63,7 @@ def update_sensor(sensor_id: int, sensor: SchemaSensor):
         return None
 
 
-@sensorsRouter.delete("/delete-sensor-platform/{sensor_id}", response_model=SchemaSensor)
+@sensorsRouter.delete("/delete/{sensor_id}", response_model=SchemaSensor)
 def delete_sensor(sensor_id: int):
     sensor_deleted = db.query(ModelSensor).filter(ModelSensor.id == sensor_id).first()
 
@@ -92,7 +92,7 @@ def delete_sensor(sensor_id: int):
 #     return addedSensors
 
 
-@sensorsRouter.get("/read-active-sensors/")
+@sensorsRouter.get("/read/active")
 def get_active_sensors(type_ids: list[int] = Query(default=[])):
     sensors = (
         db.query(ModelSensor.type_id, ModelSensor.lookup_id)
@@ -102,7 +102,7 @@ def get_active_sensors(type_ids: list[int] = Query(default=[])):
     return sensors
 
 
-@sensorsRouter.patch("/set-active-sensors/")
+@sensorsRouter.patch("/update/active")
 def set_active_sensors(sensor_serialnumbers: list[str] = Query(default=[]), active_state: bool = True):
     """Sets all sensors whose serialnumber matches to active"""
 
@@ -118,7 +118,7 @@ def set_active_sensors(sensor_serialnumbers: list[str] = Query(default=[]), acti
     return dict.fromkeys(sensor_serialnumbers, active_state)
 
 
-@sensorsRouter.patch("/set-lastUpdated/{sensor_id}/{timestamp}")
+@sensorsRouter.patch("/update/lastupdated/{sensor_id}/{timestamp}")
 def set_last_updated(sensor_id: int, timestamp: int):
     """Sets all sensors whose serialnumber matches to active"""
 
@@ -135,7 +135,7 @@ def set_last_updated(sensor_id: int, timestamp: int):
 
 
 # functions for celery tasks
-@sensorsRouter.get("/get-id-from-lookup/")
+@sensorsRouter.get("/sensorid-from-lookup/{lookup_id}")
 def sensor_id_from_lookup_id(lookup_id: str):
     sensor_id = db.query(ModelSensor.id).filter(ModelSensor.lookup_id == lookup_id).first()
     return sensor_id
