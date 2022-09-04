@@ -6,6 +6,7 @@ from core.models import Sensors as ModelSensor
 from core.schema import Sensor as SchemaSensor
 from db.database import SessionLocal
 from fastapi import APIRouter, HTTPException, Query, status
+from psycopg2.errors import UniqueViolation
 
 # error handling
 from sqlalchemy.exc import IntegrityError
@@ -29,16 +30,17 @@ def add_sensor(sensor: SchemaSensor):
         db.commit()
         return sensor
     except IntegrityError as e:
-        #  if isinstance(e.orig, PG2UniqueViolation):
-        #     raise UniqueViolation from e
-        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(e))
+        if isinstance(e.orig, UniqueViolation):
+            db.rollback()
+            raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(e))
+        else:
+            raise Exception(e)
     except Exception as e:
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
-    finally:
         db.rollback()
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
 
 
-@sensorsRouter.get("/read-sensor-platform/")
+@sensorsRouter.get("/")
 def get_sensors():
     sensors = db.query(ModelSensor).all()
     return sensors
@@ -74,20 +76,20 @@ def delete_sensor(sensor_id: int):
         return None
 
 
-@sensorsRouter.post("/add-plume-platform/")
-def add_plume_sensors(sensor_serialnumbers: list[str] = Query(default=[])):
-    """Adds plume sensor platforms by scraping the plume dashboard to fetch the lookupids of the inputted serial numbers"""
-    api = ScraperWrapper()
+# @sensorsRouter.post("/add-plume-platform/")
+# def add_plume_sensors(sensor_serialnumbers: list[str] = Query(default=[])):
+#     """Adds plume sensor platforms by scraping the plume dashboard to fetch the lookupids of the inputted serial numbers"""
+#     api = ScraperWrapper()
 
-    sensors = list(api.generate_plume_platform(sensor_serialnumbers))
+#     sensors = list(api.generate_plume_platform(sensor_serialnumbers))
 
-    addedSensors = {}
+#     addedSensors = {}
 
-    for sensor in sensors:
-        addedSensors[sensor.serial_number] = sensor.lookup_id
-        add_sensor(sensor)
+#     for sensor in sensors:
+#         addedSensors[sensor.serial_number] = sensor.lookup_id
+#         add_sensor(sensor)
 
-    return addedSensors
+#     return addedSensors
 
 
 @sensorsRouter.get("/read-active-sensors/")

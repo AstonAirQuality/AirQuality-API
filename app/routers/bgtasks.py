@@ -12,6 +12,7 @@ from dotenv import load_dotenv
 from fastapi import APIRouter, HTTPException, Query, status
 
 from routers.sensors import (
+    add_sensor,
     get_active_sensors,
     sensor_id_from_lookup_id,
     set_last_updated,
@@ -27,7 +28,7 @@ backgroundTasksRouter = APIRouter()
 dateRegex = "\s+(?:0[1-9]|[12][0-9]|3[01])[-/.](?:0[1-9]|1[012])[-/.](?:19\d{2}|20\d{2}|2100)\b"
 
 
-@backgroundTasksRouter.put("/api/upsert-scheduled-ingest-active-sensors/{start}/{end}")
+@backgroundTasksRouter.put("/upsert-scheduled-ingest-active-sensors/{start}/{end}")
 async def upsert_scheduled_ingest_active_sensors(
     start: str = Query(regex=dateRegex),
     end: str = Query(regex=dateRegex),
@@ -72,6 +73,22 @@ async def upsert_scheduled_ingest_active_sensors(
         return update_sensor_last_updated(summary_insert_log)
     else:
         return "No active sensors found"
+
+
+@backgroundTasksRouter.post("/add-plume-platform/")
+def add_plume_sensors(sensor_serialnumbers: list[str] = Query(default=[])):
+    """Adds plume sensor platforms by scraping the plume dashboard to fetch the lookupids of the inputted serial numbers"""
+    api = ScraperWrapper()
+
+    sensors = list(api.generate_plume_platform(sensor_serialnumbers))
+
+    addedSensors = {}
+
+    for sensor in sensors:
+        addedSensors[sensor.serial_number] = sensor.lookup_id
+        add_sensor(sensor)
+
+    return addedSensors
 
 
 #################################################################################################################################

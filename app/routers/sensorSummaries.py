@@ -76,6 +76,11 @@ def add_sensorSummary(sensorSummary: SchemaSensorSummary):
         if isinstance(e.orig, UniqueViolation):
             db.rollback()
             raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="SensorSummary already exists")
+        else:
+            raise Exception(e)
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
 
     # converting wkb element to wkt string
     sensorSummary.geom = convertWKBtoWKT(sensorSummary.geom)

@@ -13,12 +13,47 @@ from routers.sensorTypes import sensorsTypesRouter
 
 load_dotenv()
 
-app = FastAPI()
+description = """
+Aston Air Quality API helps you do awesome stuff. 🚀
 
-app.include_router(sensorsRouter)
-app.include_router(sensorsTypesRouter)
-app.include_router(sensorSummariesRouter)
-app.include_router(backgroundTasksRouter)
+## Sensors
+
+You can **read sensors**.
+You can **create sensors**.
+You can **update sensors**.
+You can **delete sensors**.
+
+## Sensor Summaries
+
+You can **read sensor summaries**.
+You can **create sensor summaries**.
+You can **update sensor summaries**.
+* **delete sensor summaries** (_not implemented_).
+
+## Sensor Types
+
+You can **read sensor types**.
+You can **create sensor types**.
+* **update sensor types** (_not implemented_).
+* **delete sensor types** (_not implemented_).
+
+## Users (_not implemented_).
+
+You will be able to:
+
+* **Create users** (_not implemented_).
+* **Read users** (_not implemented_).
+"""
+
+app = FastAPI(
+    title="Aston Air Quality API",
+    description=description,
+)
+
+app.include_router(sensorsRouter, prefix="/sensor", tags=["sensor"])
+app.include_router(sensorsTypesRouter, prefix="/sensorType", tags=["sensorType"])
+app.include_router(sensorSummariesRouter, prefix="/sensorSummary", tags=["sensorSummary"])
+app.include_router(backgroundTasksRouter, prefix="/api-task", tags=["api-task"])
 
 
 # # TODO remove this
