@@ -43,3 +43,13 @@ https://medium.com/analytics-vidhya/python-fastapi-and-aws-lambda-container-3e52
 https://betterprogramming.pub/python-celery-best-practices-ae182730bb81
 https://blog.frank-mich.com/creating-a-pydantic-model-for-gis-polygons/
 
+## TODO 
+configure api gateway to use proxy resources
+set authentication for each crud
+https://www.youtube.com/watch?v=oFSU6rhFETk
+
+in vscode change routes to use create/read/update/delete
+
+
+#fastapi docs
+https://stackoverflow.com/questions/67435296/how-to-access-fastapi-swaggerui-docs-behind-an-nginx-proxy

@@ -11,8 +11,8 @@ from core.models import SensorSummaries
 from dotenv import load_dotenv
 from fastapi import APIRouter, HTTPException, Query, status
 
+from routers.helperfunctions import convertDateRangeStringToDate
 from routers.sensors import (
-    add_sensor,
     get_active_sensors,
     sensor_id_from_lookup_id,
     set_last_updated,
@@ -28,7 +28,7 @@ backgroundTasksRouter = APIRouter()
 dateRegex = "\s+(?:0[1-9]|[12][0-9]|3[01])[-/.](?:0[1-9]|1[012])[-/.](?:19\d{2}|20\d{2}|2100)\b"
 
 
-@backgroundTasksRouter.put("/upsert-scheduled-ingest-active-sensors/{start}/{end}")
+@backgroundTasksRouter.put("/upsert/scheduled-ingest-active-sensors/{start}/{end}")
 async def upsert_scheduled_ingest_active_sensors(
     start: str = Query(regex=dateRegex),
     end: str = Query(regex=dateRegex),
@@ -55,9 +55,10 @@ async def upsert_scheduled_ingest_active_sensors(
 
                         upsert_sensorSummary(sensorSummary)
 
+                        # TODO clean this up
                         summary_insert_log[sensorSummary.sensor_id] = (
                             True,
-                            sensorSummary.timestamp,
+                            sensorSummary.timestamp,  # this is the timestamp of the last data point
                             "no errors",
                         )
                     except Exception as e:
@@ -75,51 +76,23 @@ async def upsert_scheduled_ingest_active_sensors(
         return "No active sensors found"
 
 
-@backgroundTasksRouter.post("/add-plume-platform/")
-def add_plume_sensors(sensor_serialnumbers: list[str] = Query(default=[])):
-    """Adds plume sensor platforms by scraping the plume dashboard to fetch the lookupids of the inputted serial numbers"""
-    api = ScraperWrapper()
-
-    sensors = list(api.generate_plume_platform(sensor_serialnumbers))
-
-    addedSensors = {}
-
-    for sensor in sensors:
-        addedSensors[sensor.serial_number] = sensor.lookup_id
-        add_sensor(sensor)
-
-    return addedSensors
-
-
 #################################################################################################################################
-###############################################helper functions###################################################################
+#                                              helper functions                                                                 #
 #################################################################################################################################
-def convertDateRangeStringToDate(start: str, end: str) -> Tuple[dt.datetime, dt.datetime]:
-    try:
-        startDate = dt.datetime.strptime(start, "%d-%m-%Y")
-        endDate = dt.datetime.strptime(end, "%d-%m-%Y")
-
-    except (ValueError, TypeError):
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid date format")
-
-    return startDate, endDate
-
-
-def get_lookupids_of_active_sensors_by_type(type_ids: list[int]) -> dict[int, list[str]]:
+def get_lookupids_of_active_sensors_by_type(type_ids: list[int]) -> dict[int, dict[str, str]]:
     """
-    Returns dict: where dict[sensor_type] = [list of lookup_ids]
+    Returns dict: where dict[sensor_type] = dict[lookup_id] = stationary_box
 
     """
-    sensorsPairs = get_active_sensors(type_ids)
+    sensors = get_active_sensors(type_ids)
 
-    # group sensors by type into a dictionary dict[sensor_type] = [list of sensors]
+    # group sensors by type into a dictionary dict[sensor_type] = dict[lookup_id] = stationary_box
     sensor_dict = {}
-    for (key, value) in sensorsPairs:
-
-        if key in sensor_dict:
-            sensor_dict[key].append(value)
+    for data in sensors:
+        if data[0] in sensor_dict:
+            sensor_dict[data[0]][data[1]] = data[2]
         else:
-            sensor_dict[key] = [value]
+            sensor_dict[data[0]] = {data[1]: data[2]}
 
     return sensor_dict
 

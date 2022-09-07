@@ -9,7 +9,7 @@ from sqlalchemy.orm import declarative_base, sessionmaker
 
 load_dotenv()
 
-engine = create_engine(env["DATABASE_URL_ALT"])
+engine = create_engine(env["DATABASE_URL"])
 
 Base = declarative_base()
 SessionLocal = sessionmaker(bind=engine)

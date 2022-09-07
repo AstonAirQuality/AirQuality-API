@@ -10,6 +10,7 @@ from routers.bgtasks import backgroundTasksRouter
 from routers.sensors import sensorsRouter
 from routers.sensorSummaries import sensorSummariesRouter
 from routers.sensorTypes import sensorsTypesRouter
+from routers.users import usersRouter
 
 load_dotenv()
 
@@ -18,42 +19,50 @@ Aston Air Quality API helps you do awesome stuff. 🚀
 
 ## Sensors
 
-You can **read sensors**.
-You can **create sensors**.
-You can **update sensors**.
-You can **delete sensors**.
+You can:
+* **read sensors**.
+* **create sensors**.
+* **update sensors**.
+* **delete sensors**.
 
 ## Sensor Summaries
 
-You can **read sensor summaries**.
-You can **create sensor summaries**.
-You can **update sensor summaries**.
+You can:
+* **read sensor summaries**.
+* **create sensor summaries**.
+* **update sensor summaries**.
 * **delete sensor summaries** (_not implemented_).
 
 ## Sensor Types
 
-You can **read sensor types**.
-You can **create sensor types**.
-* **update sensor types** (_not implemented_).
-* **delete sensor types** (_not implemented_).
+You can:
+* **read sensor types**.
+* **create sensor types**.
+* **update sensor types**.
+* **delete sensor types**.
 
-## Users (_not implemented_).
-
+## Users.
 You will be able to:
 
-* **Create users** (_not implemented_).
-* **Read users** (_not implemented_).
+You can:
+* **read users**.
+* **create users**.
+
 """
 
 app = FastAPI(
     title="Aston Air Quality API",
     description=description,
+    docs_url="/{stage_name}/docs".format(stage_name=env["AWS_STAGE_NAME"]),
+    redoc_url="/{stage_name}/redoc".format(stage_name=env["AWS_STAGE_NAME"]),
+    openapi_url="/{stage_name}/openapi.json".format(stage_name=env["AWS_STAGE_NAME"]),
 )
 
 app.include_router(sensorsRouter, prefix="/sensor", tags=["sensor"])
 app.include_router(sensorsTypesRouter, prefix="/sensorType", tags=["sensorType"])
 app.include_router(sensorSummariesRouter, prefix="/sensorSummary", tags=["sensorSummary"])
 app.include_router(backgroundTasksRouter, prefix="/api-task", tags=["api-task"])
+app.include_router(usersRouter, prefix="/user", tags=["user"])
 
 
 # # TODO remove this
@@ -64,8 +73,7 @@ app.include_router(backgroundTasksRouter, prefix="/api-task", tags=["api-task"])
 
 @app.get("/")
 async def root():
-    message = "test"
-    return {"message": message}
+    return {"message": "Hello World"}
 
 
 # TODO add login and auth

@@ -42,6 +42,13 @@ docker-compose exec app alembic upgrade head
 - remove the drop_index statement in the downgrade() function.
 
 
+## JS
+https://arthur-e.github.io/Wicket/sandbox-gmaps3.html
+
+
+# SPATIAL QUERY 
+https://www.youtube.com/watch?v=siAjDNLMdKA
+https://github.com/GeospatialProgramming/PostGIS/blob/main/GeoAlchemy2/GeoAlchemy2.ipynb
 
 # https://pydantic-docs.helpmanual.io/usage/validators/
 # links

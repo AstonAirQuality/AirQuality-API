@@ -11,6 +11,7 @@ class SensorSummary(BaseModel):
     geom: Optional[str] = None
     measurement_count: int
     measurement_data: str
+    stationary: bool
     sensor_id: int
 
     class Config:
@@ -51,14 +52,32 @@ class Sensor(BaseModel):
     serial_number: str
     type_id: int
     active: bool
+    user_id: Optional[str] = None
+    stationary_box: Optional[str] = None
 
     class Config:
         orm_mode = True
+
+    @validator("stationary_box", pre=True, always=True)
+    def stationary_box_must_contain(cls, v):
+        try:
+            WKTElement(v, srid=4326)
+        except Exception as e:
+            raise ValueError(f"stationary_box must be a valid WKTE geometry: {e}")
+        return v
 
 
 class SensorType(BaseModel):
     name: str
     description: str
+
+    class Config:
+        orm_mode = True
+
+
+class User(BaseModel):
+    username: str
+    email: str
 
     class Config:
         orm_mode = True

@@ -1,0 +1,86 @@
+import datetime as dt
+from typing import Tuple
+
+import numpy as np
+import shapely.wkt
+from fastapi import HTTPException, status
+from geoalchemy2.shape import (  # used to convert WKBE geometry to string
+    from_shape,
+    to_shape,
+)
+
+
+def convertDateRangeStringToDate(start: str, end: str) -> Tuple[dt.datetime, dt.datetime]:
+    """converts a date range string to a tuple of datetime objects"""
+    try:
+        startDate = dt.datetime.strptime(start, "%d-%m-%Y")
+        endDate = dt.datetime.strptime(end, "%d-%m-%Y")
+
+    except (ValueError, TypeError):
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid date format {start},{end}")
+
+    return startDate, endDate
+
+
+############################################################################################################
+#                                   Spatial helper functions                                               #
+############################################################################################################
+def spatialQueryBuilder(query: any, model: any, column_name:str, geom_query_type: str, geom: str) -> any:
+    """adds spatial filters to a query"""
+
+    geom = convertWKTtoWKB(geom)
+    geom_column = getattr(model, column_name)
+
+    if geom_query_type == "intersect":
+        query = query.filter(geom_column.ST_Intersects(geom))
+    elif geom_query_type == "within":
+        query = query.filter(geom_column.ST_Within(geom))
+    elif geom_query_type == "contains":
+        query = query.filter(geom_column.ST_Contains(geom))
+    elif geom_query_type == "overlaps":
+        query = query.filter(geom_column.ST_Overlaps(geom))
+    elif geom_query_type == "equals":
+        query = query.filter(geom_column.ST_Equals(geom))
+    elif geom_query_type == "disjoint":
+        query = query.filter(geom_column.ST_Disjoint(geom))
+    elif geom_query_type == "touches":
+        query = query.filter(geom_column.ST_Touches(geom))
+    elif geom_query_type == "crosses":
+        query = query.filter(geom_column.ST_Crosses(geom))
+    else:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid geom_type")
+
+    return query
+
+
+def convertWKTtoWKB(wkt: str) -> any:
+    wkb = from_shape(shapely.wkt.loads(wkt), srid=4326)
+    return wkb
+
+
+def convertWKBtoWKT(element: any) -> str:
+    """converts wkb element to human-readable (wkt string)"""
+    try:
+        if isinstance(element, str):
+            return element
+        if element is not None:
+            return to_shape(element).wkt
+    except AssertionError:
+        return None
+    return None
+
+
+def get_centre_of_polygon(geometryString):
+    """gets the centre point of a polygon
+
+    :param geometryString: string of the geometry of the polygon (e.g POLYGON ((long,lat)) )
+    """
+    latitude = np.array([])
+    longitude = np.array([])
+
+    for coordsPair in geometryString.split("POLYGON ((")[1].split("))")[0].split(", "):
+        long, lat = coordsPair.split(" ")
+        latitude = np.append(latitude, float(lat))
+        longitude = np.append(longitude, float(long))
+
+    return longitude.mean(), latitude.mean()

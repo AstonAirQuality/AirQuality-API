@@ -26,41 +26,47 @@ class SensorDTO:
         """Converts the dataframe to a json string."""
         return df.to_json(orient="index")
 
-    def create_sensor_summaries(self) -> Iterator[SchemaSensorSummary]:
-        """Creates a summary of the sensor data to be written to the database."""
+    def create_sensor_summaries(self, stationary_box: str) -> Iterator[SchemaSensorSummary]:
+        """Creates a summary of the sensor data to be written to the database. skips generating a geometry if the sensor has a stationary box"""
         data_dict = self.dataframe_to_dict(self.df)
         # sensor_summaries = []
 
         for timestampKey in data_dict:
-            try:
-                df = data_dict[timestampKey]
+            df = data_dict[timestampKey]
+            stationaryBool = False
+            if stationary_box is None:
+                try:
+                    if math.isnan(df["latitude"].min()):
+                        geometry_string = "NULL"
+                        raise Exception("No data found")
 
-                if math.isnan(df["latitude"].min()):
-                    geometry_string = "NULL"
-                    raise Exception("No data found")
+                    min_y = df["latitude"].min()
+                    max_y = df["latitude"].max()
 
-                min_y = df["latitude"].min()
-                max_y = df["latitude"].max()
+                    min_x = df["longitude"].min()
+                    max_x = df["longitude"].max()
 
-                min_x = df["longitude"].min()
-                max_x = df["longitude"].max()
+                    # POLYGON(minx miny, minx Maxy, maxx Maxy, maxx miny, minx miny)
+                    geometry_string = "POLYGON(({} {}, {} {}, {} {}, {} {},{} {}))".format(
+                        min_x, min_y, min_x, max_y, max_x, max_y, max_x, min_y, min_x, min_y
+                    )
 
-                # POLYGON(minx miny, minx Maxy, maxx Maxy, maxx miny, minx miny)
-                geometry_string = "POLYGON(({} {}, {} {}, {} {}, {} {},{} {}))".format(
-                    min_x, min_y, min_x, max_y, max_x, max_y, max_x, min_y, min_x, min_y
-                )
+                except Exception as e:
+                    geometry_string = None
+            else:
+                geometry_string = stationary_box
+                stationaryBool = True
+                # subset dataframe to only include the columns measurement columns
+                df = df[df.columns.difference(["latitude", "longitude"])]
 
-            except Exception as e:
-                # print('No locations found at timestampkey: {} for sensor {}'.format(timestampKey,self.id))
-                geometry_string = None
-
-            # summaryArray = [timestamp_start,bouding_box,measurement_count,data_json]
+            # summaryArray = [timestamp_start,bounding_box,measurement_count,data_json]
             sensorSummary = SchemaSensorSummary(
                 timestamp=timestampKey,
                 sensor_id=self.id,
                 geom=geometry_string,
                 measurement_count=len(df.index.values),
                 measurement_data=self.to_json(df),
+                stationary=stationaryBool,
             )  # inserting row into temp array
             yield sensorSummary  # assign new dataframe to coressponding key
 

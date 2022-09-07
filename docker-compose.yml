@@ -4,7 +4,9 @@ services:
 
   db:
     container_name: postgresql_db
-    build: ./db
+    build:
+      context: ./app/db
+      dockerfile: ./Dockerfile
     restart: always
     ports:
       - 5432:5432
@@ -38,7 +40,7 @@ services:
       - db
     restart: always
     environment:
-      DATABASE_URL_ALT: ${DATABASE_URL_ALT_TEST}
+      DATABASE_URL: ${DATABASE_URL_TEST}
       CELERY_BROKER_URL: ${CELERY_BROKER_URL_TEST}
       CELERY_RESULT_BACKEND: ${CELERY_RESULT_BACKEND_TEST}
       PLUME_EMAIL: "${PLUME_EMAIL_TEST}"
@@ -47,3 +49,5 @@ services:
       PLUME_ORG_NUM: "${PLUME_ORG_NUM}"
       FASTAPI_SENTRY_DSN: "${FASTAPI_SENTRY_DSN}"
       PRODUCTION_MODE: "${PRODUCTION_MODE}"
+      AWS_STAGE_NAME: "${AWS_STAGE_NAME}"
+      AWS_REGION: "${AWS_REGION}"
