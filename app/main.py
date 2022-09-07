@@ -71,6 +71,13 @@ app.include_router(usersRouter, prefix="/user", tags=["user"])
 #     division_by_zero = 1 / 0
 
 
+@app.get("/db/migrate")
+async def db_migrate():
+    import os
+
+    os.system("alembic upgrade head")
+
+
 @app.get("/")
 async def root():
     return {"message": "Hello World"}

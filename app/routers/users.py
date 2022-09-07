@@ -23,7 +23,7 @@ load_dotenv()
 #################################################################################################################################
 #                                                  Create                                                                       #
 #################################################################################################################################
-@usersRouter.post("/create", response_model=SchemaUser)  # TODO delete route, keep function
+# @usersRouter.post("/create", response_model=SchemaUser)  # TODO delete route, keep function
 def add_user(user: SchemaUser):
     try:
         user = ModelUser(username=user.username, email=user.email)

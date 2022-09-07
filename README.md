@@ -38,8 +38,8 @@ docker-compose exec app alembic revision --autogenerate -m "New Migration"
 docker-compose exec app alembic upgrade head
 
 ### Check migration file
-- remove the create_index statement in the upgrade() function.
-- remove the drop_index statement in the downgrade() function.
+- remove the create_index statement for spatial fields in the upgrade() function.
+- remove the drop_index statement for spatial fields  in the downgrade() function.
 
 
 ## JS
