@@ -2,7 +2,6 @@
 import datetime as dt
 from os import environ as env
 
-# import boto3
 from api_wrappers.scraperWrapper import ScraperWrapper
 from core.models import Users as ModelUser
 from core.schema import User as SchemaUser
@@ -33,30 +32,6 @@ def add_user(user: SchemaUser):
         db.rollback()
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
     return user
-
-
-# @usersRouter.post("/create/from-aws")
-# def add_authenticated_user(access_token: str):
-#     try:
-#         # get user info from aws cognito
-#         client = boto3.client("cognito-idp", region_name=env["AWS_REGION"])
-#         response = client.get_user(AccessToken=access_token)
-
-#         username = response["Username"]
-#         user_email = None
-#         for attr in response["UserAttributes"]:
-#             if attr["Name"] == "email":
-#                 user_email = attr["Value"]
-#                 break
-
-#         user = SchemaUser(username=username, email=user_email)
-
-#         add_user(user)
-
-#     except client.exceptions.NotAuthorizedException as e:
-#         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=str(e))
-#     except Exception as e:
-#         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
 
 
 #################################################################################################################################
