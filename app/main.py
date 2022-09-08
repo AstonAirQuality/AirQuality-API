@@ -52,16 +52,17 @@ You can:
 """
 
 if env["PRODUCTION_MODE"] == "True":
-    rootPath = "/{stage_name}/".format(stage_name=env["AWS_STAGE_NAME"])
+    app = FastAPI(
+        title="Aston Air Quality API",
+        description=description,
+        openapi_url="/prod/openapi.json",
+    )
 else:
-    rootPath = None
-
-app = FastAPI(
-    title="Aston Air Quality API",
-    description=description,
-    openapi_url="/openapi.json",
-    root_path=rootPath,
-)
+    app = FastAPI(
+        title="Aston Air Quality API",
+        description=description,
+        openapi_url="/openapi.json",
+    )
 
 
 app.include_router(sensorsRouter, prefix="/sensor", tags=["sensor"])
