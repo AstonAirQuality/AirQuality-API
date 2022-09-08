@@ -1,3 +1,4 @@
+from math import fabs
 from os import environ as env
 
 from dotenv import load_dotenv
@@ -50,11 +51,17 @@ You can:
 
 """
 
-app = FastAPI(
-    title="Aston Air Quality API",
-    description=description,
-    openapi_url="/{stage_name}/openapi.json".format(stage_name=env["AWS_STAGE_NAME"]),
-)
+if env["PRODUCTION_MODE"] == "True":
+    app = FastAPI(
+        title="Aston Air Quality API",
+        description=description,
+        root_path="{stage_name}".format(stage_name=env["AWS_STAGE_NAME"]),
+    )
+else:
+    app = FastAPI(
+        title="Aston Air Quality API",
+        description=description,
+    )
 
 app.include_router(sensorsRouter, prefix="/sensor", tags=["sensor"])
 app.include_router(sensorsTypesRouter, prefix="/sensorType", tags=["sensorType"])
@@ -64,9 +71,7 @@ app.include_router(usersRouter, prefix="/user", tags=["user"])
 
 
 # # TODO remove this
-# @app.get("/sentry-debug")
-# async def trigger_error():
-#     division_by_zero = 1 / 0
+# docs issue: openapi.json is being nested in a path (e.g. /prod/prod/openapi.json)
 
 
 @app.get("/")
