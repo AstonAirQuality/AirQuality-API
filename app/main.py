@@ -54,7 +54,8 @@ app = FastAPI(
     title="Aston Air Quality API",
     description=description,
     docs_url="/docs",
-    openapi_url="/{stage_name}/openapi.json".format(stage_name=env["AWS_STAGE_NAME"]),
+    redoc_url="/redoc",
+    openapi_url="/openapi.json",
 )
 
 app.include_router(sensorsRouter, prefix="/sensor", tags=["sensor"])
