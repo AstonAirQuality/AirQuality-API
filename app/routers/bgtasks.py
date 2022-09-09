@@ -81,7 +81,7 @@ def aws_cronjob():
     """
     This function is called by AWS Lambda to run the scheduled ingest task
     """
-    start, end = get_dates(1)
+    start, end = get_dates(-1)
     upsert_scheduled_ingest_active_sensors(start, end)
 
 
@@ -108,9 +108,9 @@ def get_lookupids_of_active_sensors_by_type(type_ids: list[int]) -> dict[int, di
 
 def get_dates(days: int) -> Tuple[str, str]:
     """
-    :return: Tuple[start, end] -> now, now +/- days
+    :return: Tuple[start, end] -> now +/- days, now in format dd-mm-yyyy
     """
-    return dt.datetime.today().strftime("%d-%m-%Y"), (dt.datetime.today() + dt.timedelta(days)).strftime("%d-%m-%Y")
+    return (dt.datetime.today() + dt.timedelta(days)).strftime("%d-%m-%Y"), dt.datetime.today().strftime("%d-%m-%Y")
 
 
 def update_sensor_last_updated(
