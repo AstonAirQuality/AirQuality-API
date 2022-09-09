@@ -76,6 +76,15 @@ async def upsert_scheduled_ingest_active_sensors(
         return "No active sensors found"
 
 
+@backgroundTasksRouter.get("/cron/ingest-active-sensors")
+def aws_cronjob():
+    """
+    This function is called by AWS Lambda to run the scheduled ingest task
+    """
+    start, end = get_dates(1)
+    upsert_scheduled_ingest_active_sensors(start, end)
+
+
 #################################################################################################################################
 #                                              helper functions                                                                 #
 #################################################################################################################################
