@@ -82,7 +82,7 @@ def aws_cronjob():
     This function is called by AWS Lambda to run the scheduled ingest task
     """
     start, end = get_dates(-1)
-    upsert_scheduled_ingest_active_sensors(start, end)
+    return upsert_scheduled_ingest_active_sensors(start, end)
 
 
 #################################################################################################################################
