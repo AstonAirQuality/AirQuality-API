@@ -8,6 +8,12 @@ from sqlalchemy.sql import func
 # TODO avoid names with '_'
 
 
+class Logs(Base):
+    __tablename__ = "Logs"
+    date = Column(DateTime, primary_key=True, default=func.now())
+    data = Column(JSON, nullable=False)
+
+
 class Users(Base):
     __tablename__ = "Users"
     username = Column(String(50), primary_key=True, index=True)

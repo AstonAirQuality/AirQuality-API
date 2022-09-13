@@ -1,4 +1,5 @@
 import datetime as dt
+import json
 
 # enviroment variables dependacies
 from os import environ as env
@@ -6,12 +7,14 @@ from typing import Tuple
 
 from api_wrappers.scraperWrapper import ScraperWrapper
 from core.models import SensorSummaries
+from core.schema import Log as SchemaLog
 
 # sensor summary
 from dotenv import load_dotenv
-from fastapi import APIRouter, HTTPException, Query, status
+from fastapi import APIRouter, BackgroundTasks, HTTPException, Query, status
 
 from routers.helperfunctions import convertDateRangeStringToDate
+from routers.logs import add_log
 from routers.sensors import (
     get_active_sensors,
     sensor_id_from_lookup_id,
@@ -44,7 +47,7 @@ async def upsert_scheduled_ingest_active_sensors(
     sensor_dict = get_lookupids_of_active_sensors_by_type(sensor_type_ids)
 
     if sensor_dict:
-        summary_insert_log = {}
+        upsert_log = []
         # for each sensor type, fetch the data from the api and write to the database
         for (key, value) in sensor_dict.items():
             if key == 1:
@@ -54,15 +57,9 @@ async def upsert_scheduled_ingest_active_sensors(
                         (sensorSummary.sensor_id,) = sensor_id_from_lookup_id(str(lookupid))
 
                         upsert_sensorSummary(sensorSummary)
-
-                        # TODO clean this up
-                        summary_insert_log[sensorSummary.sensor_id] = (
-                            True,
-                            sensorSummary.timestamp,  # this is the timestamp of the last data point
-                            "no errors",
-                        )
+                        upsert_log.append([sensorSummary.sensor_id, sensorSummary.timestamp, True, "success"])
                     except Exception as e:
-                        summary_insert_log[sensorSummary.sensor_id] = (False, sensorSummary.timestamp, str(e))
+                        upsert_log.append([sensorSummary.sensor_id, sensorSummary.timestamp, False, str(e)])
             elif key == 2:
                 # TODO add api call for sensor type 2
                 continue
@@ -71,19 +68,19 @@ async def upsert_scheduled_ingest_active_sensors(
                 continue
 
         # return timestamp and sensor id of the summaries that were successfully written to the database
-        return update_sensor_last_updated(summary_insert_log)
+        return update_sensor_last_updated(upsert_log)
     else:
         return "No active sensors found"
 
 
 @backgroundTasksRouter.get("/cron/ingest-active-sensors")
-async def aws_cronjob():
+async def aws_cronjob(background_tasks: BackgroundTasks):
     """
     This function is called by AWS Lambda to run the scheduled ingest task
     """
     start, end = get_dates(-1)
-
-    return await upsert_scheduled_ingest_active_sensors(start, end, sensor_type_ids=[1])
+    background_tasks.add_task(upsert_scheduled_ingest_active_sensors, start, end,sensor_type_ids=[1])
+    return {"message": "task sent to backend"}
 
 
 #################################################################################################################################
@@ -114,18 +111,23 @@ def get_dates(days: int) -> Tuple[str, str]:
     return (dt.datetime.today() + dt.timedelta(days)).strftime("%d-%m-%Y"), dt.datetime.today().strftime("%d-%m-%Y")
 
 
-def update_sensor_last_updated(
-    succesful_writes: dict[int, tuple([bool, str, str])]
-) -> dict[int, tuple([bool, str, str])]:
+def update_sensor_last_updated(upsert_log: list[list]) -> dict:
     """
     Logs sensor data to a file
     """
-    for (id_, (success, timestamp, error_message)) in succesful_writes.items():
-        if success:
-            set_last_updated(id_, timestamp)
-        else:
-            # TODO log error to db
-            # write_json({timestamp: [{id_: error_message}]}, timestamp)
-            pass
+    log_dictionary = {}
+    for (id_, timestamp, success_status, error_message) in upsert_log:
+        if success_status:
+            try:
+                set_last_updated(id_, timestamp)
+            except Exception as e:
+                error_message = "sensor last updated failed: " + str(e)
 
-    return succesful_writes
+        if timestamp in log_dictionary:
+            log_dictionary[timestamp][id_] = [success_status, error_message]
+        else:
+            log_dictionary[timestamp] = {id_: [success_status, error_message]}
+
+    add_log(SchemaLog(log_data=json.dumps(log_dictionary)))
+
+    return log_dictionary

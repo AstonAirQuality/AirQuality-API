@@ -81,3 +81,19 @@ class User(BaseModel):
 
     class Config:
         orm_mode = True
+
+
+class Log(BaseModel):
+    log_data: str
+
+    class Config:
+        orm_mode = True
+
+        # TODO add validation - load to dataframe and check if timestamp is included
+        @validator("log_data", pre=True, always=True)
+        def data_must_be_json(cls, v):
+            try:
+                json.loads(v)
+            except Exception as e:
+                raise ValueError(f"data must be a valid JSON: {e}")
+            return v

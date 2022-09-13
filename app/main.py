@@ -2,10 +2,12 @@ from math import fabs
 from os import environ as env
 
 from dotenv import load_dotenv
-from fastapi import FastAPI, HTTPException, status  # TODO remove body
+from fastapi import FastAPI, HTTPException, status
+from fastapi.middleware.cors import CORSMiddleware
 from mangum import Mangum
 
 from routers.bgtasks import backgroundTasksRouter
+from routers.logs import logsRouter
 
 # routers
 from routers.sensors import sensorsRouter
@@ -52,10 +54,11 @@ You can:
 """
 
 if env["PRODUCTION_MODE"] == "True":
+    # if True:
     app = FastAPI(
         title="Aston Air Quality API",
         description=description,
-        openapi_url="/prod/openapi.json",
+        openapi_prefix="/{}".format(env["AWS_STAGE_NAME"]),
     )
 else:
     app = FastAPI(
@@ -70,10 +73,20 @@ app.include_router(sensorsTypesRouter, prefix="/sensorType", tags=["sensorType"]
 app.include_router(sensorSummariesRouter, prefix="/sensorSummary", tags=["sensorSummary"])
 app.include_router(backgroundTasksRouter, prefix="/api-task", tags=["api-task"])
 app.include_router(usersRouter, prefix="/user", tags=["user"])
+app.include_router(logsRouter, prefix="/log", tags=["log"])
 
 
-# # TODO remove this
-# docs issue: openapi.json is being nested in a path (e.g. /prod/prod/openapi.json)
+# # TODO docs issue: openapi.json is being nested in a path (e.g. /prod/prod/openapi.json)
+
+origins = ["*"]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 
 @app.get("/")
