@@ -58,7 +58,7 @@ if env["PRODUCTION_MODE"] == "True":
     app = FastAPI(
         title="Aston Air Quality API",
         description=description,
-        openapi_prefix="/{}".format(env["AWS_STAGE_NAME"]),
+        openapi_url="/{}/openapi.json".format(env["AWS_STAGE_NAME"]),
     )
 else:
     app = FastAPI(

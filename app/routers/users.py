@@ -37,7 +37,7 @@ def add_user(user: SchemaUser):
 #################################################################################################################################
 #                                                  Read                                                                         #
 #################################################################################################################################
-@usersRouter.get("/read", response_model=SchemaUser)
+@usersRouter.get("/read")
 def get_user():
     try:
         result = db.query(ModelUser).all()
@@ -46,7 +46,7 @@ def get_user():
     return result
 
 
-@usersRouter.get("/read/{user_id}", response_model=SchemaUser)
+@usersRouter.get("/read/{user_id}")
 def get_user(user_id: str):
     try:
         result = db.query(ModelUser).filter(ModelUser.id == user_id).first()

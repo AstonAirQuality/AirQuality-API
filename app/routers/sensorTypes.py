@@ -43,15 +43,18 @@ def get_sensorTypes():
 @sensorsTypesRouter.put("/update/{sensorType_id}", response_model=SchemaSensorType)
 def update_sensorType(sensorType_id: int, sensorType: SchemaSensorType):
     try:
-        sensorType_updated = db.query(ModelSensorType).filter(ModelSensorType.id == sensorType_id).first()
-        sensorType_updated.name = sensorType.name
-        sensorType_updated.description = sensorType.description
+        db.query(ModelSensorType).filter(ModelSensorType.id == sensorType_id).update(
+            {
+                ModelSensorType.name: sensorType.name,
+                ModelSensorType.description: sensorType.description,
+            }
+        )
         db.commit()
     except Exception as e:
         db.rollback()
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
 
-    return sensorType_updated
+    return sensorType
 
 
 #################################################################################################################################

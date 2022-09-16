@@ -3,6 +3,8 @@ import datetime as dt
 
 from api_wrappers.scraperWrapper import ScraperWrapper
 from core.models import Sensors as ModelSensor
+from core.models import SensorTypes as ModelSensorTypes  # TODO
+from core.models import Users as ModelUser  # TODO
 from core.schema import Sensor as SchemaSensor
 from db.database import SessionLocal
 from fastapi import APIRouter, HTTPException, Query, status
@@ -88,18 +90,57 @@ def get_sensors():
     return results
 
 
+@sensorsRouter.get("/read/join-users-sensor-types")
+def get_sensors_joined(
+    columns: list[str] = Query(
+        default=["id", "lookup_id", "serial_number", "active", "stationary_box", "time_updated"]
+    ),
+    join_sensor_types: bool = Query(default=True),
+    join_user: bool = Query(default=True),
+):
+    try:
+        fields = []
+        for col in columns:
+            fields.append(getattr(ModelSensor, col))
+
+        if join_sensor_types:
+            fields.append(getattr(ModelSensorTypes, "name").label("type_name"))
+        if join_user:
+            fields.append(getattr(ModelUser, "username").label("username"))
+
+        result = db.query(*fields).select_from(ModelSensor).join(ModelSensorTypes, ModelUser, isouter=True).all()
+
+        # must convert wkb to wkt string to be be api friendly
+        results = []
+        for row in result:
+            row_as_dict = dict(row._mapping)
+            row_as_dict["stationary_box"] = convertWKBtoWKT(row_as_dict["stationary_box"])
+            results.append(row_as_dict)
+
+    except Exception as e:
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
+
+    return results
+
+
 @sensorsRouter.get("/read/active")
 def get_active_sensors(type_ids: list[int] = Query(default=[])):
     try:
         result = (
-            db.query(ModelSensor.type_id, ModelSensor.lookup_id, ModelSensor.stationary_box)
+            db.query(
+                ModelSensor.type_id.label("type_id"),
+                ModelSensor.lookup_id.label("lookup_id"),
+                ModelSensor.stationary_box.label("stationary_box"),
+            )
             .filter(ModelSensor.active == True, ModelSensor.type_id.in_(type_ids))
             .all()
         )
         # because the query returned row type we must convert wkb to wkt string to be be api friendly
         results = []
-        for res in result:
-            results.append((res[0], res[1], convertWKBtoWKT(res[2])))
+        for row in result:
+            row_as_dict = dict(row._mapping)
+            row_as_dict["stationary_box"] = convertWKBtoWKT(row_as_dict["stationary_box"])
+            results.append(row_as_dict)
 
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
@@ -110,33 +151,36 @@ def get_active_sensors(type_ids: list[int] = Query(default=[])):
 @sensorsRouter.get("/read/sensorid-from-lookup/{lookup_id}")
 def sensor_id_from_lookup_id(lookup_id: str):
     try:
-        result = db.query(ModelSensor.id).filter(ModelSensor.lookup_id == lookup_id).first()
-    except Exception:
+        result = db.query(ModelSensor.id.label("id")).filter(ModelSensor.lookup_id == lookup_id).first()
+    except Exception as e:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
     return result
-
-
-@sensorsRouter.put("/update/{sensor_id}", response_model=SchemaSensor)
-def update_sensor(sensor_id: int, sensor: SchemaSensor):
-    try:
-        sensor_updated = db.query(ModelSensor).filter(ModelSensor.id == sensor_id).first()
-        sensor_updated.lookup_id = sensor.lookup_id
-        sensor_updated.serial_number = sensor.serial_number
-        sensor_updated.type_id = sensor.type_id
-        sensor_updated.active = sensor.active
-        sensor_updated.stationary_box = sensor_updated.stationary_box
-        sensor_updated.user_id = sensor_updated.user_id
-        db.commit()
-    except Exception as e:
-        db.rollback()
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
-
-    return sensor_updated
 
 
 #################################################################################################################################
 #                                                  Update                                                                       #
 #################################################################################################################################
+@sensorsRouter.put("/update/{sensor_id}", response_model=SchemaSensor)
+def update_sensor(sensor_id: int, sensor: SchemaSensor):
+    try:
+        db.query(ModelSensor).filter(ModelSensor.id == sensor_id).update(
+            {
+                ModelSensor.lookup_id: sensor.lookup_id,
+                ModelSensor.serial_number: sensor.serial_number,
+                ModelSensor.type_id: sensor.type_id,
+                ModelSensor.active: sensor.active,
+                ModelSensor.stationary_box: sensor.stationary_box,
+                ModelSensor.user_id: sensor.user_id,
+            }
+        )
+        db.commit()
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
+
+    return sensor
+
+
 @sensorsRouter.patch("/update/active")
 def set_active_sensors(sensor_serialnumbers: list[str] = Query(default=[]), active_state: bool = True):
     """Sets all sensors whose serialnumber matches to active"""
@@ -153,6 +197,7 @@ def set_active_sensors(sensor_serialnumbers: list[str] = Query(default=[]), acti
     return dict.fromkeys(sensor_serialnumbers, active_state)
 
 
+# used for background tasks
 @sensorsRouter.patch("/update/lastupdated/{sensor_id}/{timestamp}")
 def set_last_updated(sensor_id: int, timestamp: int):
     """Sets all sensors last updated field whose id matches to sensor_id"""
