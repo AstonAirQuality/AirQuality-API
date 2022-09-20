@@ -23,18 +23,9 @@ class ScraperWrapper:
             env["PLUME_EMAIL"], env["PLUME_PASSWORD"], env["PLUME_FIREBASE_API_KEY"], env["PLUME_ORG_NUM"]
         )
 
-    def generate_plume_platform(self, serial_nums: list[str]) -> Iterator[SchemaSensor]:
-        """Generates a list of plume sensor platforms from a list of serial numbers"""
-        sensor_platforms = self.pw.fetch_lookup_ids(serial_nums)
-        sensors = []
-        for (key, value) in sensor_platforms.items():
-            sensors.append(
-                SchemaSensor(
-                    lookup_id=value, serial_number=key, type_id=1, active=False, user_id=None, stationary_box=None
-                )
-            )
-        for sensor in sensors:
-            yield sensor
+    def fetch_plume_platform_lookupids(self, serial_nums: list[str]) -> dict[str, str]:
+        """Fetches a list of plume sensor lookup_ids from a list of serial numbers"""
+        return self.pw.fetch_lookup_ids(serial_nums)
 
     def fetch_plume_data(
         self, start: dt.datetime, end: dt.datetime, sensordict: dict[str, str]

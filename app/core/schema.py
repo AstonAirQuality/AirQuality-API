@@ -97,3 +97,7 @@ class Log(BaseModel):
             except Exception as e:
                 raise ValueError(f"data must be a valid JSON: {e}")
             return v
+
+
+class PlumeSerialNumbers(BaseModel):
+    serial_numbers: List[str]

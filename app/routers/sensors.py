@@ -5,9 +5,10 @@ from api_wrappers.scraperWrapper import ScraperWrapper
 from core.models import Sensors as ModelSensor
 from core.models import SensorTypes as ModelSensorTypes  # TODO
 from core.models import Users as ModelUser  # TODO
+from core.schema import PlumeSerialNumbers as SchemaPlumeSerialNumbers
 from core.schema import Sensor as SchemaSensor
 from db.database import SessionLocal
-from fastapi import APIRouter, HTTPException, Query, status
+from fastapi import APIRouter, HTTPException, Query, Response, status
 from psycopg2.errors import UniqueViolation
 
 # error handling
@@ -48,25 +49,44 @@ def add_sensor(sensor: SchemaSensor):
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
 
 
-@sensorsRouter.post("/create/plume")
-def add_plume_sensors(sensor_serialnumbers: list[str] = Query(default=[])):
+@sensorsRouter.post("/create/plume", status_code=200)
+def add_plume_sensors(serialnumbers: SchemaPlumeSerialNumbers, response: Response):
     """Adds plume sensor platforms by scraping the plume dashboard to fetch the lookupids of the inputted serial numbers"""
     api = ScraperWrapper()
 
-    sensors = list(api.generate_plume_platform(sensor_serialnumbers))
+    sensor_platforms = api.fetch_plume_platform_lookupids(serialnumbers.serial_numbers)
 
     addedSensors = {}
+    import psycopg2
 
-    for sensor in sensors:
+    for (key, value) in sensor_platforms.items():
+        sensor = ModelSensor(
+            lookup_id=value,
+            serial_number=key,
+            type_id=1,
+            active=False,
+            user_id=None,
+            stationary_box=None,
+        )
+
         try:
             add_sensor(sensor)
-        except Exception:
+
+        except HTTPException as e:
+            # if the sensor already exists continue adding other sensors but change status code to 409
+            if e.status_code == 409:
+                addedSensors[key] = "Sensor already exists"
+                response.status_code = status.HTTP_409_CONFLICT
+                continue
+            else:
+                raise e
+        except Exception as e:
             db.rollback()
-            addedSensors[sensor.serial_number] = "failed to add sensor: " + sensor.lookup_id
-            continue
+            addedSensors[key] = "failed to add sensor: " + str(value)
+            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=addedSensors)
 
         # write successfully added sensors to the return dict
-        addedSensors[sensor.serial_number] = sensor.lookup_id
+        addedSensors[key] = value
 
     return addedSensors
 
