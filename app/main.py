@@ -53,16 +53,10 @@ You can:
 
 """
 
-if env["PRODUCTION_MODE"] == "True":
-    # if True:
-    app = FastAPI(
-        title="Aston Air Quality API", description=description, openapi_prefix="/{}".format(env["AWS_STAGE_NAME"])
-    )
-else:
-    app = FastAPI(
-        title="Aston Air Quality API",
-        description=description,
-    )
+stage = env.get("STAGE", None)
+openapi_prefix = f"/{stage}" if stage else "/"
+
+app = FastAPI(title="Aston Air Quality API", description=description, openapi_prefix=openapi_prefix)
 
 
 app.include_router(sensorsRouter, prefix="/sensor", tags=["sensor"])
