@@ -53,10 +53,10 @@ You can:
 
 """
 
-stage = env.get("STAGE", None)
+stage = env.get("AWS_STAGE_NAME", None)
 openapi_prefix = f"/{stage}" if stage else "/"
 
-app = FastAPI(title="Aston Air Quality API", description=description, openapi_prefix=openapi_prefix)
+app = FastAPI(title="Aston Air Quality API", description=description, root_path=openapi_prefix)
 
 
 app.include_router(sensorsRouter, prefix="/sensor", tags=["sensor"])
