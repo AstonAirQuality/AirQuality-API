@@ -2,6 +2,8 @@
 Fast API project to fetch/scrape data from Aston's air quality sensors
 
 # Tutorial
+## deployment
+https://adem.sh/blog/tutorial-fastapi-aws-lambda-serverless
 
 
 ## setup python virtual env
