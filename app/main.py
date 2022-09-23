@@ -7,6 +7,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from mangum import Mangum
 
 from routers.bgtasks import backgroundTasksRouter
+from routers.firebaseAuth import authRouter
 from routers.logs import logsRouter
 
 # routers
@@ -65,6 +66,7 @@ app.include_router(sensorSummariesRouter, prefix="/sensorSummary", tags=["sensor
 app.include_router(backgroundTasksRouter, prefix="/api-task", tags=["api-task"])
 app.include_router(usersRouter, prefix="/user", tags=["user"])
 app.include_router(logsRouter, prefix="/log", tags=["log"])
+app.include_router(authRouter, prefix="/auth", tags=["auth"])
 
 
 # # TODO docs issue: openapi.json is being nested in a path (e.g. /prod/prod/openapi.json)
@@ -83,9 +85,6 @@ app.add_middleware(
 @app.get("/")
 async def root():
     return {"message": "Hello World"}
-
-
-# TODO add login and auth
 
 
 # setting up sentry

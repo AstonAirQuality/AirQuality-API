@@ -25,7 +25,7 @@ load_dotenv()
 @usersRouter.post("/create", response_model=SchemaUser)  # TODO delete route, keep function
 def add_user(user: SchemaUser):
     try:
-        user = ModelUser(username=user.username, email=user.email)
+        user = ModelUser(uid=user.uid, username=user.username, email=user.email, role=user.role)
         db.add(user)
         db.commit()
     except Exception as e:
@@ -46,10 +46,20 @@ def get_user():
     return result
 
 
-@usersRouter.get("/read/{user_id}")
-def get_user(user_id: str):
+@usersRouter.get("/read/{uid}")
+def get_user(uid: str):
     try:
-        result = db.query(ModelUser).filter(ModelUser.id == user_id).first()
+        result = db.query(ModelUser).filter(ModelUser.uid == uid).first()
+    except Exception:
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Could retrieve user")
+
+    return result
+
+
+@usersRouter.get("/read/role/{uid}")
+def get_user_role(uid: str):
+    try:
+        result = db.query(ModelUser.role).filter(ModelUser.uid == uid).first()
     except Exception:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Could retrieve user")
 
@@ -63,14 +73,17 @@ def get_user(user_id: str):
 #################################################################################################################################
 #                                                  Delete                                                                       #
 #################################################################################################################################
-@usersRouter.delete("/delete/{user_id}")
-def delete_user(user_id: str):
+@usersRouter.delete("/delete/{uid}")
+def delete_user(uid: str):
     try:
-        user_deleted = db.query(ModelUser).filter(ModelUser.id == user_id).first()
+        user_deleted = db.query(ModelUser).filter(ModelUser.uid == uid).first()
         db.delete(user_deleted)
         db.commit()
     except IntegrityError as e:
         db.rollback()
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="User could not be deleted")
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Could not delete user")
 
     return user_deleted

@@ -16,8 +16,10 @@ class Logs(Base):
 
 class Users(Base):
     __tablename__ = "Users"
-    username = Column(String(50), primary_key=True, index=True)
+    uid = Column(String(50), primary_key=True, index=True)
+    username = Column(String(50), nullable=True)
     email = Column(String(50), unique=True, nullable=False)
+    role = Column(String(50), nullable=False)
 
 
 class SensorTypes(Base):
@@ -38,7 +40,7 @@ class Sensors(Base):
     stationary_box = Column(
         Geometry(geometry_type="POLYGON", srid=4326, spatial_index=True), unique=False, nullable=True
     )
-    user_id = Column(String(50), ForeignKey("Users.username"), nullable=True)
+    user_id = Column(String(50), ForeignKey("Users.uid"), nullable=True)
     type_id = Column(Integer, ForeignKey("SensorTypes.id"), nullable=False)
 
     sensorTypeFK = relationship("SensorTypes")

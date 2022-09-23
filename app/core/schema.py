@@ -76,8 +76,10 @@ class SensorType(BaseModel):
 
 
 class User(BaseModel):
+    uid: str
     username: str
     email: str
+    role: str
 
     class Config:
         orm_mode = True
