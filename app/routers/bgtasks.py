@@ -13,14 +13,14 @@ from core.schema import Log as SchemaLog
 from dotenv import load_dotenv
 from fastapi import APIRouter, BackgroundTasks, HTTPException, Query, status
 
-from routers.helperfunctions import convertDateRangeStringToDate
+from routers.helpers.helperfunctions import convertDateRangeStringToDate
+from routers.helpers.sensorSummarySharedFunctions import upsert_sensorSummary
 from routers.logs import add_log
 from routers.sensors import (
     get_active_sensors,
     sensor_id_from_lookup_id,
     set_last_updated,
 )
-from routers.sensorSummaries import upsert_sensorSummary
 
 load_dotenv()
 
@@ -79,7 +79,7 @@ async def aws_cronjob(background_tasks: BackgroundTasks):
     This function is called by AWS Lambda to run the scheduled ingest task
     """
     start, end = get_dates(-1)
-    background_tasks.add_task(upsert_scheduled_ingest_active_sensors, start, end,sensor_type_ids=[1])
+    background_tasks.add_task(upsert_scheduled_ingest_active_sensors, start, end, sensor_type_ids=[1])
     return {"message": "task sent to backend"}
 
 

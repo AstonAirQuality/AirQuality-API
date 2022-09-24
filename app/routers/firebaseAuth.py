@@ -3,10 +3,7 @@ import email
 from os import environ as env
 from types import NoneType
 
-from config.firebaseConfig import (  # TODO remove this dependancy
-    PyreBaseAuth,
-    delete_user_account,
-)
+from config.firebaseConfig import PyreBaseAuth  # TODO remove this dependancy
 from core.auth import AuthHandler
 from core.schema import User as SchemaUser
 from fastapi import APIRouter, Depends, Header, HTTPException, status
@@ -88,10 +85,25 @@ async def protected_route_test(payload=Depends(auth_handler.auth_wrapper)):
 # dev routes only
 if env["PRODUCTION_MODE"] != "TRUE":
 
-    @authRouter.delete("/delete-user-from-firebase/{uid}")
-    async def delete_firebase_user(idToken: str):
-        delete_user_account(idToken)
-        return {"message": "User deleted from firebase"}
+    @authRouter.post("/custom-token/{idToken}")
+    async def custom_token(idToken: str):
+
+        decoded_jwt = auth_handler.verify_firebase_token(idToken)
+
+        payload = {"role": "admin"}
+
+        token = PyreBaseAuth.create_custom_token(decoded_jwt["sub"], payload)
+        return {"token": token}
+
+    # @authRouter.delete("/delete-user-from-firebase/{uid}")
+    # async def delete_firebase_user(idToken: str):
+    #     user = PyreBaseAuth.delete_user(idToken)
+    #     return user
+
+    @authRouter.post("/create-user-in-firebase")
+    async def create_firebase_user(email: str, password: str):
+        user = PyreBaseAuth.create_user_with_email_and_password(email, password)
+        return user
 
     @authRouter.get("/firebase-token")
     async def login_firebase_token(email: str, password: str):
@@ -108,10 +120,10 @@ if env["PRODUCTION_MODE"] != "TRUE":
         except Exception as e:
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=str(e))
 
-    # @authRouter.get("/login-firebase")
-    # async def login_firebase(email: str, password: str):
-    #     try:
-    #         user = PyreBaseAuth.sign_in_with_email_and_password(email, password)
-    #         return auth_handler.encode_token(user["idToken"])
-    #     except Exception as e:
-    #         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=str(e))
+    @authRouter.get("/login-firebase")
+    async def login_firebase(email: str, password: str):
+        try:
+            user = PyreBaseAuth.sign_in_with_email_and_password(email, password)
+            return auth_handler.encode_token(user["idToken"])
+        except Exception as e:
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=str(e))
