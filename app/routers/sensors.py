@@ -2,29 +2,37 @@
 import datetime as dt
 
 from api_wrappers.scraperWrapper import ScraperWrapper
+from core.auth import AuthHandler
 from core.models import Sensors as ModelSensor
 from core.models import SensorTypes as ModelSensorTypes  # TODO
 from core.models import Users as ModelUser  # TODO
 from core.schema import PlumeSerialNumbers as SchemaPlumeSerialNumbers
 from core.schema import Sensor as SchemaSensor
 from db.database import SessionLocal
-from fastapi import APIRouter, HTTPException, Query, Response, status
+from fastapi import APIRouter, Depends, HTTPException, Query, Response, status
 from psycopg2.errors import UniqueViolation
 
 # error handling
 from sqlalchemy.exc import IntegrityError
 
-from routers.helperfunctions import convertWKBtoWKT
+from routers.helpers.authSharedFunctions import checkRoleAboveUser, checkRoleAdmin
+from routers.helpers.spatialSharedFunctions import convertWKBtoWKT
 
 sensorsRouter = APIRouter()
 
 db = SessionLocal()
+auth_handler = AuthHandler()
+
 
 #################################################################################################################################
 #                                                  Create                                                                       #
 #################################################################################################################################
 @sensorsRouter.post("/create", response_model=SchemaSensor)
-def add_sensor(sensor: SchemaSensor):
+def add_sensor(sensor: SchemaSensor, payload=Depends(auth_handler.auth_wrapper)):
+
+    if checkRoleAdmin(payload) == False:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authorized")
+
     sensor = ModelSensor(
         lookup_id=sensor.lookup_id,
         serial_number=sensor.serial_number,
@@ -38,6 +46,7 @@ def add_sensor(sensor: SchemaSensor):
         db.add(sensor)
         db.commit()
         return sensor
+
     except IntegrityError as e:
         if isinstance(e.orig, UniqueViolation):
             db.rollback()
@@ -49,15 +58,20 @@ def add_sensor(sensor: SchemaSensor):
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
 
 
-@sensorsRouter.post("/create/plume", status_code=200)
-def add_plume_sensors(serialnumbers: SchemaPlumeSerialNumbers, response: Response):
+@sensorsRouter.post("/create/plume")
+def add_plume_sensors(
+    serialnumbers: SchemaPlumeSerialNumbers, response: Response, payload=Depends(auth_handler.auth_wrapper)
+):
     """Adds plume sensor platforms by scraping the plume dashboard to fetch the lookupids of the inputted serial numbers"""
+
+    if checkRoleAboveUser(payload) == False:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authorized")
+
     api = ScraperWrapper()
 
     sensor_platforms = api.fetch_plume_platform_lookupids(serialnumbers.serial_numbers)
 
     addedSensors = {}
-    import psycopg2
 
     for (key, value) in sensor_platforms.items():
         sensor = ModelSensor(
@@ -70,7 +84,7 @@ def add_plume_sensors(serialnumbers: SchemaPlumeSerialNumbers, response: Respons
         )
 
         try:
-            add_sensor(sensor)
+            add_sensor(sensor, payload)
 
         except HTTPException as e:
             # if the sensor already exists continue adding other sensors but change status code to 409
@@ -143,7 +157,8 @@ def get_sensors_joined(
     return results
 
 
-@sensorsRouter.get("/read/active")
+# functions for background tasks
+# @sensorsRouter.get("/read/active")
 def get_active_sensors(type_ids: list[int] = Query(default=[])):
     try:
         result = (
@@ -168,7 +183,7 @@ def get_active_sensors(type_ids: list[int] = Query(default=[])):
 
 
 # functions for background tasks
-@sensorsRouter.get("/read/sensorid-from-lookup/{lookup_id}")
+# @sensorsRouter.get("/read/sensorid-from-lookup/{lookup_id}")
 def sensor_id_from_lookup_id(lookup_id: str):
     try:
         result = db.query(ModelSensor.id.label("id")).filter(ModelSensor.lookup_id == lookup_id).first()
@@ -181,19 +196,31 @@ def sensor_id_from_lookup_id(lookup_id: str):
 #                                                  Update                                                                       #
 #################################################################################################################################
 @sensorsRouter.put("/update/{sensor_id}", response_model=SchemaSensor)
-def update_sensor(sensor_id: int, sensor: SchemaSensor):
+def update_sensor(sensor_id: int, sensor: SchemaSensor, payload=Depends(auth_handler.auth_wrapper)):
+
+    if checkRoleAboveUser(payload) == False:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authorized")
+
     try:
-        db.query(ModelSensor).filter(ModelSensor.id == sensor_id).update(
-            {
-                ModelSensor.lookup_id: sensor.lookup_id,
-                ModelSensor.serial_number: sensor.serial_number,
-                ModelSensor.type_id: sensor.type_id,
-                ModelSensor.active: sensor.active,
-                ModelSensor.stationary_box: sensor.stationary_box,
-                ModelSensor.user_id: sensor.user_id,
-            }
-        )
-        db.commit()
+        sensor_updated = db.query(ModelSensor).filter(ModelSensor.id == sensor_id).first()
+        if sensor_updated is None:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Sensor not found")
+        else:
+            # only allow update if user is admin or sensor belongs to user (the auth token matches the user_id of the sensor)
+            # if no user is asignned to the sensor, then anyone above user can update it
+            if checkRoleAdmin(payload) == False:
+                if sensor_updated.user_id is not None & sensor_updated.user_id != payload["sub"]:
+                    raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authorized")
+
+            # else update sensor
+            sensor_updated.lookup_id = sensor.lookup_id
+            sensor_updated.serial_number = sensor.serial_number
+            sensor_updated.type_id = sensor.type_id
+            sensor_updated.active = sensor.active
+            sensor_updated.user_id = sensor.user_id
+            sensor_updated.stationary_box = sensor.stationary_box
+            db.commit()
+
     except Exception as e:
         db.rollback()
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
@@ -202,8 +229,14 @@ def update_sensor(sensor_id: int, sensor: SchemaSensor):
 
 
 @sensorsRouter.patch("/update/active")
-def set_active_sensors(sensor_serialnumbers: list[str] = Query(default=[]), active_state: bool = True):
+def set_active_sensors(
+    sensor_serialnumbers: list[str] = Query(default=[]),
+    active_state: bool = True,
+    payload=Depends(auth_handler.auth_wrapper),
+):
     """Sets all sensors whose serialnumber matches to active"""
+
+    checkRoleAdmin(payload)
 
     try:
         db.query(ModelSensor).filter(ModelSensor.serial_number.in_(sensor_serialnumbers)).update(
@@ -218,7 +251,7 @@ def set_active_sensors(sensor_serialnumbers: list[str] = Query(default=[]), acti
 
 
 # used for background tasks
-@sensorsRouter.patch("/update/lastupdated/{sensor_id}/{timestamp}")
+# @sensorsRouter.patch("/update/lastupdated/{sensor_id}/{timestamp}")
 def set_last_updated(sensor_id: int, timestamp: int):
     """Sets all sensors last updated field whose id matches to sensor_id"""
 
@@ -234,24 +267,18 @@ def set_last_updated(sensor_id: int, timestamp: int):
     return {sensor_id: timestamp}
 
 
-@sensorsRouter.patch("/update/stationary_box/{sensor_id}/")
-def set_stationary_box(sensor_id: int, stationary_box: str = Query(default=None)):
-    """Sets all sensors stationary box field whose id matches to sensor_id"""
-    try:
-        db.query(ModelSensor).filter(ModelSensor.id == sensor_id).update({ModelSensor.stationary_box: stationary_box})
-        db.commit()
-    except Exception as e:
-        db.rollback()
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
-
-    return {sensor_id: stationary_box}
-
-
 #################################################################################################################################
 #                                                  Delete                                                                       #
 #################################################################################################################################
-@sensorsRouter.delete("/delete/{sensor_id}", response_model=SchemaSensor)
-def delete_sensor(sensor_id: int):
+@sensorsRouter.delete(
+    "/delete/{sensor_id}",
+    response_model=SchemaSensor,
+)
+def delete_sensor(sensor_id: int, payload=Depends(auth_handler.auth_wrapper)):
+
+    if checkRoleAdmin(payload) == False:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authorized")
+
     try:
         sensor_deleted = db.query(ModelSensor).filter(ModelSensor.id == sensor_id).first()
         db.delete(sensor_deleted)

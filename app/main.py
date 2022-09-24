@@ -33,9 +33,6 @@ You can:
 
 You can:
 * **read sensor summaries**.
-* **create sensor summaries**.
-* **update sensor summaries**.
-* **delete sensor summaries** (_not implemented_).
 
 ## Sensor Types
 
@@ -46,8 +43,6 @@ You can:
 * **delete sensor types**.
 
 ## Users.
-You will be able to:
-
 You can:
 * **read users**.
 * **create users**.

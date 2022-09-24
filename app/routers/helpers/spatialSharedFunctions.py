@@ -1,6 +1,3 @@
-import datetime as dt
-from typing import Tuple
-
 import numpy as np
 import shapely.wkt
 from fastapi import HTTPException, status
@@ -9,23 +6,12 @@ from geoalchemy2.shape import (  # used to convert WKBE geometry to string
     to_shape,
 )
 
-
-def convertDateRangeStringToDate(start: str, end: str) -> Tuple[dt.datetime, dt.datetime]:
-    """converts a date range string to a tuple of datetime objects"""
-    try:
-        startDate = dt.datetime.strptime(start, "%d-%m-%Y")
-        endDate = dt.datetime.strptime(end, "%d-%m-%Y")
-
-    except (ValueError, TypeError):
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid date format {start},{end}")
-
-    return startDate, endDate
-
-
 ############################################################################################################
 #                                   Spatial helper functions                                               #
 ############################################################################################################
-def spatialQueryBuilder(query: any, model: any, column_name:str, geom_query_type: str, geom: str) -> any:
+
+
+def spatialQueryBuilder(query: any, model: any, column_name: str, geom_query_type: str, geom: str) -> any:
     """adds spatial filters to a query"""
 
     geom = convertWKTtoWKB(geom)

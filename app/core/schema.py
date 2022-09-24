@@ -77,7 +77,7 @@ class SensorType(BaseModel):
 
 class User(BaseModel):
     uid: str
-    username: str
+    username: Optional[str] = None
     email: str
     role: str
 

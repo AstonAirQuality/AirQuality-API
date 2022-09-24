@@ -1,23 +1,17 @@
 # # dependancies:
-import datetime as dt
+import email
 from os import environ as env
+from types import NoneType
 
-import jwt
-from config.firebaseConfig import PyreBaseAuth  # TODO remove this dependancy
+from config.firebaseConfig import (  # TODO remove this dependancy
+    PyreBaseAuth,
+    delete_user_account,
+)
 from core.auth import AuthHandler
+from core.schema import User as SchemaUser
+from fastapi import APIRouter, Depends, Header, HTTPException, status
 
-# from api_wrappers.scraperWrapper import ScraperWrapper
-# from core.models import Users as ModelUser
-# from core.schema import User as SchemaUser
-# from db.database import SessionLocal
-# from dotenv import load_dotenv
-from fastapi import APIRouter, Depends, HTTPException, status
-
-# from psycopg2.errors import UniqueViolation
-
-# # error handling
-# from sqlalchemy.exc import IntegrityError
-
+from routers.helpers.usersSharedFunctions import add_user
 
 authRouter = APIRouter()
 auth_handler = AuthHandler()
@@ -31,7 +25,6 @@ auth_handler = AuthHandler()
 # the backend will then verify the token and check the custom claims
 # """
 
-# notes
 """
 signup and login occurs in the frontend then the jwt token from firebase is passed to the backend
 verify the jwt token is signed by google and extract the uid
@@ -43,30 +36,82 @@ the backend will then verify the token and check the custom claims
 """
 
 
-@authRouter.get("/login")
-async def login(email: str, password: str):
+@authRouter.get("/signup")
+async def signup(token=Header(default=None)):
     try:
-        user = PyreBaseAuth.sign_in_with_email_and_password(email, password)
-        return auth_handler.encode_token(user["idToken"])
+        decoded_jwt = auth_handler.verify_firebase_token(token)
+    except Exception as e:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token")
+
+    # TODO add username extraction from firebase token
+    username = None
+    try:
+        user = SchemaUser(uid=decoded_jwt["sub"], email=decoded_jwt["email"], username=username, role="user")
+        add_user(user)
+    except HTTPException as e:
+        if e.status_code == status.HTTP_409_CONFLICT:
+            raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="User already exists")
+        else:
+            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Could not create user")
+
+    # login the user
+    return login(token)
+
+
+@authRouter.get("/login")
+async def login(token=Header(default=None)):
+    try:
+        access_token = auth_handler.encode_token(token)
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=str(e))
 
+    # login the user
+    return {"access_token": access_token}
 
-# dev login (skip firebase auth)
+
+@authRouter.get("/protected-route-test")
+async def protected_route_test(payload=Depends(auth_handler.auth_wrapper)):
+    # from enum import Enum
+    # Numbers = Enum(ONE=1, TWO=2, THREE='three')
+    if payload["role"] == "admin":
+        return {"message": "Hello admin"}
+    elif payload["role"] == "user":
+        return {"message": "Hello user"}
+    else:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid role")
+
+
+#################################################################################################################################
+#                                                  Dev only                                                                     #
+#################################################################################################################################
+
+# dev routes only
 if env["PRODUCTION_MODE"] != "TRUE":
 
-    @authRouter.get("/dev-login")
-    async def dev_login(uid: str):
+    @authRouter.delete("/delete-user-from-firebase/{uid}")
+    async def delete_firebase_user(idToken: str):
+        delete_user_account(idToken)
+        return {"message": "User deleted from firebase"}
+
+    @authRouter.get("/firebase-token")
+    async def login_firebase_token(email: str, password: str):
         try:
-            return auth_handler.dev_encode_token(uid)
+            user = PyreBaseAuth.sign_in_with_email_and_password(email, password)
+            return user["idToken"]
         except Exception as e:
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=str(e))
 
+    @authRouter.get("/dev-login")
+    async def dev_login(uid: str, role: str):
+        try:
+            return auth_handler.dev_encode_token(uid, role)
+        except Exception as e:
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=str(e))
 
-@authRouter.get("/protected")
-async def protected(payload=Depends(auth_handler.auth_wrapper)):
-
-    if payload["role"] == "admin":
-        return {"message": "Hello admin"}
-    else:
-        return {"message": "Hello user"}
+    # @authRouter.get("/login-firebase")
+    # async def login_firebase(email: str, password: str):
+    #     try:
+    #         user = PyreBaseAuth.sign_in_with_email_and_password(email, password)
+    #         return auth_handler.encode_token(user["idToken"])
+    #     except Exception as e:
+    #         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=str(e))
