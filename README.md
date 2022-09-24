@@ -15,10 +15,10 @@ https://adem.sh/blog/tutorial-fastapi-aws-lambda-serverless
 -   pip install -r requirements.txt
 
 ## aws env
--   pip install fastapi fastapi-sqlalchemy pydantic alembic psycopg2-binary uvicorn python-dotenv geoalchemy geoalchemy2 shapely pandas requests sentry-sdk mangum black 
+-   pip install fastapi fastapi-sqlalchemy pydantic alembic psycopg2-binary uvicorn python-dotenv geoalchemy geoalchemy2 shapely pandas requests sentry-sdk mangum black PyJWT
 
 ## heroku celery env
--   pip install fastapi fastapi-sqlalchemy celery redis pydantic alembic psycopg2-binary uvicorn python-dotenv geoalchemy geoalchemy2 shapely pandas requests sentry-sdk black 
+-   pip install fastapi fastapi-sqlalchemy celery redis pydantic alembic psycopg2-binary uvicorn python-dotenv geoalchemy geoalchemy2 shapely pandas requests sentry-sdk black PyJWT 
 
 
 

@@ -81,7 +81,6 @@ async def protected_route_test(payload=Depends(auth_handler.auth_wrapper)):
 #################################################################################################################################
 #                                                  Dev only                                                                     #
 #################################################################################################################################
-
 # dev routes only
 if env["PRODUCTION_MODE"] != "TRUE":
 
@@ -109,7 +108,7 @@ if env["PRODUCTION_MODE"] != "TRUE":
     async def login_firebase_token(email: str, password: str):
         try:
             user = PyreBaseAuth.sign_in_with_email_and_password(email, password)
-            return user["idToken"]
+            return user
         except Exception as e:
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=str(e))
 

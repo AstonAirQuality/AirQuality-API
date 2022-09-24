@@ -4,7 +4,7 @@
 # cred = credentials.Certificate("./config/aston-air-quality-firebase-adminsdk-4jn4i-2c19a6b6a9.json")
 # firebaseapp = firebase_admin.initialize_app(cred)
 
-import pyrebase
+from config.firebaseWrapper import FirebaseWrapper
 
 config = {
     "apiKey": "AIzaSyAGNOikpc7Soo0JyLfCZf3SyWFw0hw5C_s",
@@ -19,7 +19,7 @@ config = {
 }
 
 
-app = pyrebase.initialize_app(config)
+app = FirebaseWrapper(config)
 PyreBaseAuth = app.auth()
 
 # jwt wihout firebase
