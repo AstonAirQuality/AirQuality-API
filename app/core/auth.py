@@ -40,13 +40,16 @@ class AuthHandler:
 
     def encode_token(self, token: str):
         decoded_jwt = self.verify_firebase_token(token)
-        role = get_user_role(decoded_jwt["user_id"])["role"]
+
+        role = get_user_role(decoded_jwt["sub"])
+
+        # print(role)
 
         if role == None:
             role = "user"
 
         payload = {
-            "sub": decoded_jwt["user_id"],
+            "sub": decoded_jwt["sub"],
             "role": role,
             "iat": dt.datetime.utcnow(),
             "exp": dt.datetime.utcnow() + dt.timedelta(hours=1),

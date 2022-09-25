@@ -3,7 +3,7 @@ def checkRoleAdmin(payload: dict) -> bool:
     if payload["role"] == "admin":
         return True
     else:
-        raise False
+        return False
 
 
 def checkRoleSensorTech(payload: dict) -> bool:
@@ -11,7 +11,7 @@ def checkRoleSensorTech(payload: dict) -> bool:
     if payload["role"] == "sensortech":
         return True
     else:
-        raise False
+        return False
 
 
 def checkRoleAboveUser(payload: dict) -> bool:
@@ -19,4 +19,4 @@ def checkRoleAboveUser(payload: dict) -> bool:
     if payload["role"] == "admin" or payload["role"] == "sensortech":
         return True
     else:
-        raise False
+        return False

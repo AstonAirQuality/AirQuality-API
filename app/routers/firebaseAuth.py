@@ -1,7 +1,7 @@
 # # dependancies:
 from os import environ as env
 
-from config.firebaseConfig import PyreBaseAuth, delete_user
+from config.firebaseConfig import PyreBaseAuth
 from core.auth import AuthHandler
 from core.schema import User as SchemaUser
 from fastapi import APIRouter, Depends, Header, HTTPException, status
@@ -32,14 +32,19 @@ the backend will then verify the token and check the custom claims
 
 
 @authRouter.get("/signup")
-async def signup(token=Header(default=None)):
+async def signup(firebase_tokenID=Header(default=None)):
     try:
-        decoded_jwt = auth_handler.verify_firebase_token(token)
+        decoded_jwt = auth_handler.verify_firebase_token(firebase_tokenID)
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token")
 
-    # TODO add username extraction from firebase token
+    # assign username if it exists in the firebase user record (displayName)
     username = None
+    try:
+        username = decoded_jwt["name"]
+    except KeyError:
+        pass
+
     try:
         user = SchemaUser(uid=decoded_jwt["sub"], email=decoded_jwt["email"], username=username, role="user")
         add_user(user)
@@ -50,13 +55,14 @@ async def signup(token=Header(default=None)):
             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Could not create user")
 
     # login the user
-    return login(token)
+    return login(firebase_tokenID)
 
 
 @authRouter.get("/login")
-async def login(token=Header(default=None)):
+async def login(firebase_tokenID=Header(default=None)):
     try:
-        access_token = auth_handler.encode_token(token)
+        access_token = auth_handler.encode_token(firebase_tokenID)
+        # access_token = verify_firebase_token(firebase_tokenID)
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=str(e))
 
@@ -69,6 +75,23 @@ async def login(token=Header(default=None)):
 #################################################################################################################################
 # dev routes only
 if env["PRODUCTION_MODE"] != "TRUE":
+
+    @authRouter.delete("/delete")
+    async def delete_user(firebase_tokenID: str):
+        jsonResponse = PyreBaseAuth.delete_user(firebase_tokenID)
+        return jsonResponse
+
+    @authRouter.post("/firebase-login")
+    async def sign_in_with_firebase(email: str, password: str):
+        jsonResponse = PyreBaseAuth.sign_in_with_email_and_password(email, password)
+        print(jsonResponse["idToken"])
+        return jsonResponse
+
+    @authRouter.post("/firebase-signup")
+    async def sign_up_with_firebase(email: str, password: str):
+        jsonResponse = PyreBaseAuth.create_user_with_email_and_password(email, password)
+        print(jsonResponse["idToken"])
+        return jsonResponse
 
     @authRouter.get("/dev-login")
     async def dev_login(uid: str, role: str):
