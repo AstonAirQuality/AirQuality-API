@@ -3,7 +3,6 @@ from os import environ as env
 
 import jwt
 import requests
-from config.firebaseConfig import PyreBaseAuth
 from cryptography import x509
 from cryptography.hazmat.backends import default_backend
 from fastapi import HTTPException, Security
