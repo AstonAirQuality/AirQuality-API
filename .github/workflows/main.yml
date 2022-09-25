@@ -35,14 +35,14 @@ jobs:
         id: cache-venv # name for referring later
         with:
           path: venv # what we cache: the Virtual ENV
-          # The cache key depends on requirements-production.txt
-          key: ${{ runner.os }}-venv-${{ hashFiles('**/requirements-production*.txt') }}
+          # The cache key depends on requirements.txt
+          key: ${{ runner.os }}-venv-${{ hashFiles('**/requirements*.txt') }}
           restore-keys: |
             ${{ runner.os }}-venv-
 
       # Step-4 Build a Virtual ENV, but only if it doesn't already exist
       - name: Activate Virtual ENV
-        run: python -m venv venv && source venv/bin/activate && pip3 install -r requirements-production.txt
+        run: python -m venv venv && source venv/bin/activate && pip3 install -r requirements.txt
         if: steps.cache-venv.outputs.cache-hit != 'true'
 
 
