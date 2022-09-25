@@ -71,27 +71,31 @@ async def login(firebase_tokenID=Header(default=None)):
 
 
 #################################################################################################################################
+#                                                  Firebase                                                                     #
+#################################################################################################################################
+@authRouter.delete("/delete")
+async def delete_user(firebase_tokenID: str):
+    jsonResponse = PyreBaseAuth.delete_user(firebase_tokenID)
+    return jsonResponse
+
+
+@authRouter.post("/firebase-login")
+async def sign_in_with_firebase(email: str, password: str):
+    jsonResponse = PyreBaseAuth.sign_in_with_email_and_password(email, password)
+    return jsonResponse
+
+
+@authRouter.post("/firebase-signup")
+async def sign_up_with_firebase(email: str, password: str):
+    jsonResponse = PyreBaseAuth.create_user_with_email_and_password(email, password)
+    return jsonResponse
+
+
+#################################################################################################################################
 #                                                  Dev only                                                                     #
 #################################################################################################################################
 # dev routes only
 if env["PRODUCTION_MODE"] != "TRUE":
-
-    @authRouter.delete("/delete")
-    async def delete_user(firebase_tokenID: str):
-        jsonResponse = PyreBaseAuth.delete_user(firebase_tokenID)
-        return jsonResponse
-
-    @authRouter.post("/firebase-login")
-    async def sign_in_with_firebase(email: str, password: str):
-        jsonResponse = PyreBaseAuth.sign_in_with_email_and_password(email, password)
-        print(jsonResponse["idToken"])
-        return jsonResponse
-
-    @authRouter.post("/firebase-signup")
-    async def sign_up_with_firebase(email: str, password: str):
-        jsonResponse = PyreBaseAuth.create_user_with_email_and_password(email, password)
-        print(jsonResponse["idToken"])
-        return jsonResponse
 
     @authRouter.get("/dev-login")
     async def dev_login(uid: str, role: str):
