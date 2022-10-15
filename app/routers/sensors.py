@@ -157,16 +157,17 @@ def get_sensors_joined(
 
 
 # functions for background tasks #TODO move to helper folder
-# @sensorsRouter.get("/read/active")
+@sensorsRouter.get("/read/active")
 def get_active_sensors(type_ids: list[int] = Query(default=[])):
     try:
         result = (
             db.query(
-                ModelSensor.type_id.label("type_id"),
+                ModelSensorTypes.name.label("type_name"),
                 ModelSensor.lookup_id.label("lookup_id"),
                 ModelSensor.stationary_box.label("stationary_box"),
             )
             .filter(ModelSensor.active == True, ModelSensor.type_id.in_(type_ids))
+            .join(ModelSensorTypes, isouter=True)
             .all()
         )
         # because the query returned row type we must convert wkb to wkt string to be be api friendly

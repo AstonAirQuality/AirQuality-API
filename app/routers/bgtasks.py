@@ -53,7 +53,7 @@ async def upsert_scheduled_ingest_active_sensors(
         upsert_log = []
         # for each sensor type, fetch the data from the api and write to the database
         for (sensorType, dict_lookupid_stationaryBox) in sensor_dict.items():
-            if sensorType == 1:
+            if sensorType == "Plume":
                 for sensorSummary in api.fetch_plume_data(startDate, endDate, dict_lookupid_stationaryBox):
                     lookupid = sensorSummary.sensor_id
                     (sensorSummary.sensor_id, sensor_serial_number) = sensor_id_and_serialnum_from_lookup_id(str(lookupid))
@@ -62,10 +62,10 @@ async def upsert_scheduled_ingest_active_sensors(
                         upsert_log.append([sensorSummary.sensor_id, sensorSummary.timestamp, sensor_serial_number, True, "success"])
                     except Exception as e:
                         upsert_log.append([sensorSummary.sensor_id, sensorSummary.timestamp, sensor_serial_number, False, str(e)])
-            elif sensorType == 2:
+            elif sensorType == "Zephyr":
                 # TODO add api call for sensor type 2
                 continue
-            elif sensorType == 3:
+            elif sensorType == "SensorCommunity":
                 # TODO add api call for sensor type 3
                 continue
 
@@ -90,7 +90,7 @@ async def aws_cronjob(background_tasks: BackgroundTasks):
 #################################################################################################################################
 def get_lookupids_of_active_sensors_by_type(type_ids: list[int]) -> dict[int, dict[str, str]]:
     """
-    Returns dict: where dict[sensor_type][lookup_id] = stationary_box
+    Returns dict: where dict[sensor_type_name][lookup_id] = stationary_box
 
     """
     sensors = get_active_sensors(type_ids)
@@ -98,10 +98,10 @@ def get_lookupids_of_active_sensors_by_type(type_ids: list[int]) -> dict[int, di
     # group sensors by type into a dictionary dict[sensor_type][lookup_id] = stationary_box
     sensor_dict = {}
     for data in sensors:
-        if data["type_id"] in sensor_dict:
-            sensor_dict[data["type_id"]][str(data["lookup_id"])] = data["stationary_box"]
+        if data["type_name"] in sensor_dict:
+            sensor_dict[data["type_name"]][str(data["lookup_id"])] = data["stationary_box"]
         else:
-            sensor_dict[data["type_id"]] = {str(data["lookup_id"]): data["stationary_box"]}
+            sensor_dict[data["type_name"]] = {str(data["lookup_id"]): data["stationary_box"]}
 
     return sensor_dict
 
