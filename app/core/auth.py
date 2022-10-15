@@ -1,0 +1,81 @@
+import datetime as dt
+from os import environ as env
+from typing import Tuple
+
+import jwt
+import requests
+from cryptography import x509
+from cryptography.hazmat.backends import default_backend
+from fastapi import HTTPException, Security
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
+from routers.helpers.usersSharedFunctions import get_user_token_info
+
+
+class AuthHandler:
+    security = HTTPBearer()
+    secret = env["JWT_SECRET"]
+
+    # decodes the jwt token from firebase
+    # reference: https://stackoverflow.com/questions/69319437/decode-firebase-jwt-in-python-using-pyjwt
+    def verify_firebase_token(self, token):
+        try:
+            n_decoded = jwt.get_unverified_header(token)
+            kid_claim = n_decoded["kid"]
+
+            response = requests.get("https://www.googleapis.com/robot/v1/metadata/x509/securetoken@system.gserviceaccount.com")
+            x509_key = response.json()[kid_claim]
+            key = x509.load_pem_x509_certificate(x509_key.encode("utf-8"), backend=default_backend())
+            public_key = key.public_key()
+
+            decoded_token = jwt.decode(token, public_key, ["RS256"], options=None, audience="aston-air-quality")
+
+        except jwt.ExpiredSignatureError:
+            raise HTTPException(status_code=401, detail="Signature has expired")
+        except jwt.InvalidTokenError:
+            raise HTTPException(status_code=401, detail="Invalid token")
+        except Exception:
+            raise HTTPException(status_code=500, detail="Internal server error")
+
+        return decoded_token
+
+    def encode_token(self, token: str) -> Tuple[str, str]:
+        decoded_jwt = self.verify_firebase_token(token)
+
+        user_info = get_user_token_info(decoded_jwt["sub"])
+
+        if user_info == None:
+            raise HTTPException(status_code=401, detail="User does not exist. Please register an account")
+
+        payload = {
+            "sub": decoded_jwt["sub"],
+            "role": user_info[0],
+            "iat": dt.datetime.utcnow(),
+            "exp": dt.datetime.utcnow() + dt.timedelta(hours=1),
+        }
+
+        token = jwt.encode(payload, self.secret, algorithm="HS256")
+        return (token, user_info[0], user_info[1])
+
+    def dev_encode_token(self, uid: str, role: str):
+        payload = {
+            "sub": uid,
+            "role": role,
+            "iat": dt.datetime.utcnow(),
+            "exp": dt.datetime.utcnow() + dt.timedelta(hours=1),
+        }
+
+        # generate a custom jwt token
+        token = jwt.encode(payload, self.secret, algorithm="HS256")
+        return token
+
+    def decode_token(self, token: str):
+        try:
+            payload = jwt.decode(token, self.secret, algorithms=["HS256"])
+            return payload
+        except jwt.ExpiredSignatureError:
+            raise HTTPException(status_code=401, detail="Signature has expired")
+        except jwt.InvalidTokenError as e:
+            raise HTTPException(status_code=401, detail="Invalid token")
+
+    def auth_wrapper(self, auth: HTTPAuthorizationCredentials = Security(security)):
+        return self.decode_token(auth.credentials)

@@ -1,0 +1,26 @@
+{
+    "sensors": [
+        {
+            "current_firmware_version": 2018,
+            "id": 18749,
+            "device_id": "02:00:00:00:48:45",
+            "updated_at": 1664257879,
+            "last_sync": 1664257879,
+            "sensor_group": {
+                "target_firmware_version": 2018
+            },
+            "shipment": null
+        },
+        {
+            "current_firmware_version": 2018,
+            "id": 18699,
+            "device_id": "02:00:00:00:48:13",
+            "updated_at": 1638456778,
+            "last_sync": 1638456778,
+            "sensor_group": {
+                "target_firmware_version": 2018
+            },
+            "shipment": null
+        }
+    ]
+}
