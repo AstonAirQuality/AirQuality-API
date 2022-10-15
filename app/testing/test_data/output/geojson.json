@@ -1,0 +1,774 @@
+{
+    "type": "FeatureCollection",
+    "features": [
+        {
+            "type": "Feature",
+            "properties": {
+                "NO2": 14.212557815789474,
+                "NO2 count": 57.0,
+                "VOC": 153.96666666666667,
+                "VOC count": 60.0,
+                "particulatePM10": 5.978468196666666,
+                "particulatePM10 count": 60.0,
+                "particulatePM2.5": 2.23074104,
+                "particulatePM2.5 count": 60.0,
+                "particulatePM1": 1.0250773516666667,
+                "particulatePM1 count": 60.0,
+                "datetime (UTC)": "2022-09-28 00:00:00"
+            },
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    null
+                ]
+            }
+        },
+        {
+            "type": "Feature",
+            "properties": {
+                "NO2": 14.574389677966103,
+                "NO2 count": 59.0,
+                "VOC": 156.01666666666668,
+                "VOC count": 60.0,
+                "particulatePM10": 5.058909573333334,
+                "particulatePM10 count": 60.0,
+                "particulatePM2.5": 2.036471306666667,
+                "particulatePM2.5 count": 60.0,
+                "particulatePM1": 1.0019127216666666,
+                "particulatePM1 count": 60.0,
+                "datetime (UTC)": "2022-09-28 01:00:00"
+            },
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    null
+                ]
+            }
+        },
+        {
+            "type": "Feature",
+            "properties": {
+                "NO2": 13.367661509090908,
+                "NO2 count": 55.0,
+                "VOC": 157.42372881355934,
+                "VOC count": 59.0,
+                "particulatePM10": 4.975412779661017,
+                "particulatePM10 count": 59.0,
+                "particulatePM2.5": 2.1831497779661015,
+                "particulatePM2.5 count": 59.0,
+                "particulatePM1": 1.0473430559322034,
+                "particulatePM1 count": 59.0,
+                "datetime (UTC)": "2022-09-28 02:00:00"
+            },
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    null
+                ]
+            }
+        },
+        {
+            "type": "Feature",
+            "properties": {
+                "NO2": 12.764099433333334,
+                "NO2 count": 60.0,
+                "VOC": 155.41666666666666,
+                "VOC count": 60.0,
+                "particulatePM10": 4.805989011666667,
+                "particulatePM10 count": 60.0,
+                "particulatePM2.5": 2.206685025,
+                "particulatePM2.5 count": 60.0,
+                "particulatePM1": 1.0282164833333334,
+                "particulatePM1 count": 60.0,
+                "datetime (UTC)": "2022-09-28 03:00:00"
+            },
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    null
+                ]
+            }
+        },
+        {
+            "type": "Feature",
+            "properties": {
+                "NO2": 12.441006648148148,
+                "NO2 count": 54.0,
+                "VOC": 153.47457627118644,
+                "VOC count": 59.0,
+                "particulatePM10": 4.562047725423729,
+                "particulatePM10 count": 59.0,
+                "particulatePM2.5": 2.200025052542373,
+                "particulatePM2.5 count": 59.0,
+                "particulatePM1": 1.0332340440677965,
+                "particulatePM1 count": 59.0,
+                "datetime (UTC)": "2022-09-28 04:00:00"
+            },
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    null
+                ]
+            }
+        },
+        {
+            "type": "Feature",
+            "properties": {
+                "NO2": 11.224337191666667,
+                "NO2 count": 60.0,
+                "VOC": 176.83333333333334,
+                "VOC count": 60.0,
+                "particulatePM10": 5.559111688333333,
+                "particulatePM10 count": 60.0,
+                "particulatePM2.5": 2.3168528850000003,
+                "particulatePM2.5 count": 60.0,
+                "particulatePM1": 1.0531588,
+                "particulatePM1 count": 60.0,
+                "datetime (UTC)": "2022-09-28 05:00:00"
+            },
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    null
+                ]
+            }
+        },
+        {
+            "type": "Feature",
+            "properties": {
+                "NO2": 15.096849,
+                "NO2 count": 58.0,
+                "VOC": 475.8666666666667,
+                "VOC count": 60.0,
+                "particulatePM10": 5.42081607118644,
+                "particulatePM10 count": 59.0,
+                "particulatePM2.5": 2.3393551491525426,
+                "particulatePM2.5 count": 59.0,
+                "particulatePM1": 1.0706591237288134,
+                "particulatePM1 count": 59.0,
+                "datetime (UTC)": "2022-09-28 06:00:00"
+            },
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    null
+                ]
+            }
+        },
+        {
+            "type": "Feature",
+            "properties": {
+                "NO2": 17.09737654385965,
+                "NO2 count": 57.0,
+                "VOC": 262.0508474576271,
+                "VOC count": 59.0,
+                "particulatePM10": 3.9752515416666667,
+                "particulatePM10 count": 60.0,
+                "particulatePM2.5": 2.1271358416666666,
+                "particulatePM2.5 count": 60.0,
+                "particulatePM1": 1.0296920416666666,
+                "particulatePM1 count": 60.0,
+                "datetime (UTC)": "2022-09-28 07:00:00"
+            },
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    null
+                ]
+            }
+        },
+        {
+            "type": "Feature",
+            "properties": {
+                "NO2": 16.651755133333335,
+                "NO2 count": 60.0,
+                "VOC": 220.51666666666668,
+                "VOC count": 60.0,
+                "particulatePM10": 3.3988987466666667,
+                "particulatePM10 count": 60.0,
+                "particulatePM2.5": 2.000760825,
+                "particulatePM2.5 count": 60.0,
+                "particulatePM1": 1.0,
+                "particulatePM1 count": 60.0,
+                "datetime (UTC)": "2022-09-28 08:00:00"
+            },
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    null
+                ]
+            }
+        },
+        {
+            "type": "Feature",
+            "properties": {
+                "NO2": 17.948530109090907,
+                "NO2 count": 55.0,
+                "VOC": 206.47457627118644,
+                "VOC count": 59.0,
+                "particulatePM10": 4.782153857627119,
+                "particulatePM10 count": 59.0,
+                "particulatePM2.5": 2.2591539779661014,
+                "particulatePM2.5 count": 59.0,
+                "particulatePM1": 1.0579823305084746,
+                "particulatePM1 count": 59.0,
+                "datetime (UTC)": "2022-09-28 09:00:00"
+            },
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    null
+                ]
+            }
+        },
+        {
+            "type": "Feature",
+            "properties": {
+                "NO2": 15.757543166666666,
+                "NO2 count": 60.0,
+                "VOC": 188.23333333333332,
+                "VOC count": 60.0,
+                "particulatePM10": 5.200781393333333,
+                "particulatePM10 count": 60.0,
+                "particulatePM2.5": 2.1917635433333333,
+                "particulatePM2.5 count": 60.0,
+                "particulatePM1": 1.0369995433333332,
+                "particulatePM1 count": 60.0,
+                "datetime (UTC)": "2022-09-28 10:00:00"
+            },
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    null
+                ]
+            }
+        },
+        {
+            "type": "Feature",
+            "properties": {
+                "NO2": 11.520184303571428,
+                "NO2 count": 56.0,
+                "VOC": 206.35593220338984,
+                "VOC count": 59.0,
+                "particulatePM10": 4.2425350898305085,
+                "particulatePM10 count": 59.0,
+                "particulatePM2.5": 2.102577920338983,
+                "particulatePM2.5 count": 59.0,
+                "particulatePM1": 1.008780825423729,
+                "particulatePM1 count": 59.0,
+                "datetime (UTC)": "2022-09-28 11:00:00"
+            },
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    null
+                ]
+            }
+        },
+        {
+            "type": "Feature",
+            "properties": {
+                "NO2": 8.904447583050848,
+                "NO2 count": 59.0,
+                "VOC": 301.25,
+                "VOC count": 60.0,
+                "particulatePM10": 4.337440221666666,
+                "particulatePM10 count": 60.0,
+                "particulatePM2.5": 2.1400457766666667,
+                "particulatePM2.5 count": 60.0,
+                "particulatePM1": 1.0131860966666666,
+                "particulatePM1 count": 60.0,
+                "datetime (UTC)": "2022-09-28 12:00:00"
+            },
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    null
+                ]
+            }
+        },
+        {
+            "type": "Feature",
+            "properties": {
+                "NO2": 8.126197363793104,
+                "NO2 count": 58.0,
+                "VOC": 249.93333333333334,
+                "VOC count": 60.0,
+                "particulatePM10": 3.9263861366666664,
+                "particulatePM10 count": 60.0,
+                "particulatePM2.5": 2.040426236666667,
+                "particulatePM2.5 count": 60.0,
+                "particulatePM1": 1.0076995083333333,
+                "particulatePM1 count": 60.0,
+                "datetime (UTC)": "2022-09-28 13:00:00"
+            },
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    null
+                ]
+            }
+        },
+        {
+            "type": "Feature",
+            "properties": {
+                "NO2": 8.468702107142857,
+                "NO2 count": 56.0,
+                "VOC": 205.94915254237287,
+                "VOC count": 59.0,
+                "particulatePM10": 4.961545210169492,
+                "particulatePM10 count": 59.0,
+                "particulatePM2.5": 2.061560286440678,
+                "particulatePM2.5 count": 59.0,
+                "particulatePM1": 1.0097429050847457,
+                "particulatePM1 count": 59.0,
+                "datetime (UTC)": "2022-09-28 14:00:00"
+            },
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    null
+                ]
+            }
+        },
+        {
+            "type": "Feature",
+            "properties": {
+                "NO2": 9.0742811,
+                "NO2 count": 60.0,
+                "VOC": 183.48333333333332,
+                "VOC count": 60.0,
+                "particulatePM10": 3.23846284,
+                "particulatePM10 count": 60.0,
+                "particulatePM2.5": 2.0,
+                "particulatePM2.5 count": 60.0,
+                "particulatePM1": 1.0,
+                "particulatePM1 count": 60.0,
+                "datetime (UTC)": "2022-09-28 15:00:00"
+            },
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    null
+                ]
+            }
+        },
+        {
+            "type": "Feature",
+            "properties": {
+                "NO2": 7.807570594444445,
+                "NO2 count": 54.0,
+                "VOC": 166.66101694915255,
+                "VOC count": 59.0,
+                "particulatePM10": 3.56283936779661,
+                "particulatePM10 count": 59.0,
+                "particulatePM2.5": 2.017195540677966,
+                "particulatePM2.5 count": 59.0,
+                "particulatePM1": 1.0,
+                "particulatePM1 count": 59.0,
+                "datetime (UTC)": "2022-09-28 16:00:00"
+            },
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    null
+                ]
+            }
+        },
+        {
+            "type": "Feature",
+            "properties": {
+                "NO2": 8.457767721666666,
+                "NO2 count": 60.0,
+                "VOC": 153.85,
+                "VOC count": 60.0,
+                "particulatePM10": 4.983546766666667,
+                "particulatePM10 count": 60.0,
+                "particulatePM2.5": 2.09997451,
+                "particulatePM2.5 count": 60.0,
+                "particulatePM1": 1.0099136066666667,
+                "particulatePM1 count": 60.0,
+                "datetime (UTC)": "2022-09-28 17:00:00"
+            },
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    null
+                ]
+            }
+        },
+        {
+            "type": "Feature",
+            "properties": {
+                "NO2": 7.65459001090909,
+                "NO2 count": 55.0,
+                "VOC": 149.39285714285714,
+                "VOC count": 56.0,
+                "particulatePM10": 4.372560151724138,
+                "particulatePM10 count": 58.0,
+                "particulatePM2.5": 2.188373675862069,
+                "particulatePM2.5 count": 58.0,
+                "particulatePM1": 1.038400675862069,
+                "particulatePM1 count": 58.0,
+                "datetime (UTC)": "2022-09-28 18:00:00"
+            },
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    [
+                        [
+                            -1.836323,
+                            52.425392
+                        ],
+                        [
+                            -1.836288,
+                            52.425392
+                        ],
+                        [
+                            -1.836288,
+                            52.425726
+                        ],
+                        [
+                            -1.836323,
+                            52.425726
+                        ],
+                        [
+                            -1.836323,
+                            52.425392
+                        ]
+                    ]
+                ]
+            }
+        },
+        {
+            "type": "Feature",
+            "properties": {
+                "NO2": 4.785414632758621,
+                "NO2 count": 58.0,
+                "VOC": 163.45,
+                "VOC count": 60.0,
+                "particulatePM10": 5.548916605,
+                "particulatePM10 count": 60.0,
+                "particulatePM2.5": 2.393773138333333,
+                "particulatePM2.5 count": 60.0,
+                "particulatePM1": 1.0862155733333334,
+                "particulatePM1 count": 60.0,
+                "datetime (UTC)": "2022-09-28 19:00:00"
+            },
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    null
+                ]
+            }
+        },
+        {
+            "type": "Feature",
+            "properties": {
+                "NO2": 4.409935012068965,
+                "NO2 count": 58.0,
+                "VOC": 155.31666666666666,
+                "VOC count": 60.0,
+                "particulatePM10": 5.1419819166666665,
+                "particulatePM10 count": 60.0,
+                "particulatePM2.5": 2.2729616183333334,
+                "particulatePM2.5 count": 60.0,
+                "particulatePM1": 1.0617181416666666,
+                "particulatePM1 count": 60.0,
+                "datetime (UTC)": "2022-09-28 20:00:00"
+            },
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    null
+                ]
+            }
+        },
+        {
+            "type": "Feature",
+            "properties": {
+                "NO2": 2.718528426785714,
+                "NO2 count": 56.0,
+                "VOC": 157.98305084745763,
+                "VOC count": 59.0,
+                "particulatePM10": 5.975372454237288,
+                "particulatePM10 count": 59.0,
+                "particulatePM2.5": 2.4762218644067797,
+                "particulatePM2.5 count": 59.0,
+                "particulatePM1": 1.1051950762711864,
+                "particulatePM1 count": 59.0,
+                "datetime (UTC)": "2022-09-28 21:00:00"
+            },
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    null
+                ]
+            }
+        },
+        {
+            "type": "Feature",
+            "properties": {
+                "NO2": 0.38459548666666665,
+                "NO2 count": 60.0,
+                "VOC": 156.03333333333333,
+                "VOC count": 60.0,
+                "particulatePM10": 4.900465013333333,
+                "particulatePM10 count": 60.0,
+                "particulatePM2.5": 2.3077049166666668,
+                "particulatePM2.5 count": 60.0,
+                "particulatePM1": 1.071223945,
+                "particulatePM1 count": 60.0,
+                "datetime (UTC)": "2022-09-28 22:00:00"
+            },
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    null
+                ]
+            }
+        },
+        {
+            "type": "Feature",
+            "properties": {
+                "NO2": 0.0,
+                "NO2 count": 55.0,
+                "VOC": 155.47457627118644,
+                "VOC count": 59.0,
+                "particulatePM10": 5.057805466101695,
+                "particulatePM10 count": 59.0,
+                "particulatePM2.5": 2.3065715779661016,
+                "particulatePM2.5 count": 59.0,
+                "particulatePM1": 1.0502129508474576,
+                "particulatePM1 count": 59.0,
+                "datetime (UTC)": "2022-09-28 23:00:00"
+            },
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    null
+                ]
+            }
+        },
+        {
+            "type": "Feature",
+            "properties": {
+                "NO2": 0.0,
+                "NO2 count": 60.0,
+                "VOC": 157.1,
+                "VOC count": 60.0,
+                "particulatePM10": 5.62884928,
+                "particulatePM10 count": 60.0,
+                "particulatePM2.5": 2.4953176133333335,
+                "particulatePM2.5 count": 60.0,
+                "particulatePM1": 1.1209291066666667,
+                "particulatePM1 count": 60.0,
+                "datetime (UTC)": "2022-09-29 00:00:00"
+            },
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    null
+                ]
+            }
+        },
+        {
+            "type": "Feature",
+            "properties": {
+                "NO2": 0.0,
+                "NO2 count": 57.0,
+                "VOC": 153.3728813559322,
+                "VOC count": 59.0,
+                "particulatePM10": 5.021576494915254,
+                "particulatePM10 count": 59.0,
+                "particulatePM2.5": 2.217498716949153,
+                "particulatePM2.5 count": 59.0,
+                "particulatePM1": 1.0432286457627118,
+                "particulatePM1 count": 59.0,
+                "datetime (UTC)": "2022-09-29 01:00:00"
+            },
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    null
+                ]
+            }
+        },
+        {
+            "type": "Feature",
+            "properties": {
+                "NO2": 0.0,
+                "NO2 count": 58.0,
+                "VOC": 156.93333333333334,
+                "VOC count": 60.0,
+                "particulatePM10": 5.654885405,
+                "particulatePM10 count": 60.0,
+                "particulatePM2.5": 2.446511893333333,
+                "particulatePM2.5 count": 60.0,
+                "particulatePM1": 1.0973268466666668,
+                "particulatePM1 count": 60.0,
+                "datetime (UTC)": "2022-09-29 02:00:00"
+            },
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    null
+                ]
+            }
+        },
+        {
+            "type": "Feature",
+            "properties": {
+                "NO2": 0.0,
+                "NO2 count": 59.0,
+                "VOC": 157.93333333333334,
+                "VOC count": 60.0,
+                "particulatePM10": 5.61347193,
+                "particulatePM10 count": 60.0,
+                "particulatePM2.5": 2.3512081933333335,
+                "particulatePM2.5 count": 60.0,
+                "particulatePM1": 1.0688065433333334,
+                "particulatePM1 count": 60.0,
+                "datetime (UTC)": "2022-09-29 03:00:00"
+            },
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    null
+                ]
+            }
+        },
+        {
+            "type": "Feature",
+            "properties": {
+                "NO2": 0.0,
+                "NO2 count": 56.0,
+                "VOC": 161.15254237288136,
+                "VOC count": 59.0,
+                "particulatePM10": 4.671544291525424,
+                "particulatePM10 count": 59.0,
+                "particulatePM2.5": 2.2625460440677965,
+                "particulatePM2.5 count": 59.0,
+                "particulatePM1": 1.049982681355932,
+                "particulatePM1 count": 59.0,
+                "datetime (UTC)": "2022-09-29 04:00:00"
+            },
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    null
+                ]
+            }
+        },
+        {
+            "type": "Feature",
+            "properties": {
+                "NO2": 0.0,
+                "NO2 count": 60.0,
+                "VOC": 168.7,
+                "VOC count": 60.0,
+                "particulatePM10": 4.825755725,
+                "particulatePM10 count": 60.0,
+                "particulatePM2.5": 2.3079182516666665,
+                "particulatePM2.5 count": 60.0,
+                "particulatePM1": 1.0454099300000002,
+                "particulatePM1 count": 60.0,
+                "datetime (UTC)": "2022-09-29 05:00:00"
+            },
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    null
+                ]
+            }
+        },
+        {
+            "type": "Feature",
+            "properties": {
+                "NO2": 0.0,
+                "NO2 count": 54.0,
+                "VOC": 242.89830508474577,
+                "VOC count": 59.0,
+                "particulatePM10": 7.481002305084746,
+                "particulatePM10 count": 59.0,
+                "particulatePM2.5": 2.542558705084746,
+                "particulatePM2.5 count": 59.0,
+                "particulatePM1": 1.0872448305084748,
+                "particulatePM1 count": 59.0,
+                "datetime (UTC)": "2022-09-29 06:00:00"
+            },
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    null
+                ]
+            }
+        },
+        {
+            "type": "Feature",
+            "properties": {
+                "NO2": 3.084048178,
+                "NO2 count": 60.0,
+                "VOC": 294.06666666666666,
+                "VOC count": 60.0,
+                "particulatePM10": 8.264643866666667,
+                "particulatePM10 count": 60.0,
+                "particulatePM2.5": 2.35420323,
+                "particulatePM2.5 count": 60.0,
+                "particulatePM1": 1.0310980066666666,
+                "particulatePM1 count": 60.0,
+                "datetime (UTC)": "2022-09-29 07:00:00"
+            },
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    null
+                ]
+            }
+        },
+        {
+            "type": "Feature",
+            "properties": {
+                "NO2": 10.412752414035088,
+                "NO2 count": 57.0,
+                "VOC": 266.01666666666665,
+                "VOC count": 60.0,
+                "particulatePM10": 5.445628111666666,
+                "particulatePM10 count": 60.0,
+                "particulatePM2.5": 2.21072564,
+                "particulatePM2.5 count": 60.0,
+                "particulatePM1": 1.03790531,
+                "particulatePM1 count": 60.0,
+                "datetime (UTC)": "2022-09-29 08:00:00"
+            },
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    null
+                ]
+            }
+        },
+        {
+            "type": "Feature",
+            "properties": {
+                "NO2": 13.969316625,
+                "NO2 count": 16.0,
+                "VOC": 234.88235294117646,
+                "VOC count": 17.0,
+                "particulatePM10": 6.158417629411765,
+                "particulatePM10 count": 17.0,
+                "particulatePM2.5": 2.1059768,
+                "particulatePM2.5 count": 17.0,
+                "particulatePM1": 1.0140295176470588,
+                "particulatePM1 count": 17.0,
+                "datetime (UTC)": "2022-09-29 09:00:00"
+            },
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    null
+                ]
+            }
+        }
+    ]
+}

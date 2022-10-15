@@ -107,3 +107,8 @@ class Log(BaseModel):
 
 class PlumeSerialNumbers(BaseModel):
     serial_numbers: List[str]
+
+
+class GeoJsonExport(BaseModel):
+    sensorid: int
+    geojson: Dict

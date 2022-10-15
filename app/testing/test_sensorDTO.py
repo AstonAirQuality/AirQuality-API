@@ -10,6 +10,7 @@ from api_wrappers.plume_api_wrapper import PlumeWrapper
 from api_wrappers.plume_sensor import PlumeSensor
 from api_wrappers.Sensor_DTO import SensorDTO
 from core.schema import SensorSummary as SchemaSensorSummary
+from routers.helpers.sensorSummarySharedFunctions import JsonToSensorDTO
 
 # NOTE:  https://www.youtube.com/watch?v=6tNS--WetLI
 
@@ -86,6 +87,50 @@ class Test_plumeSensor(TestCase):
             self.assertTrue(sensor_summary.measurement_count > 0)
             self.assertIsNotNone(sensor_summary.measurement_data)
             self.assertEqual(sensor_summary.stationary, False)
+
+    def test_SensorDTO_from_db(self):
+
+        file = open("./testing/test_data/plume_fromdb.json", "r")
+        results = json.load(file)
+        file.close()
+        sensors = JsonToSensorDTO(results)
+
+        for sensor in sensors:
+            self.assertTrue(isinstance(sensor, SensorDTO))
+
+    def test_AveragesConversion_from_db(self):
+
+        file = open("./testing/test_data/plume_fromdb.json", "r")
+        results = json.load(file)
+        file.close()
+        sensors = JsonToSensorDTO(results)
+
+        for sensor in sensors:
+            self.assertTrue(isinstance(sensor, SensorDTO))
+            measurements_columns = sensor.ConvertDFToAverages("mean", "H")
+            for column in measurements_columns:
+                self.assertTrue((column, "mean") in sensor.df.columns)
+                self.assertTrue((column, "count") in sensor.df.columns)
+
+    def test_SensorDTO_to_geojson(self):
+
+        file = open("./testing/test_data/plume_fromdb.json", "r")
+        results = json.load(file)
+        file.close()
+        sensors = JsonToSensorDTO(results)
+
+        for sensor in sensors:
+            self.assertTrue(isinstance(sensor, SensorDTO))
+            geojson = sensor.to_geojson("mean", "H")
+            self.assertTrue(isinstance(geojson, dict))
+            self.assertTrue("features" in geojson)
+            self.assertTrue("type" in geojson)
+            self.assertTrue("geometry" in geojson["features"][0])
+            self.assertTrue("properties" in geojson["features"][0])
+
+            # write to dict to file
+            with open("./testing/test_data/output/geojson.json", "w") as file:
+                file.write(json.dumps(geojson, indent=4, default=str))
 
 
 if __name__ == "__main__":

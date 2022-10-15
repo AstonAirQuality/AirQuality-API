@@ -195,11 +195,15 @@ class SensorDTO:
     # Currently this is not being used but may be useful for testing and future development.
     #########################################################################################################################
 
-    def ConvertDFToAverages(self, averaging_method: str, averaging_frequency: str = "H"):
-        """Given a dataframe with a datetime index, this function will return a dataframe with the hourly summary of the data.
+    def ConvertDFToAverages(self, averaging_method: str, averaging_frequency: str = "H") -> list[str]:
+        """converts the object's dataframe to a list of averages based on the averaging method and frequency
+
+        Given a dataframe with a datetime index, this function will return a dataframe with the hourly summary of the data.
+
         :param df: dataframe to convert
         :param averaging_method: method to use for averaging (e.g. mean, median, min, max)
         :param averaging_frequency: frequency to use for averaging (e.g. H for hourly, D for daily, M for monthly)
+        :return: dataframe with the hourly summary of the data
         """
         df = self.df
         # subset location data from the dataframe
@@ -222,57 +226,46 @@ class SensorDTO:
 
         return measurements_columns
 
-    # def to_geojson(self) -> dict[str, Any]:
-    #     """Converts a dataframe to a geojson object"""
+    def to_geojson(self, averaging_method: str, averaging_frequency: str = "H") -> dict[str, Any]:
+        """Converts a dataframe to a geojson object"""
 
-    #     measurement_columns = self.ConvertDFToAverages("mean", "H")
+        measurement_columns = self.ConvertDFToAverages(averaging_method, averaging_frequency)
 
-    #     geojson = {"type": "FeatureCollection", "features": []}
+        geojson = {"type": "FeatureCollection", "features": []}
 
-    #     # loop through each row in the dataframe and convert each row to geojson feature format
-    #     for _, row in self.df.iterrows():
+        # loop through each row in the dataframe and convert each row to geojson feature format
+        for _, row in self.df.iterrows():
 
-    #         # feature
-    #         feature = {"type": "Feature", "properties": {}, "geometry": {"type": "Polygon", "coordinates": []}}
+            # feature
+            feature = {"type": "Feature", "properties": {}, "geometry": {"type": "Polygon", "coordinates": []}}
 
-    #         # get the bounding box
-    #         if row["latitude"]["min"] == np.nan:
-    #             bounding_box = None
+            # get the bounding box
+            if math.isnan(row["latitude"]["min"]):
+                bounding_box = None
 
-    #         else:
-    #             bounding_box = [
-    #                 [row["longitude"]["min"], row["latitude"]["min"]],
-    #                 [row["longitude"]["max"], row["latitude"]["min"]],
-    #                 [row["longitude"]["max"], row["latitude"]["max"]],
-    #                 [row["longitude"]["min"], row["latitude"]["max"]],
-    #                 [row["longitude"]["min"], row["latitude"]["min"]],
-    #             ]
+            else:
+                bounding_box = [
+                    [row["longitude"]["min"], row["latitude"]["min"]],
+                    [row["longitude"]["max"], row["latitude"]["min"]],
+                    [row["longitude"]["max"], row["latitude"]["max"]],
+                    [row["longitude"]["min"], row["latitude"]["max"]],
+                    [row["longitude"]["min"], row["latitude"]["min"]],
+                ]
 
-    #         # add the bounding box to the feature
-    #         feature["geometry"]["coordinates"] = bounding_box
+            # add the bounding box to the feature
+            feature["geometry"]["coordinates"] = [bounding_box]
 
-    #         # POLYGON(minx miny, minx Maxy, maxx Maxy, maxx miny, minx miny)
-    #         # feature["geometry"]["coordinates"] = [
-    #         #     row["latitude"]["min"] if row["latitude"]["min"] != np.nan else "null",
-    #         #     row["longitude"]["min"] if row["longitude"]["min"] != np.nan else "null",
-    #         #     row["latitude"]["min"] if row["latitude"]["min"] != np.nan else "null",
-    #         #     row["longitude"]["max"] if row["longitude"]["max"] != np.nan else "null",
-    #         #     row["latitude"]["max"] if row["latitude"]["max"] != np.nan else "null",
-    #         #     row["longitude"]["max"] if row["longitude"]["max"] != np.nan else "null",
-    #         #     row["latitude"]["max"] if row["latitude"]["max"] != np.nan else "null",
-    #         #     row["longitude"]["min"] if row["longitude"]["min"] != np.nan else "null",
-    #         #     row["longitude"]["min"] if row["longitude"]["min"] != np.nan else "null",
-    #         #     row["latitude"]["min"] if row["latitude"]["max"] != np.nan else "null",
-    #         # ]
+            # assign properties (measurement values) to the feature
+            for col in measurement_columns:
+                feature["properties"][col] = row[col]["mean"]
+                feature["properties"][col + " count"] = row[col]["count"]
 
-    #         # assign properties (measurement values) to the feature
-    #         for col in measurement_columns:
-    #             feature["properties"][col] = row[col]["mean"]
-    #             feature["properties"][col + " count"] = row[col]["count"]
+            # add datetime to the feature
+            feature["properties"]["datetime (UTC)"] = row.name
 
-    #         geojson["features"].append(feature)
+            geojson["features"].append(feature)
 
-    #     return geojson
+        return geojson
 
     @staticmethod
     def JsonStringToDataframe(jsonb: tuple) -> pd.DataFrame:
