@@ -157,7 +157,7 @@ def get_sensors_joined(
 
 
 # functions for background tasks #TODO move to helper folder
-@sensorsRouter.get("/read/active")
+# @sensorsRouter.get("/read/active")
 def get_active_sensors(type_ids: list[int] = Query(default=[])):
     try:
         result = (
