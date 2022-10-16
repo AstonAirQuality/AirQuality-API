@@ -1,11 +1,8 @@
 import datetime as dt
-import json  # TODO remove this
 
 from api_wrappers.Sensor_DTO import SensorDTO
-from app.core.schema import GeoJsonExport
-
-# from celeryWrapper import CeleryWrapper
 from core.models import SensorSummaries as ModelSensorSummary
+from core.schema import GeoJsonExport
 from core.schema import SensorSummary as SchemaSensorSummary
 from db.database import SessionLocal
 from fastapi import HTTPException, Query, status
@@ -113,7 +110,9 @@ def searchQueryFilters(query: any, geom_type: str, geom: str, sensor_ids: list[s
 
 
 def JsonToSensorDTO(results: list) -> list[SensorDTO]:
-    # 28-09-2022
+    """converts a list of sensor summaries into a list of sensor DTOs
+    :param results: list of sensor summaries
+    :return: list of sensor DTOs"""
 
     # group sensors by id into a dictionary dict[sensor_id] = list[measurement data]
     sensor_dict = {}
@@ -131,10 +130,17 @@ def JsonToSensorDTO(results: list) -> list[SensorDTO]:
     return sensors
 
 
-def sensorSummariesToGeoJson(results: list, averaging_method: str, averaging_frequency: str = "H"):
+def sensorSummariesToGeoJson(results: list, averaging_methods: list[str], averaging_frequency: str = "H"):
+    """converts a list of sensor summaries into geojsons
+    :param results: list of sensor summaries
+    :param averaging_method: method of averaging the sensor summaries
+    :param averaging_frequency: frequency of averaging the sensor summaries
+    :return: list of geojsons"""
+
     sensors = JsonToSensorDTO(results)
 
+    geoJsons = []
     for sensor in sensors:
-        geoJson = GeoJsonExport(sensor_id=sensor.id, geojson=sensor.to_geojson(averaging_method, averaging_frequency))
+        geoJsons.append(GeoJsonExport(sensorid=sensor.id, geojson=sensor.to_geojson(averaging_methods, averaging_frequency)))
 
-    yield geoJson  # assign new dataframe to coressponding key
+    return geoJsons

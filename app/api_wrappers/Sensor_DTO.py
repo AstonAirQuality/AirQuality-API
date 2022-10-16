@@ -178,7 +178,7 @@ class SensorDTO:
                 # TODO - this .copy() might be a problem since pandas is not thread safe
                 df_day_subset = df[df["day"] == day].copy(deep=False)
 
-                # drop the day column to save space (we don't need this anymore)
+                # drop the day column to save memory (we don't need this anymore)
                 df_day_subset.drop("day", axis=1, inplace=True)
                 df_day_subset.set_index("timestamp", inplace=True)
 
@@ -195,7 +195,7 @@ class SensorDTO:
     # Currently this is not being used but may be useful for testing and future development.
     #########################################################################################################################
 
-    def ConvertDFToAverages(self, averaging_method: str, averaging_frequency: str = "H") -> list[str]:
+    def ConvertDFToAverages(self, averaging_methods: list[str], averaging_frequency: str = "H") -> list[str]:
         """converts the object's dataframe to a list of averages based on the averaging method and frequency
 
         Given a dataframe with a datetime index, this function will return a dataframe with the hourly summary of the data.
@@ -219,17 +219,17 @@ class SensorDTO:
         measurements_columns = df_measurements.columns.to_list()
 
         # calculate the averages  of the sensor data
-        df_measurements = df_measurements.groupby(pd.Grouper(freq=averaging_frequency)).agg([averaging_method, "count"])
+        df_measurements = df_measurements.groupby(pd.Grouper(freq=averaging_frequency)).agg(averaging_methods)
 
         # merge the location and sensor data
         self.df = pd.merge(df_location, df_measurements, left_index=True, right_index=True, how="outer")
 
         return measurements_columns
 
-    def to_geojson(self, averaging_method: str, averaging_frequency: str = "H") -> dict[str, Any]:
+    def to_geojson(self, averaging_methods: list[str], averaging_frequency: str = "H") -> dict[str, Any]:
         """Converts a dataframe to a geojson object"""
 
-        measurement_columns = self.ConvertDFToAverages(averaging_method, averaging_frequency)
+        measurement_columns = self.ConvertDFToAverages(averaging_methods, averaging_frequency)
 
         geojson = {"type": "FeatureCollection", "features": []}
 
@@ -239,7 +239,7 @@ class SensorDTO:
             # feature
             feature = {"type": "Feature", "properties": {}, "geometry": {"type": "Polygon", "coordinates": []}}
 
-            # get the bounding box
+            # get the bounding box if coordinates are available else assign empty list
             if math.isnan(row["latitude"]["min"]):
                 bounding_box = None
 
@@ -257,11 +257,11 @@ class SensorDTO:
 
             # assign properties (measurement values) to the feature
             for col in measurement_columns:
-                feature["properties"][col] = row[col]["mean"]
-                feature["properties"][col + " count"] = row[col]["count"]
+                for method in averaging_methods:
+                    feature["properties"][col + method] = row[col][method] if not math.isnan(row[col][method]) else None
 
             # add datetime to the feature
-            feature["properties"]["datetime (UTC)"] = row.name
+            feature["properties"]["datetime_UTC"] = row.name
 
             geojson["features"].append(feature)
 
