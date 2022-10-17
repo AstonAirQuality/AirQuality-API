@@ -190,10 +190,9 @@ class SensorDTO:
 
         return data
 
-    #########################################################################################################################
-    # NOTE: these functions below are only used to convert and process from the postgres database to a sensorDTO object.
-    # Currently this is not being used but may be useful for testing and future development.
-    #########################################################################################################################
+    ####################################################################################################################################
+    # NOTE: these functions below are only used to convert and process sensor summaries from the postgres database to a sensorDTO object.
+    #####################################################################################################################################
 
     def ConvertDFToAverages(self, averaging_methods: list[str], averaging_frequency: str = "H") -> list[str]:
         """converts the object's dataframe to a list of averages based on the averaging method and frequency

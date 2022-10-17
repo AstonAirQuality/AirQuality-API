@@ -1,8 +1,3 @@
-# import json
-
-# json_ = json.load(open("app\\testing\\test_data\\plume_LookupIds.json", "r"))
-# print(json_)
-
 import datetime as dt
 import io  # TODO remove
 import json

@@ -1,6 +1,5 @@
 import datetime as dt
 
-# from celeryWrapper import CeleryWrapper
 from core.models import SensorSummaries as ModelSensorSummary
 from db.database import SessionLocal
 from fastapi import APIRouter, HTTPException, Query, status
@@ -21,6 +20,7 @@ db = SessionLocal()
 #################################################################################################################################
 #                                                  Read                                                                         #
 #################################################################################################################################
+# TODO add param to read to allow aggregation of sensors into a single measurement_data json
 @sensorSummariesRouter.get("/read/{start}/{end}")
 def get_sensorSummaries(
     start: str,

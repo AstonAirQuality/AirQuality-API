@@ -2,6 +2,14 @@
 Fast API project to fetch/scrape data from Aston's air quality sensors
 
 # Tutorial
+
+## Running Test suite
+cd app
+python -m coverage run -m unittest discover -s testing -p 'test_*.py'
+OR WITHOUT COVEREAGE
+python -m unittest discover -s testing -p 'test_*.py'
+https://www.pythontutorial.net/python-unit-testing/python-unittest-coverage/
+
 ## deployment
 https://adem.sh/blog/tutorial-fastapi-aws-lambda-serverless
 

@@ -140,5 +140,6 @@ dump.rdb
 .devcontainer/devcontainer.json
 deployment/export/*
 deployment/lib/*
+app/testing/test_data/output/*
 .vscode/tasks.json
 *.ipynb

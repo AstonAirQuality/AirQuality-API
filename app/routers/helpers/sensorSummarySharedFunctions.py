@@ -22,6 +22,10 @@ db = SessionLocal()
 # used for background tasks
 # @sensorSummariesRouter.post("/create", response_model=SchemaSensorSummary)
 def add_sensorSummary(sensorSummary: SchemaSensorSummary):
+    """adds a sensor summary
+    :param sensorSummary: sensor summary to add
+    :return: sensor summary added"""
+
     sensorSummary = ModelSensorSummary(
         timestamp=sensorSummary.timestamp,
         sensor_id=sensorSummary.sensor_id,
@@ -57,7 +61,9 @@ def add_sensorSummary(sensorSummary: SchemaSensorSummary):
 # used for background tasks
 # @sensorSummariesRouter.put("/update", response_model=SchemaSensorSummary)
 def update_sensorSummary(sensorSummary: SchemaSensorSummary):
-
+    """updates a sensor summary
+    :param sensorSummary: sensor summary to update
+    :return: updated sensor summary"""
     try:
         db.query(ModelSensorSummary).filter(ModelSensorSummary.timestamp == sensorSummary.timestamp, ModelSensorSummary.sensor_id == sensorSummary.sensor_id,).update(
             {
@@ -80,6 +86,9 @@ def update_sensorSummary(sensorSummary: SchemaSensorSummary):
 # used for background tasks
 # @sensorSummariesRouter.put("/upsert", response_model=SchemaSensorSummary)
 def upsert_sensorSummary(sensorSummary: SchemaSensorSummary):
+    """upserts a sensor summary
+    :param sensorSummary: sensor summary to upsert
+    :return: upserted sensor summary"""
     try:
         add_sensorSummary(sensorSummary)
     except HTTPException as e:
@@ -99,6 +108,12 @@ def upsert_sensorSummary(sensorSummary: SchemaSensorSummary):
 
 # adding search filters
 def searchQueryFilters(query: any, geom_type: str, geom: str, sensor_ids: list[str]) -> any:
+    """applies search filters to the query
+    :param query: query to apply filters to
+    :param geom_type: type of geometry to filter by
+    :param geom: geometry to filter by
+    :param sensor_ids: list of sensor ids to filter by
+    :return: query with filters applied"""
 
     if sensor_ids:
         query = query.filter(ModelSensorSummary.sensor_id.in_(sensor_ids))
