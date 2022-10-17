@@ -13,25 +13,31 @@ from core.schema import SensorSummary as SchemaSensorSummary
 
 
 class SensorDTO:
-    """Data transfer object for sensor data. (database-application)
-
-    Example Usage:
-
-    """
+    """Sensor Data transfer object, used to transfer and process data from api wrappers to the database and API"""
 
     def __init__(self, id_, merged_df: pd.DataFrame):
+        """Initialises the SensorDTO object
+        :param id_: sensor id
+        :param merged_df: dataframe of sensor data"""
         self.id = id_
         self.df = merged_df
 
     def __iter__(self):
+        """Iterator for the SensorDTO object
+        :return: a tuple of the sensor id and the sensor summary"""
         return iter((self.id, self.df))
 
     def to_json(self, df: pd.DataFrame) -> str:
-        """Converts the dataframe to a json string."""
+        """Converts the dataframe to a json string.
+        :param df: dataframe of sensor data
+        :return: json string of the dataframe"""
         return df.to_json(orient="index")
 
     def create_sensor_summaries(self, stationary_box: str) -> Iterator[SchemaSensorSummary]:
-        """Creates a summary of the sensor data to be written to the database. skips generating a geometry if the sensor has a stationary box"""
+        """Creates a summary of the sensor data to be written to the database. skips generating a geometry if the sensor has a stationary box
+        param stationary_box: geometry string of the stationary box
+        :return: iterator of the sensor summaries
+        """
         data_dict = self.dataframe_to_dict(self.df)
         # sensor_summaries = []
 
@@ -44,7 +50,7 @@ class SensorDTO:
                 # TODO if df has location data, check if it is within the 2.5km from the centre point of the stationary box.
                 # If not then do not use the stationary box
 
-                (df, geometry_string) = self.is_within_stationary_box(df, stationary_box)
+                (df, geometry_string) = self.is_within_stationary_box(df, stationary_box, threshhold=2)
 
                 stationaryBool = True if geometry_string == stationary_box else False
 
@@ -63,7 +69,6 @@ class SensorDTO:
 
     def generate_geomertyString(self, df: pd.DataFrame):
         """generates a geometry string from a dataframe of sensor data
-
         :param df: dataframe of sensor data
         :return: geometry string
         """
@@ -100,17 +105,18 @@ class SensorDTO:
 
         return longitude.mean(), latitude.mean()
 
-    def is_within_stationary_box(self, df: pd.DataFrame, boxGeometry: str) -> Tuple[pd.DataFrame, str]:
+    def is_within_stationary_box(self, df: pd.DataFrame, boxGeometry: str, threshold: float = 2) -> Tuple[pd.DataFrame, str]:
         """replaces the gps coordinates of the dataframe with the given coordinates if the distance between the two is less than 2km
         or if the coordinates are not valid/NaN
 
         :param df: dataframe to check
         :param boxGeometry: geometry string of the stationary box
+        :param threshold: threshold distance in km to check if the coordinates are within the stationary box, default is 2km
         :return: dataframe, with the coordinates replaced only if the distance is less than 2km or if the coordinates are not valid/NaN. Bounding box string
         """
 
         (centerPoint_long, centerPoint_lat) = self.get_centre_of_polygon(boxGeometry)
-        threshhold = 2  # km
+
         boundingBoxString = boxGeometry
 
         # if the dataframe has no location data, then replace the dataframe with the given coordinates
@@ -118,28 +124,26 @@ class SensorDTO:
             df["latitude"] = centerPoint_lat
             df["longitude"] = centerPoint_long
         else:
-            # if locations are within the threshhold then replace the dataframe with the given coordinates
-            if self.haversine(centerPoint_long, centerPoint_lat, df["longitude"].min(), df["latitude"].max()) < threshhold:
+            # if locations are within the threshold then replace the dataframe with the given coordinates
+            if self.haversine(centerPoint_long, centerPoint_lat, df["longitude"].min(), df["latitude"].max()) < threshold:
                 df["latitude"] = centerPoint_lat
                 df["longitude"] = centerPoint_long
-            elif self.haversine(centerPoint_long, centerPoint_lat, df["longitude"].max(), df["latitude"].max()) < threshhold:
+            elif self.haversine(centerPoint_long, centerPoint_lat, df["longitude"].max(), df["latitude"].max()) < threshold:
                 df["latitude"] = centerPoint_lat
                 df["longitude"] = centerPoint_long
-            # if locations are not within the threshhold then generate a new bounding box
+            # if locations are not within the threshold then generate a new bounding box
             else:
                 boundingBoxString = self.generate_geomertyString(df)
 
         return df, boundingBoxString
 
-    def haversine(self, lon1, lat1, lon2, lat2) -> float:
-        # Reference: https://stackoverflow.com/questions/4913349/haversine-formula-in-python-bearing-and-distance-between-two-gps-points
+    def haversine(self, lon1: float, lat1: float, lon2: float, lat2: float) -> float:
         """Calculate the great circle distance in kilometers between two points on the earth (specified in decimal degrees)
-
+        :reference: https://stackoverflow.com/questions/4913349/haversine-formula-in-python-bearing-and-distance-between-two-gps-points
         :param lon1: longitude of point 1
         :param lat1: latitude of point 1
         :param lon2: longitude of point 2
         :param lat2: latitude of point 2
-
         :return: Distance in km as a float
         """
 
@@ -155,8 +159,10 @@ class SensorDTO:
         return c * r
 
     def dataframe_to_dict(self, df: pd.DataFrame) -> dict[str, pd.DataFrame]:
-        """converts a dataframe to a dictionary of dataframes with timestamp keys."""
-
+        """converts a dataframe to a dictionary of dataframes with timestamp keys.
+        :param df: dataframe to convert
+        :return: dictionary of dataframes with timestamp keys
+        """
         data = {}  # intialise empty dictionary to store each day of records
 
         # using the dates which are already supplied. This strategy in the line below converts them and rounds down to date using 'd' flag
@@ -226,7 +232,11 @@ class SensorDTO:
         return measurements_columns
 
     def to_geojson(self, averaging_methods: list[str], averaging_frequency: str = "H") -> dict[str, Any]:
-        """Converts a dataframe to a geojson object"""
+        """Converts a dataframe to a geojson object
+        :param df: dataframe to convert
+        :param averaging_method: method to use for averaging (e.g. mean, median, min, max)
+        :param averaging_frequency: frequency to use for averaging (e.g. H for hourly, D for daily, M for monthly)
+        :return: geojson dictionary"""
 
         measurement_columns = self.ConvertDFToAverages(averaging_methods, averaging_frequency)
 
@@ -268,9 +278,9 @@ class SensorDTO:
 
     @staticmethod
     def JsonStringToDataframe(jsonb: tuple) -> pd.DataFrame:
-        """converts a jsonb string to a pandas dataframe
+        """converts a jsonb string to a dataframe
         :param jsonb: jsonb string
-        :return: pandas dataframe
+        :return: dataframe
         """
         # Preparing the json string to be read into dataframe
         my_json_string = str(jsonb)

@@ -12,4 +12,5 @@ class BaseWrapper(abc.ABC):
 
     @abc.abstractmethod
     def get_sensors(self, start: dt.datetime, end: dt.datetime, *args, **kwargs):
+        """Get sensor data from the respective API."""
         ...

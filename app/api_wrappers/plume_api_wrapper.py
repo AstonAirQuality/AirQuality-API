@@ -15,6 +15,10 @@ from api_wrappers.plume_sensor import PlumeSensor
 
 
 class APITimeoutException(IOError):
+    """Exception raised when the API times out.
+    Extends the IOError class.
+    :param IOError: Base class for I/O related errors."""
+
     pass
 
 
@@ -22,6 +26,12 @@ class PlumeWrapper(BaseWrapper):
     """API wrapper for the Plume dashboard."""
 
     def __init__(self, email: str, password: str, API_KEY: str, org_number: int):
+        """Initializes the Plume API wrapper.
+        :param email: email address of the Plume account
+        :param password: password of the Plume account
+        :param API_KEY: API key of the Plume account
+        :param org_number: organization number of the Plume account
+        """
         self.org = str(org_number)
         self.__session = self.__login(email, password, API_KEY)
 
@@ -78,7 +88,8 @@ class PlumeWrapper(BaseWrapper):
 
     def fetch_lookup_ids(self, serial_nums: list[str]) -> dict[str, str]:
         """Fetches look ids from the dashboard
-        return dict: {serial_num:lookup_id}
+        :param serial_nums: list of serial numbers
+        :return dict: {serial_num:lookup_id}
         """
         sensor_dict = dict.fromkeys(serial_nums, None)
 
@@ -94,7 +105,11 @@ class PlumeWrapper(BaseWrapper):
     ###################################################################################################################
 
     def get_sensors(self, sensor_dict: dict[str, str], start: dt.datetime, end: dt.datetime) -> list[PlumeSensor]:
-        """Fetches data from the Plume API for a given list of sensor lookup ids in the specified timeframe."""
+        """Fetches data from the Plume API for a given list of sensor lookup ids in the specified timeframe.
+        :param sensor_dict: dict of sensor lookup ids
+        :param start: start time of the data
+        :param end: end time of the data
+        :return: list of PlumeSensor objects"""
 
         plumeSensors = []
         sensorids = list(sensor_dict.keys())
@@ -130,7 +145,11 @@ class PlumeWrapper(BaseWrapper):
         return plumeSensors
 
     def get_sensors_merged_from_zip(self, sensorids: list[str], start: dt.datetime, end: dt.datetime) -> list[PlumeSensor]:
-        """Fetches data from the Plume API for a given sensor lookup id in the specified timeframe."""
+        """Fetches data from the Plume API for a given sensor lookup id in the specified timeframe.
+        :param sensorids: list of sensor lookup ids
+        :param start: start time of the data
+        :param end: end time of the data
+        :return: list of PlumeSensor objects"""
         plumeSensors = []
 
         link = self.get_zip_file_link(sensorids, start, end, include_measurements=True)
@@ -151,13 +170,10 @@ class PlumeWrapper(BaseWrapper):
     ##measurement data - json export
     def get_sensor_measurement_data(self, sensorId: str, start: dt.datetime, end: dt.datetime) -> List:
         """Downloads the sensor data from the Plume API and loads to PlumeSensor objects.
-
-        :param sensorID: id of the sensor to retrieve
-        :param start: start time
-        :param end: end time
-        :return: List of measurement json data
-         Generator of PlumeSensor Objects for each sensor populated with data from the API
-        """
+        :param sensorId: sensor lookup id
+        :param start: start time of the data
+        :param end: end time of the data
+        :return: list of PlumeSensor objects"""
 
         difference = end - start
         dataList = []
@@ -186,8 +202,16 @@ class PlumeWrapper(BaseWrapper):
 
     ##Location data - csv export
     def get_sensor_location_data(self, sensors: list[str], start: dt.datetime, end: dt.datetime, link: str) -> List[PlumeSensor]:
+        """Downloads the sensor data from the Plume API and loads to PlumeSensor objects.
+        :param sensors: list of sensor lookup ids
+        :param start: start time of the data
+        :param end: end time of the data
+        :param link: link to the zip file
+        :return: list of PlumeSensor objects"""
+
         plumeSensors = []
 
+        # if link is not provided, get the link
         if link is None:
             link = self.get_zip_file_link(sensors, start, end, include_measurements=False)
 
@@ -196,6 +220,12 @@ class PlumeWrapper(BaseWrapper):
         return plumeSensors
 
     def get_zip_file_link(self, sensors: list[str], start: dt.datetime, end: dt.datetime, include_measurements: bool, timeout=150) -> str:
+        """Gets the link to the zip file containing the sensor data from the Plume API.
+        :param sensors: list of sensor lookup ids
+        :param start: start time of the data
+        :param end: end time of the data
+        :param include_measurements: boolean to include measurements in the zip file
+        :param timeout: timeout for the request"""
         task_id = self.__session.post(
             f"https://api-preprod.plumelabs.com/2.0/user/organizations/" f"{self.org}/sensors/export",
             json={
@@ -225,10 +255,10 @@ class PlumeWrapper(BaseWrapper):
 
     def extract_zip(self, link: str, include_measurements: bool):
         """Download and extract zip into memory using link URL.
-
         :param link: url to sensor data zip file
-        :return:sensor id, sensor data in a string buffer
-        """
+        :param include_measurements: boolean to include measurements in the zip file
+        :return: list of tuples containing sensor id and buffer"""
+
         res = requests.get(link, stream=True)
         if not res.ok:
             raise IOError(f"Failed to download zip file from link: {link}")
@@ -239,8 +269,8 @@ class PlumeWrapper(BaseWrapper):
     @staticmethod
     def extract_zip_content(zip_: zipfile.ZipFile, include_measurements: bool) -> Iterator[Tuple[str, io.StringIO]]:
         """Extract zip into memory.
-
         :param zip_: zip file
+        :param include_measurements: boolean to include measurements in the zip file
         :return:sensor id, sensor data in a string buffer
         """
         for name in zip_.namelist():
@@ -253,27 +283,8 @@ class PlumeWrapper(BaseWrapper):
                     continue
 
             else:
-                # if skip all csv files except for position csv
+                # skip all csv files except for position csv
                 if "position" in pathlib.PurePath(name).parts[3]:
                     yield (pathlib.PurePath(name).parts[2].lstrip("sensor_"), io.StringIO(zip_.read(name).decode()))
                 else:
                     continue
-
-
-# if __name__ == "__main__":
-#     from os import environ as env
-
-#     from dotenv import load_dotenv
-
-#     load_dotenv()
-
-#     pw = PlumeWrapper(env["PLUME_EMAIL"], env["PLUME_PASSWORD"], env["PLUME_FIREBASE_API_KEY"], env["PLUME_ORG_NUM"])
-
-#     sensor_dict = {18749: None}
-#     start = dt.datetime(2021, 7, 22)
-#     end = dt.datetime(2021, 7, 23)
-
-#     sensors = pw.get_sensors(sensor_dict, start, end)
-#     for sensor in sensors:
-#         print(sensor.id)
-#         print(sensor.df)

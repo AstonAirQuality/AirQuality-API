@@ -11,17 +11,20 @@ from api_wrappers.Sensor_DTO import SensorDTO
 
 class PlumeSensor(SensorDTO):
     """Per sensor object designed to wrap the csv files returned by the Plume API.
-
-    Example Usage:
-        ps = PlumeSensor.from_csv("16397", open("sensor_measures_20211004_20211008_1.csv"))
-        print(ps.dataFrame)
+    Extends the SensorDTO class.
+    :param SensorDTO: SensorDTO class to inherit from.
     """
 
     def __init__(self, id_, dataframe: pd.DataFrame):
+        """Initializes the PlumeSensor object.
+        :param id_: The sensor id.
+        :param dataframe: The sensor data.
+        """
         super().__init__(id_, dataframe)
 
     def join_dataframes(self, mdf):
-        """Combines the measurement dataframe with the existing dataframe."""
+        """Combines the measurement dataframe with the existing dataframe.
+        :param mdf: The measurement dataframe."""
         self.df = pd.concat([self.df, mdf], axis=1)
 
         # drop rows where there is no measurement data
@@ -35,7 +38,8 @@ class PlumeSensor(SensorDTO):
 
     # measurement data
     def add_measurements_json(self, data: list):
-        """Extracts the measurement data from the Plume API JSON and adds it to the dataframe."""
+        """Extracts the measurement data from the Plume API JSON and adds it to the dataframe.
+        :param data: The Plume API JSON data."""
         try:
             dfList = []
 
@@ -54,7 +58,9 @@ class PlumeSensor(SensorDTO):
 
     @staticmethod
     def prepare_measurements(df: pd.DataFrame) -> pd.DataFrame:
-        """Prepares the measurement dataframe for use"""
+        """Prepares the measurement dataframe for merging with the locations dataframe and renames columns to match other sensor platform types.
+        :param df: The measurement dataframe.
+        :return: The prepared measurement dataframe."""
 
         df.drop(["id"], axis=1, inplace=True)
         df.rename(
