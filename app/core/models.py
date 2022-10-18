@@ -9,12 +9,23 @@ from sqlalchemy.sql import func
 
 
 class Logs(Base):
+    """Logs table extends Base class from database.py
+    :date (DateTime)
+    :data (JSON), log data in JSON format of data ingestion of multiple sensors"""
+
     __tablename__ = "Logs"
     date = Column(DateTime, primary_key=True, default=func.now())
     data = Column(JSON, nullable=False)
 
 
 class Users(Base):
+    """Users table extends Base class from database.py
+    :uid or userid (Integer), primary key
+    :email (String), unique
+    :password (String)
+    :role (String)
+    """
+
     __tablename__ = "Users"
     uid = Column(String(50), primary_key=True, index=True)
     username = Column(String(50), nullable=True)
@@ -23,6 +34,11 @@ class Users(Base):
 
 
 class SensorTypes(Base):
+    """SensorTypes table extends Base class from database.py
+    :id (Integer), primary key
+    :sensortype_name (String),
+    :description (String)"""
+
     __tablename__ = "SensorTypes"
     id = Column(Integer, primary_key=True)
     name = Column(String(50), nullable=False)
@@ -30,6 +46,17 @@ class SensorTypes(Base):
 
 
 class Sensors(Base):
+    """Sensors table extends Base class from database.py
+    :id (Integer), primary key
+    :lookup_id (String), unique
+    :serial_number (String), unique
+    :active (Boolean)
+    :time_created (DateTime)
+    :time_updated (DateTime)
+    :stationary_box (Geometry)
+    :user_id (Integer), foreign key
+    :type_id (Integer), foreign key"""
+
     __tablename__ = "Sensors"
     id = Column(Integer, primary_key=True, index=True, nullable=False)
     lookup_id = Column(String(50), nullable=True)
@@ -59,6 +86,13 @@ class Sensors(Base):
 
 
 class SensorSummaries(Base):
+    """SensorSummaries table extends Base class from database.py
+    :timestamp (DateTime), primary key
+    :geom (Geometry)
+    :measurement_count (Integer)
+    :measurement_data (JSON)
+    :stationary (Boolean)
+    :sensor_id (Integer), foreign key"""
 
     __tablename__ = "SensorSummaries"
     timestamp = Column(Integer, primary_key=True, nullable=False)

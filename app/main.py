@@ -22,31 +22,40 @@ description = """
 Aston Air Quality API helps you do awesome stuff. 🚀
 
 ## Sensors
-
 You can:
-* **read sensors**.
-* **create sensors**.
-* **update sensors**.
-* **delete sensors**.
+* **Create sensors**.
+* **Read sensors**.
+* **Update sensors**.
+* **Delete sensors**.
 
 ## Sensor Summaries
-
 You can:
 * **read sensor summaries**.
 
 ## Sensor Types
-
 You can:
-* **read sensor types**.
-* **create sensor types**.
-* **update sensor types**.
-* **delete sensor types**.
+* **Create sensor types**.
+* **Read sensor types**.
+* **Update sensor types**.
+* **Delete sensor types**.
 
 ## Users.
 You can:
 * **read users**.
 * **create users**.
 
+## Logs.
+You can:
+* **read logs**.
+* **delete logs**.
+
+## Auth
+You can:
+* **signin**.
+* **signup**.
+* **firebase login**.
+* **firebase register**.
+* **delete account**.
 """
 
 stage = env.get("AWS_STAGE_NAME", None)
@@ -64,10 +73,8 @@ app.include_router(logsRouter, prefix="/log", tags=["log"])
 app.include_router(authRouter, prefix="/auth", tags=["auth"])
 
 
-# # TODO docs issue: openapi.json is being nested in a path (e.g. /prod/prod/openapi.json)
-
+# TODO change this to a more secure origin
 origins = ["*"]
-
 app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,

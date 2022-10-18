@@ -3,8 +3,6 @@ import datetime as dt
 from core.models import SensorSummaries as ModelSensorSummary
 from db.database import SessionLocal
 from fastapi import APIRouter, HTTPException, Query, status
-from psycopg2.errors import UniqueViolation
-from sqlalchemy.exc import IntegrityError
 
 from routers.helpers.helperfunctions import convertDateRangeStringToDate
 from routers.helpers.sensorSummarySharedFunctions import (
@@ -26,11 +24,18 @@ def get_sensorSummaries(
     start: str,
     end: str,
     columns: list[str] = Query(default=["sensor_id", "measurement_count", "geom", "timestamp"]),
-    geom_type: str = Query(None),
+    spatial_query_type: str = Query(None),
     geom: str = Query(None),
     sensor_ids: list[int] = Query(default=[]),
 ):
-    """read sensor summaries e.g /read/28-09-2022/30-09-2022"""
+    """read sensor summaries given a date range (e.g /read/28-09-2022/30-09-2022) and any optional filters then return a json of sensor summaries
+    :param start: start date of the query in the format dd-mm-yyyy
+    :param end: end date of the query in the format dd-mm-yyyy
+    :param columns: list of columns to return from the sensor summaries table
+    :param spatial_query_type: type of spatial query to perform (e.g intersects, contains, within ) - see spatialQueryBuilder for more info
+    :param geom: geometry to use in the spatial query (e.g POINT(0 0), POLYGON((0 0, 0 1, 1 1, 1 0, 0 0)) ) - see spatialQueryBuilder for more info
+    :param sensor_ids: list of sensor ids to filter by if none then all sensors that match the above filters will be returned
+    :return: sensor summaries"""
 
     (startDate, endDate) = convertDateRangeStringToDate(start, end)
 
@@ -43,7 +48,7 @@ def get_sensorSummaries(
             fields.append(getattr(ModelSensorSummary, col))
 
         query = db.query(*fields).filter(ModelSensorSummary.timestamp >= timestampStart, ModelSensorSummary.timestamp <= timestampEnd)
-        query = searchQueryFilters(query, geom_type, geom, sensor_ids)
+        query = searchQueryFilters(query, spatial_query_type, geom, sensor_ids)
         query_result = query.all()
 
         # # must convert wkb to wkt string to be be api friendly
@@ -69,12 +74,22 @@ def get_sensorSummaries(
 def get_geojson_Export_of_sensorSummaries(
     start: str,
     end: str,
-    geom_type: str = Query(None),
+    spatial_query_type: str = Query(None),
     geom: str = Query(None),
-    sensor_ids: list[int] = Query(default=[]),
     averaging_methods: list[str] = Query(default=["mean", "count"]),
     averaging_frequency: str = Query(None),
+    sensor_ids: list[int] = Query(default=[]),
 ):
+    """read sensor summaries given a date range and any optional filters then return as geojson
+    :param start: start date of tthe query in the format dd-mm-yyyy
+    :param end: end date of the query in the format dd-mm-yyyy
+    :param spatial_query_type: type of spatial query to perform e.g intersects, contains, within
+    :param geom: geometry to use in the spatial query e.g POINT(0 0), POLYGON((0 0, 0 1, 1 1, 1 0, 0 0))
+    :param averaging_methods: list of averaging methods to use e.g mean, count
+    :param averaging_frequency: frequency to average the data by e.g H, D, M, Y
+    :param sensor_ids: list of sensor ids to filter by, if none then all sensors that match the above filters will be returned
+    """
+
     (startDate, endDate) = convertDateRangeStringToDate(start, end)
 
     timestampStart = int(dt.datetime.timestamp(startDate.replace(tzinfo=dt.timezone.utc)))
@@ -83,7 +98,7 @@ def get_geojson_Export_of_sensorSummaries(
     try:
 
         query = db.query(ModelSensorSummary.sensor_id, ModelSensorSummary.measurement_data).filter(ModelSensorSummary.timestamp >= timestampStart, ModelSensorSummary.timestamp <= timestampEnd)
-        query = searchQueryFilters(query, geom_type, geom, sensor_ids)
+        query = searchQueryFilters(query, spatial_query_type, geom, sensor_ids)
         query_result = query.all()
 
         # # must convert wkb to wkt string to be be api friendly

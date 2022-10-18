@@ -1,17 +1,11 @@
-import datetime as dt
-
 from api_wrappers.Sensor_DTO import SensorDTO
 from core.models import SensorSummaries as ModelSensorSummary
 from core.schema import GeoJsonExport
 from core.schema import SensorSummary as SchemaSensorSummary
 from db.database import SessionLocal
-from fastapi import HTTPException, Query, status
+from fastapi import HTTPException, status
 from psycopg2.errors import UniqueViolation
-from routers.helpers.helperfunctions import convertDateRangeStringToDate
 from routers.helpers.spatialSharedFunctions import convertWKBtoWKT, spatialQueryBuilder
-
-# from shapely.geometry import Point, Polygon
-# from shapely.wkt import loads
 from sqlalchemy.exc import IntegrityError
 
 db = SessionLocal()
@@ -107,10 +101,10 @@ def upsert_sensorSummary(sensorSummary: SchemaSensorSummary):
 #################################################################################################################################
 
 # adding search filters
-def searchQueryFilters(query: any, geom_type: str, geom: str, sensor_ids: list[str]) -> any:
+def searchQueryFilters(query: any, spatial_query_type: str, geom: str, sensor_ids: list[str]) -> any:
     """applies search filters to the query
     :param query: query to apply filters to
-    :param geom_type: type of geometry to filter by
+    :param spatial_query_type: type of geometry filter query to use (intersects, contains, within)
     :param geom: geometry to filter by
     :param sensor_ids: list of sensor ids to filter by
     :return: query with filters applied"""
@@ -118,8 +112,8 @@ def searchQueryFilters(query: any, geom_type: str, geom: str, sensor_ids: list[s
     if sensor_ids:
         query = query.filter(ModelSensorSummary.sensor_id.in_(sensor_ids))
 
-    if geom_type and geom is not None:
-        query = spatialQueryBuilder(query, ModelSensorSummary, "geom", geom_type, geom)
+    if spatial_query_type and geom is not None:
+        query = spatialQueryBuilder(query, ModelSensorSummary, "geom", spatial_query_type, geom)
 
     return query
 

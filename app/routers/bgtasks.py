@@ -14,13 +14,13 @@ from dotenv import load_dotenv
 from fastapi import APIRouter, BackgroundTasks, HTTPException, Query, status
 
 from routers.helpers.helperfunctions import convertDateRangeStringToDate
-from routers.helpers.sensorSummarySharedFunctions import upsert_sensorSummary
-from routers.logs import add_log
-from routers.sensors import (
-    get_active_sensors,
-    sensor_id_and_serialnum_from_lookup_id,
+from routers.helpers.sensorsSharedFunctions import (
+    get_active_sensors_for_scraping,
+    get_sensor_id_and_serialnum_from_lookup_id,
     set_last_updated,
 )
+from routers.helpers.sensorSummarySharedFunctions import upsert_sensorSummary
+from routers.logs import add_log
 
 load_dotenv()
 
@@ -56,7 +56,7 @@ async def upsert_scheduled_ingest_active_sensors(
             if sensorType == "Plume":
                 for sensorSummary in api.fetch_plume_data(startDate, endDate, dict_lookupid_stationaryBox):
                     lookupid = sensorSummary.sensor_id
-                    (sensorSummary.sensor_id, sensor_serial_number) = sensor_id_and_serialnum_from_lookup_id(str(lookupid))
+                    (sensorSummary.sensor_id, sensor_serial_number) = get_sensor_id_and_serialnum_from_lookup_id(str(lookupid))
                     try:
                         upsert_sensorSummary(sensorSummary)
                         upsert_log.append([sensorSummary.sensor_id, sensorSummary.timestamp, sensor_serial_number, True, "success"])
@@ -93,7 +93,7 @@ def get_lookupids_of_active_sensors_by_type(type_ids: list[int]) -> dict[int, di
     Returns dict: where dict[sensor_type_name][lookup_id] = stationary_box
 
     """
-    sensors = get_active_sensors(type_ids)
+    sensors = get_active_sensors_for_scraping(type_ids)
 
     # group sensors by type into a dictionary dict[sensor_type][lookup_id] = stationary_box
     sensor_dict = {}

@@ -11,6 +11,9 @@ db = SessionLocal()
 
 
 def add_user(user: SchemaUser):
+    """Add a new user to the database
+    :param user: User to add
+    :return: newly added User"""
     try:
         user = ModelUser(uid=user.uid, username=user.username, email=user.email, role=user.role)
         db.add(user)
@@ -28,6 +31,9 @@ def add_user(user: SchemaUser):
 
 
 def get_user_token_info(uid: str):
+    """Get user token info from the database
+    :param uid: user id
+    :return: tuple of user role and username"""
     try:
         result = db.query(ModelUser.role, ModelUser.username).filter(ModelUser.uid == uid).first()
     except Exception:

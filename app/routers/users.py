@@ -7,8 +7,7 @@ from core.models import Users as ModelUser
 from core.schema import User as SchemaUser
 from db.database import SessionLocal
 from dotenv import load_dotenv
-from fastapi import APIRouter, Depends, HTTPException, Query, status
-from psycopg2.errors import UniqueViolation
+from fastapi import APIRouter, Depends, HTTPException, status
 
 # error handling
 from sqlalchemy.exc import IntegrityError
@@ -27,7 +26,8 @@ load_dotenv()
 #################################################################################################################################
 @usersRouter.get("/read")
 def get_users(payload=Depends(auth_handler.auth_wrapper)):
-
+    """read all users and return a json of users
+    :return: users"""
     if checkRoleAdmin(payload) == False:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authorized")
 
@@ -40,6 +40,9 @@ def get_users(payload=Depends(auth_handler.auth_wrapper)):
 
 @usersRouter.get("/read/{uid}")
 def get_user_from_uid(uid: str, payload=Depends(auth_handler.auth_wrapper)):
+    """read a user from uid and return a json of user
+    :param uid: user uid
+    :return: user"""
 
     if checkRoleAboveUser(uid) == False:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authorized")
@@ -62,7 +65,10 @@ def get_user_from_uid(uid: str, payload=Depends(auth_handler.auth_wrapper)):
 #################################################################################################################################
 @usersRouter.put("/update/{uid}")
 def update_user(uid: str, user: SchemaUser, payload=Depends(auth_handler.auth_wrapper)):
-
+    """update a user using the user schema and uid
+    :param uid: user uid
+    :param user: user schema
+    :return: user"""
     # only allow update if user is admin or the user is reading their own data
     if checkRoleAdmin(payload) == False:
         if uid != payload["sub"]:
@@ -84,6 +90,9 @@ def update_user(uid: str, user: SchemaUser, payload=Depends(auth_handler.auth_wr
 #################################################################################################################################
 @usersRouter.delete("/delete/{uid}")
 def delete_user(uid: str, payload=Depends(auth_handler.auth_wrapper)):
+    """delete a user using the uid
+    :param uid: user uid
+    :return: user"""
 
     # only allow delete if user is admin or the user is deleting their own data
     if checkRoleAdmin(payload) == False:

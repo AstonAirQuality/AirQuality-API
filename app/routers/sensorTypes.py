@@ -17,6 +17,9 @@ auth_handler = AuthHandler()
 #################################################################################################################################
 @sensorsTypesRouter.post("/create", response_model=SchemaSensorType)
 def add_sensorType(sensorType: SchemaSensorType, payload=Depends(auth_handler.auth_wrapper)):
+    """create a sensor type using the sensor type schema
+    :param sensorType: sensor type schema
+    :return: sensor type"""
 
     if checkRoleAdmin(payload) == False:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authorized")
@@ -36,6 +39,8 @@ def add_sensorType(sensorType: SchemaSensorType, payload=Depends(auth_handler.au
 #################################################################################################################################
 @sensorsTypesRouter.get("/read")
 def get_sensorTypes():
+    """read all sensor types and return a json of sensor types
+    :return: sensor types"""
     try:
         result = db.query(ModelSensorType).all()
     except Exception:
@@ -48,7 +53,10 @@ def get_sensorTypes():
 #################################################################################################################################
 @sensorsTypesRouter.put("/update/{sensorType_id}", response_model=SchemaSensorType)
 def update_sensorType(sensorType_id: int, sensorType: SchemaSensorType, payload=Depends(auth_handler.auth_wrapper)):
-
+    """update a sensor type using the sensor type schema
+    :param sensorType_id: sensor type id
+    :param sensorType: sensor type schema
+    :return: sensor type"""
     if checkRoleAdmin(payload) == False:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authorized")
 
@@ -67,7 +75,9 @@ def update_sensorType(sensorType_id: int, sensorType: SchemaSensorType, payload=
 #################################################################################################################################
 @sensorsTypesRouter.delete("/delete/{sensorType_id}")
 def delete_sensorType(sensorType_id: int, payload=Depends(auth_handler.auth_wrapper)):
-
+    """delete a sensor type using the sensor type id
+    :param sensorType_id: sensor type id
+    :return: sensor type"""
     if checkRoleAdmin(payload) == False:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authorized")
 

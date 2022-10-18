@@ -5,10 +5,11 @@ from oauth2client.service_account import ServiceAccountCredentials
 from requests.exceptions import HTTPError
 
 
-# All credit to pyrebase5
-# https://github.com/davidvartanian/Pyrebase
 class Firebase:
-    """Firebase Interface"""
+    """Firebase Interface, Modified from pyrebase5 package
+    :reference: https://github.com/davidvartanian/Pyrebase
+
+    """
 
     def __init__(self, config):
         self.api_key = config["apiKey"]

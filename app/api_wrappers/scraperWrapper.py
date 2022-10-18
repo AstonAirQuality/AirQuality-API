@@ -15,6 +15,8 @@ from api_wrappers.Sensor_DTO import SensorDTO
 
 
 class ScraperWrapper:
+    """Wrapper class for fetching sensor data from the different apis"""
+
     def __init__(self):
         """initialise the api wrappers and load the environment variables"""
         load_dotenv()

@@ -10,7 +10,7 @@ from api_wrappers.Sensor_DTO import SensorDTO
 
 
 class PlumeSensor(SensorDTO):
-    """Per sensor object designed to wrap the csv files returned by the Plume API.
+    """Per sensor object designed to wrap the csv/json files returned by the Plume API.
     Extends the SensorDTO class.
     :param SensorDTO: SensorDTO class to inherit from.
     """

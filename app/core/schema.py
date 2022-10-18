@@ -9,6 +9,14 @@ from pydantic import BaseModel, constr, validator
 
 # TODO add validation for fields
 class SensorSummary(BaseModel):
+    """SensorSummary Schema extends BaseModel, used to validate form data from the API
+    :timestamp (int)
+    :geom (Optional[str]), WKTElement format
+    :measurement_count (int)
+    :measurement_data (str), JSON format
+    :stationary (bool)
+    :sensor_id (int)"""
+
     timestamp: int
     geom: Optional[str] = None
     measurement_count: int
@@ -32,7 +40,10 @@ class SensorSummary(BaseModel):
         }
 
     @validator("geom", pre=True, always=True)
-    def geom_must_contain(cls, v):
+    def geom_must_be_valid_geometry(cls, v):
+        """Validate that geom is a valid geometry
+        :param v: geom
+        :return: v if valid, raise HTTPException if not"""
         try:
             if v is not None:
                 shapely.wkt.loads(v)
@@ -40,9 +51,12 @@ class SensorSummary(BaseModel):
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"geom must be a valid WKTE geometry: {e}")
         return v
 
-    # TODO add validation - load to dataframe and check if timestamp is included
+    # TODO OPTIONAL additional validation - load to dataframe and check if columns exists (e.g timestamp,NO2,etc.)
     @validator("measurement_data", pre=True, always=True)
     def measurement_data_must_be_json(cls, v):
+        """Validate that measurement_data is a valid JSON
+        :param v: measurement_data
+        :return: v if valid, raise HTTPException if not"""
         try:
             json.loads(v)
         except Exception as e:
@@ -51,6 +65,15 @@ class SensorSummary(BaseModel):
 
 
 class Sensor(BaseModel):
+    """Sensor Schema extends BaseModel used to validate form data from the API
+    :lookup_id (str)
+    :serial_number (str)
+    :type_id (int)
+    :active (bool)
+    :stationary_box (str), WKTElement format
+    :user_id (str)
+    """
+
     lookup_id: str
     serial_number: str
     type_id: int
@@ -72,6 +95,11 @@ class Sensor(BaseModel):
 
 
 class SensorType(BaseModel):
+    """SensorType Schema extends BaseModel used to validate form data from the API
+    :name (str)
+    :description (str)
+    """
+
     name: str
     description: str
 
@@ -80,6 +108,13 @@ class SensorType(BaseModel):
 
 
 class User(BaseModel):
+    """User Schema extends BaseModel used to validate form data from the API
+    :uid (str)
+    :username (Optional[str])
+    :email (str)
+    :role (str)
+    """
+
     uid: str
     username: Optional[str] = None
     email: str
@@ -90,12 +125,16 @@ class User(BaseModel):
 
 
 class Log(BaseModel):
+    """Log Schema extends BaseModel used to validate form data from the API
+    :log_data (str)
+    """
+
     log_data: str
 
     class Config:
         orm_mode = True
 
-        # TODO add validation - load to dataframe and check if timestamp is included
+        # TODO OPTIONAL additional validation - load to dataframe and check if columns exists (e.g timestamp,sensorid,etc.)
         @validator("log_data", pre=True, always=True)
         def data_must_be_json(cls, v):
             try:
@@ -106,9 +145,18 @@ class Log(BaseModel):
 
 
 class PlumeSerialNumbers(BaseModel):
+    """PlumeSerialNumbers Schema extends BaseModel used to validate form data from the API
+    :serial_numbers (List[str])
+    """
+
     serial_numbers: List[str]
 
 
 class GeoJsonExport(BaseModel):
+    """GeoJsonExport Schema extends BaseModel used to validate form data from the API
+    :sensorid (int)
+    :geojson (Dict), GeoJSON format
+    """
+
     sensorid: int
     geojson: Dict
