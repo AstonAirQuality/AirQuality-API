@@ -50,7 +50,7 @@ class SensorDTO:
                 # TODO if df has location data, check if it is within the 2.5km from the centre point of the stationary box.
                 # If not then do not use the stationary box
 
-                (df, geometry_string) = self.is_within_stationary_box(df, stationary_box, threshhold=2)
+                (df, geometry_string) = self.is_within_stationary_box(df, stationary_box, threshold=2)
 
                 stationaryBool = True if geometry_string == stationary_box else False
 
