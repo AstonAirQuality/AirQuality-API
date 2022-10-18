@@ -2,7 +2,7 @@
 import datetime as dt
 
 from api_wrappers.scraperWrapper import ScraperWrapper
-from core.auth import AuthHandler
+from core.authentication import AuthHandler
 from core.models import Sensors as ModelSensor
 from core.models import SensorTypes as ModelSensorTypes  # TODO
 from core.models import Users as ModelUser  # TODO
@@ -15,7 +15,6 @@ from psycopg2.errors import ForeignKeyViolation, UniqueViolation
 # error handling
 from sqlalchemy.exc import IntegrityError
 
-from routers.helpers.authSharedFunctions import checkRoleAboveUser, checkRoleAdmin
 from routers.helpers.spatialSharedFunctions import convertWKBtoWKT
 
 sensorsRouter = APIRouter()
@@ -34,7 +33,7 @@ def add_sensor(sensor: SchemaSensor, payload=Depends(auth_handler.auth_wrapper))
     :param payload: auth payload
     :return: Sensor object"""
 
-    if checkRoleAdmin(payload) == False:
+    if auth_handler.checkRoleAdmin(payload) == False:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authorized")
 
     sensor = ModelSensor(
@@ -70,7 +69,7 @@ def add_plume_sensors(serialnumbers: SchemaPlumeSerialNumbers, response: Respons
     :param payload: auth payload
     :return: log of added/failed to add sensors"""
 
-    if checkRoleAboveUser(payload) == False:
+    if auth_handler.checkRoleAboveUser(payload) == False:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authorized")
 
     api = ScraperWrapper()
@@ -183,7 +182,7 @@ def update_sensor(sensor_id: int, sensor: SchemaSensor, payload=Depends(auth_han
     :param payload: auth payload
     :return: updated sensor"""
 
-    if checkRoleAboveUser(payload) == False:
+    if auth_handler.checkRoleAboveUser(payload) == False:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authorized")
 
     try:
@@ -193,7 +192,7 @@ def update_sensor(sensor_id: int, sensor: SchemaSensor, payload=Depends(auth_han
         else:
             # only allow update if user is admin or sensor belongs to user (the auth token matches the user_id of the sensor)
             # if no user is asignned to the sensor, then anyone above user can update it
-            if checkRoleAdmin(payload) == False:
+            if auth_handler.checkRoleAdmin(payload) == False:
                 if sensor_updated.user_id is not None & sensor_updated.user_id != payload["sub"]:
                     raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authorized")
 
@@ -235,7 +234,7 @@ def set_active_sensors(
     :param payload: auth payload
     :return: list of updated sensors"""
 
-    checkRoleAdmin(payload)
+    auth_handler.checkRoleAdmin(payload)
 
     try:
         db.query(ModelSensor).filter(ModelSensor.serial_number.in_(sensor_serialnumbers)).update({ModelSensor.active: active_state})
@@ -257,7 +256,7 @@ def delete_sensor(sensor_id: int, payload=Depends(auth_handler.auth_wrapper)):
     :param payload: auth payload
     :return: deleted sensor"""
 
-    if checkRoleAdmin(payload) == False:
+    if auth_handler.checkRoleAdmin(payload) == False:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authorized")
 
     try:

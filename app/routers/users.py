@@ -2,7 +2,7 @@
 import datetime as dt
 from os import environ as env
 
-from core.auth import AuthHandler
+from core.authentication import AuthHandler
 from core.models import Users as ModelUser
 from core.schema import User as SchemaUser
 from db.database import SessionLocal
@@ -11,8 +11,6 @@ from fastapi import APIRouter, Depends, HTTPException, status
 
 # error handling
 from sqlalchemy.exc import IntegrityError
-
-from routers.helpers.authSharedFunctions import checkRoleAboveUser, checkRoleAdmin
 
 usersRouter = APIRouter()
 
@@ -28,7 +26,7 @@ load_dotenv()
 def get_users(payload=Depends(auth_handler.auth_wrapper)):
     """read all users and return a json of users
     :return: users"""
-    if checkRoleAdmin(payload) == False:
+    if auth_handler.checkRoleAdmin(payload) == False:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authorized")
 
     try:
@@ -44,14 +42,14 @@ def get_user_from_uid(uid: str, payload=Depends(auth_handler.auth_wrapper)):
     :param uid: user uid
     :return: user"""
 
-    if checkRoleAboveUser(uid) == False:
+    if auth_handler.checkRoleAboveUser(uid) == False:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authorized")
 
     try:
         result = db.query(ModelUser).filter(ModelUser.uid == uid).first()
 
         # only allow read if user is admin or the user is reading their own data
-        if checkRoleAdmin(payload) == False:
+        if auth_handler.checkRoleAdmin(payload) == False:
             if result.uid != payload["sub"]:
                 raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authorized")
     except Exception:
@@ -70,7 +68,7 @@ def update_user(uid: str, user: SchemaUser, payload=Depends(auth_handler.auth_wr
     :param user: user schema
     :return: user"""
     # only allow update if user is admin or the user is reading their own data
-    if checkRoleAdmin(payload) == False:
+    if auth_handler.checkRoleAdmin(payload) == False:
         if uid != payload["sub"]:
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authorized")
         else:
@@ -95,7 +93,7 @@ def delete_user(uid: str, payload=Depends(auth_handler.auth_wrapper)):
     :return: user"""
 
     # only allow delete if user is admin or the user is deleting their own data
-    if checkRoleAdmin(payload) == False:
+    if auth_handler.checkRoleAdmin(payload) == False:
         if uid != payload["sub"]:
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authorized")
 

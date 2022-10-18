@@ -10,16 +10,17 @@ from fastapi import HTTPException, Security
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from routers.helpers.usersSharedFunctions import get_user_token_info
 
-# TODO move role verification here
+from core.authorisation import Authorisation
 
 
-class AuthHandler:
+class AuthHandler(Authorisation):
     """
     Handles the encoding and decoding of JWT tokens
     """
 
-    security = HTTPBearer()
-    secret = env["JWT_SECRET"]
+    def __init__(self):
+        super().__init__()
+        self.secret = env["JWT_SECRET"]
 
     def verify_firebase_token(self, token):
         """Verifies and decodes Firebase ID token.
@@ -98,5 +99,5 @@ class AuthHandler:
         except jwt.InvalidTokenError as e:
             raise HTTPException(status_code=401, detail="Invalid token")
 
-    def auth_wrapper(self, auth: HTTPAuthorizationCredentials = Security(security)):
+    def auth_wrapper(self, auth: HTTPAuthorizationCredentials = Security(HTTPBearer())):
         return self.decode_token(auth.credentials)

@@ -1,13 +1,11 @@
 # dependancies:
 import datetime as dt
 
-from core.auth import AuthHandler
+from core.authentication import AuthHandler
 from core.models import Logs as ModelLogs
 from core.schema import Log as SchemaLog
 from db.database import SessionLocal
 from fastapi import APIRouter, Depends, HTTPException, status
-
-from routers.helpers.authSharedFunctions import checkRoleAdmin
 
 logsRouter = APIRouter()
 
@@ -40,7 +38,7 @@ def get_log(payload=Depends(auth_handler.auth_wrapper)):
     :param payload: auth payload
     :return: log object"""
 
-    if checkRoleAdmin(payload) == False:
+    if auth_handler.checkRoleAdmin(payload) == False:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authorized")
     try:
         result = db.query(ModelLogs).all()
@@ -55,7 +53,7 @@ def get_log(log_date: str, payload=Depends(auth_handler.auth_wrapper)):
     :param log_date: date of the log
     :param payload: auth payload
     :return: log object"""
-    if checkRoleAdmin(payload) == False:
+    if auth_handler.checkRoleAdmin(payload) == False:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authorized")
 
     try:
@@ -78,7 +76,7 @@ def delete_log(log_date: str, payload=Depends(auth_handler.auth_wrapper)):
     :param log_date: date of the log
     :param payload: auth payload
     :return: log object"""
-    if checkRoleAdmin(payload) == False:
+    if auth_handler.checkRoleAdmin(payload) == False:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authorized")
 
     try:

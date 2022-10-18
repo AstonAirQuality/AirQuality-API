@@ -2,7 +2,7 @@
 from os import environ as env
 
 from config.firebaseConfig import PyreBaseAuth
-from core.auth import AuthHandler
+from core.authentication import AuthHandler
 from core.schema import User as SchemaUser
 from fastapi import APIRouter, Header, HTTPException, Query, status
 

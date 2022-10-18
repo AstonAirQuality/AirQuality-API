@@ -1,11 +1,9 @@
 # dependancies:
-from core.auth import AuthHandler
+from core.authentication import AuthHandler
 from core.models import SensorTypes as ModelSensorType
 from core.schema import SensorType as SchemaSensorType
 from db.database import SessionLocal
 from fastapi import APIRouter, Depends, HTTPException, status
-
-from routers.helpers.authSharedFunctions import checkRoleAdmin
 
 sensorsTypesRouter = APIRouter()
 
@@ -21,7 +19,7 @@ def add_sensorType(sensorType: SchemaSensorType, payload=Depends(auth_handler.au
     :param sensorType: sensor type schema
     :return: sensor type"""
 
-    if checkRoleAdmin(payload) == False:
+    if auth_handler.checkRoleAdmin(payload) == False:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authorized")
 
     try:
@@ -57,7 +55,7 @@ def update_sensorType(sensorType_id: int, sensorType: SchemaSensorType, payload=
     :param sensorType_id: sensor type id
     :param sensorType: sensor type schema
     :return: sensor type"""
-    if checkRoleAdmin(payload) == False:
+    if auth_handler.checkRoleAdmin(payload) == False:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authorized")
 
     try:
@@ -78,7 +76,7 @@ def delete_sensorType(sensorType_id: int, payload=Depends(auth_handler.auth_wrap
     """delete a sensor type using the sensor type id
     :param sensorType_id: sensor type id
     :return: sensor type"""
-    if checkRoleAdmin(payload) == False:
+    if auth_handler.checkRoleAdmin(payload) == False:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authorized")
 
     try:
