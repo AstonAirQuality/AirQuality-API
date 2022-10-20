@@ -70,6 +70,8 @@ def get_sensorSummaries(
     return results
 
 
+# TODO include stationary bool and geom in the query. for stationary sensors use its geom for the bounding boxes in the geojson.
+# for non stationary sensors calculate the bounding box from the sensor readings
 @sensorSummariesRouter.get("/readasgeojson/{start}/{end}")
 def get_geojson_Export_of_sensorSummaries(
     start: str,
@@ -96,8 +98,9 @@ def get_geojson_Export_of_sensorSummaries(
     timestampEnd = int(dt.datetime.timestamp(endDate.replace(tzinfo=dt.timezone.utc)))
 
     try:
-
-        query = db.query(ModelSensorSummary.sensor_id, ModelSensorSummary.measurement_data).filter(ModelSensorSummary.timestamp >= timestampStart, ModelSensorSummary.timestamp <= timestampEnd)
+        query = db.query(ModelSensorSummary.sensor_id, ModelSensorSummary.geom, ModelSensorSummary.stationary, ModelSensorSummary.measurement_data).filter(
+            ModelSensorSummary.timestamp >= timestampStart, ModelSensorSummary.timestamp <= timestampEnd
+        )
         query = searchQueryFilters(query, spatial_query_type, geom, sensor_ids)
         query_result = query.all()
 

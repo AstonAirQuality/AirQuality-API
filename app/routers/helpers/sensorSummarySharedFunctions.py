@@ -119,17 +119,17 @@ def searchQueryFilters(query: any, spatial_query_type: str, geom: str, sensor_id
 
 
 def JsonToSensorDTO(results: list) -> list[SensorDTO]:
-    """converts a list of sensor summaries into a list of sensor DTOs
+    """converts a list of sensor summaries into a list of sensor DTOs.
     :param results: list of sensor summaries
     :return: list of sensor DTOs"""
 
-    # group sensors by id into a dictionary dict[sensor_id] = list[measurement data]
+    # group sensors by id into a dictionary dict[sensor_id] = dict{json_ : measurement data, "boundingBox": geom}
     sensor_dict = {}
     for sensorSummary in results:
         if sensorSummary["sensor_id"] in sensor_dict:
-            sensor_dict[sensorSummary["sensor_id"]].append(sensorSummary["measurement_data"])
+            sensor_dict[sensorSummary["sensor_id"]].append({"json_": sensorSummary["measurement_data"], "boundingBox": sensorSummary["geom"] if sensorSummary["stationary"] == True else None})
         else:
-            sensor_dict[sensorSummary["sensor_id"]] = [sensorSummary["measurement_data"]]
+            sensor_dict[sensorSummary["sensor_id"]] = [{"json_": sensorSummary["measurement_data"], "boundingBox": sensorSummary["geom"] if sensorSummary["stationary"] == True else None}]
 
     # convert list of measurement data into a sensorDTO
     sensors = []
