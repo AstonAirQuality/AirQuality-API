@@ -105,6 +105,7 @@ class SensorType(BaseModel):
 
     class Config:
         orm_mode = True
+        read_with_orm_mode = True
 
 
 class User(BaseModel):

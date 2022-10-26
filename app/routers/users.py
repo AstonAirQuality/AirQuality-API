@@ -36,22 +36,33 @@ def get_users(payload=Depends(auth_handler.auth_wrapper)):
     return result
 
 
-@usersRouter.get("/read/{uid}")
-def get_user_from_uid(uid: str, payload=Depends(auth_handler.auth_wrapper)):
-    """read a user from uid and return a json of user
-    :param uid: user uid
+@usersRouter.get("/read-from/{column}")
+def get_user_from_column(column: str, searchvalue: str, payload=Depends(auth_handler.auth_wrapper)):
+    """query/read a user from searchvalue  and column name and return a json of the first user
+    :param column: column to apply the filter on (uid, email, username)
+    :param searchvalue : user searchvalue
     :return: user"""
 
-    if auth_handler.checkRoleAboveUser(uid) == False:
+    # query all users which match the searchvalue (only used for username searching)
+    queryAll = False
+
+    if column == "email" and auth_handler.checkRoleAdmin(payload) == False:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authorized")
+    # only allow read if user is admin or the user is reading their own data
+    elif column == "uid" and (auth_handler.checkRoleAdmin(payload) == False or searchvalue != payload["sub"]):
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authorized")
+    elif column == "username" or column == "role":
+        queryAll = True
+        if auth_handler.checkRoleAdmin(payload) == False:
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authorized")
+    elif column not in ["uid", "email", "username", "role"]:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid column name")
 
     try:
-        result = db.query(ModelUser).filter(ModelUser.uid == uid).first()
-
-        # only allow read if user is admin or the user is reading their own data
-        if auth_handler.checkRoleAdmin(payload) == False:
-            if result.uid != payload["sub"]:
-                raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authorized")
+        if queryAll:
+            result = db.query(ModelUser).filter(getattr(ModelUser, column) == searchvalue).all()
+        else:
+            result = db.query(ModelUser).filter(getattr(ModelUser, column) == searchvalue).first()
     except Exception:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Could retrieve user")
 
@@ -81,6 +92,26 @@ def update_user(uid: str, user: SchemaUser, payload=Depends(auth_handler.auth_wr
         db.rollback()
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
     return user
+
+
+@usersRouter.patch("/update-role/{uid}/{role}")
+def update_user_role(uid: str, role: str, payload=Depends(auth_handler.auth_wrapper)):
+    """update a user using the user schema and uid
+    :param uid: user uid
+    :param role: user role
+    :return: user"""
+
+    # only allow update if user is admin only
+    if auth_handler.checkRoleAdmin(payload) == False:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authorized")
+
+    try:
+        db.query(ModelUser).filter(ModelUser.uid == uid).update({"role": role})
+        db.commit()
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
+    return {"uid": uid, "role": role}
 
 
 #################################################################################################################################

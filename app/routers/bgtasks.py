@@ -126,9 +126,9 @@ def update_sensor_last_updated(upsert_log: list[list]) -> dict:
                 error_message = "sensor last updated failed: " + str(e)
 
         if timestamp in log_dictionary:
-            log_dictionary[timestamp][id_] = [sensor_serial_number, success_status, error_message]
+            log_dictionary[timestamp][id_] = {"serial_number": sensor_serial_number, "status": success_status, "message": error_message}
         else:
-            log_dictionary[timestamp] = {id_: [sensor_serial_number, success_status, error_message]}
+            log_dictionary[timestamp] = {id_: {"serial_number": sensor_serial_number, "status": success_status, "message": error_message}}
 
     add_log(SchemaLog(log_data=json.dumps(log_dictionary)))
 

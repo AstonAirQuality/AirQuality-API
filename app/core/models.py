@@ -21,6 +21,7 @@ class Logs(Base):
 class Users(Base):
     """Users table extends Base class from database.py
     :uid or userid (Integer), primary key
+    :username (String)
     :email (String), unique
     :password (String)
     :role (String)

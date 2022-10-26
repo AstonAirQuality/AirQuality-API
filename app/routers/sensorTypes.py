@@ -1,4 +1,6 @@
 # dependancies:
+from unittest import result
+
 from core.authentication import AuthHandler
 from core.models import SensorTypes as ModelSensorType
 from core.schema import SensorType as SchemaSensorType
@@ -41,6 +43,18 @@ def get_sensorTypes():
     :return: sensor types"""
     try:
         result = db.query(ModelSensorType).all()
+    except Exception:
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Could retrieve sensorTypes")
+    return result
+
+
+@sensorsTypesRouter.get("/read/paginated/{page}/{limit}")
+def get_sensorTypes_paginated(page: int, limit: int):
+    """read all sensor types and return a json of sensor types
+    :return: sensor types"""
+    try:
+        # NOTE: using the model ModelSensorType does not allow for response to be ordered by id,name,description, we must explicitly state the columns if we want to order the response
+        result = db.query(ModelSensorType.id, ModelSensorType.name, ModelSensorType.description).offset((page - 1) * limit).limit(limit).all()
     except Exception:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Could retrieve sensorTypes")
     return result
