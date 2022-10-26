@@ -171,6 +171,53 @@ def get_sensors_joined(
     return results
 
 
+# get sensors joined paginated
+@sensorsRouter.get("/read/join-users-sensor-types/paginated/{page}/{limit}")
+def get_sensors_joined_paginated(
+    page: int,
+    limit: int,
+    columns: list[str] = Query(default=["id", "lookup_id", "serial_number", "active", "stationary_box", "time_updated"]),
+    join_sensor_types: bool = Query(default=True),
+    join_user: bool = Query(default=True),
+):
+
+    """Returns all paginated sensors in the database
+    :param page: page number
+    :param limit: number of items per page
+    :param columns: list of columns to return
+    :param join_sensor_types: boolean to join sensor types
+    :param join_user: boolean to join user
+    :return: list of sensors"""
+
+    try:
+        fields = []
+        for col in columns:
+            fields.append(getattr(ModelSensor, col))
+
+        if join_sensor_types:
+            fields.append(getattr(ModelSensorTypes, "name").label("type_name"))
+        if join_user:
+            fields.append(getattr(ModelUser, "username").label("username"))
+            fields.append(getattr(ModelUser, "uid").label("uid"))
+
+        # result = db.query(*fields).select_from(ModelSensor).join(ModelSensorTypes, ModelUser, isouter=True).all()
+        result = db.query(*fields).select_from(ModelSensor).join(ModelSensorTypes, ModelUser, isouter=True).offset((page - 1) * limit).limit(limit).all()
+
+        # must convert wkb to wkt string to be be api friendly
+        results = []
+        for row in result:
+            row_as_dict = dict(row._mapping)
+            row_as_dict["stationary_box"] = convertWKBtoWKT(row_as_dict["stationary_box"])
+            row_as_dict["username"] = str(row_as_dict["username"]) + " " + str(row_as_dict["uid"])  # join username and uid
+            del row_as_dict["uid"]
+            results.append(row_as_dict)
+
+    except Exception as e:
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
+
+    return results
+
+
 #################################################################################################################################
 #                                                  Update                                                                       #
 #################################################################################################################################
