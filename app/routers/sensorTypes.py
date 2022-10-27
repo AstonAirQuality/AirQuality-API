@@ -42,7 +42,8 @@ def get_sensorTypes():
     """read all sensor types and return a json of sensor types
     :return: sensor types"""
     try:
-        result = db.query(ModelSensorType).all()
+        # NOTE: using the model ModelSensorType does not allow for response to be ordered by id,name,description, we must explicitly state the columns if we want to order the response
+        result = db.query(ModelSensorType.id, ModelSensorType.name, ModelSensorType.description).all()
     except Exception:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Could retrieve sensorTypes")
     return result

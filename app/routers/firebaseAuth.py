@@ -4,9 +4,10 @@ from os import environ as env
 from config.firebaseConfig import PyreBaseAuth
 from core.authentication import AuthHandler
 from core.schema import User as SchemaUser
-from fastapi import APIRouter, Header, HTTPException, Query, status
+from fastapi import APIRouter, Depends, Header, HTTPException, Query, status
 
 from routers.helpers.usersSharedFunctions import add_user
+from routers.users import delete_user
 
 authRouter = APIRouter()
 auth_handler = AuthHandler()
@@ -21,7 +22,7 @@ async def signup(firebase_token=Header(default=None), username: str = Query(None
     try:
         decoded_jwt = auth_handler.verify_firebase_token(firebase_token)
     except Exception as e:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token")
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid token")
 
     # assign username if it exists in the firebase user record (displayName)
     if username is None:
@@ -59,13 +60,18 @@ async def login(firebase_token=Header(default=None)):
 #################################################################################################################################
 #                                                  Firebase                                                                     #
 #################################################################################################################################
-@authRouter.delete("/delete")
-async def delete_user(firebase_token: str):
+@authRouter.delete("/delete-myaccount")
+async def delete_users(firebase_token: str, payload=Depends(auth_handler.auth_wrapper)):
     """delete a user from firebase
     :param firebase_token: firebase access token
     return: user record from firebase
     """
-    jsonResponse = PyreBaseAuth.delete_user(firebase_token)
+    try:
+        delete_user(payload["sub"], payload=payload)
+        jsonResponse = PyreBaseAuth.delete_user(firebase_token)
+    except Exception as e:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid token")
+
     return jsonResponse
 
 
@@ -107,4 +113,4 @@ if env["PRODUCTION_MODE"] != "TRUE":
         try:
             return auth_handler.dev_encode_token(uid, role)
         except Exception as e:
-            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=str(e))
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
