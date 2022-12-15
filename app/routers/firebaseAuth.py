@@ -5,7 +5,6 @@ from config.firebaseConfig import PyreBaseAuth
 from core.authentication import AuthHandler
 from core.schema import User as SchemaUser
 from fastapi import APIRouter, Depends, Header, HTTPException, Query, status
-
 from routers.helpers.usersSharedFunctions import add_user
 from routers.users import delete_user
 
@@ -103,7 +102,7 @@ async def sign_up_with_firebase(email: str, password: str):
 # dev routes only
 if env["PRODUCTION_MODE"] != "TRUE":
 
-    @authRouter.get("/dev-login")
+    @authRouter.post("/dev-login")
     async def dev_login(uid: str, role: str):  #
         """Use this to login as a user with a specific uid and role bypassing authentication with firebase token (for dev only).
         \n This endpoint is only available in dev mode.

@@ -28,7 +28,7 @@ Run the following commands to create a virtual python enviornment for this proje
 ## Activating the virtual python enviornment
 ```cd env/scripts && activate && cd..\..```
 
-If the above command fails then try 
+### If the above command fails then try it separately 
 - ```cd env/scripts```
 - ```activate```
 - ```cd..\..```

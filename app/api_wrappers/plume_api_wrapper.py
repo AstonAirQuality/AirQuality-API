@@ -49,9 +49,11 @@ class PlumeWrapper(BaseWrapper):
         res = requests.post(
             f"https://www.googleapis.com/identitytoolkit/v3/relyingparty/verifyPassword?" f"key={apiKey}",
             data={"email": email, "password": password, "returnSecureToken": True},
+            headers={"referer": "https://dashboard-flow.plumelabs.com/"},
         )
         if not res.ok:
             raise IOError("Login failed")
+
         json_ = json.loads(res.content)
         auth_token = json_["idToken"]
         auth_key = json_["localId"]
