@@ -10,7 +10,8 @@ from api_wrappers.interfaces.sensor_product import SensorProduct
 
 
 class PlumeSensor(SensorProduct, SensorWritable):
-    """Per sensor object designed to wrap the csv/json files returned by the Plume API.
+    """Plume Sensor Product object designed to wrap the csv/json files returned by the Plume API.
+    Per sensor object designed to wrap the csv/json files returned by the Plume API.
     Extends the SensorWritable class.
     :param SensorWritable: SensorWritable class to inherit from.
     """

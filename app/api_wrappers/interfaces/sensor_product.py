@@ -5,10 +5,10 @@ from abc import ABC, abstractmethod
 class SensorProduct(ABC):
     @abstractmethod
     def from_json(self, sensor_id: str, *args, **kwargs):
-        """Get sensor data from the respective API."""
+        """Create a sensor product from a json object"""
         ...
 
     @abstractmethod
     def from_csv(self, sensor_id: str, *args, **kwargs):
-        """Get sensor data from the respective API."""
+        """Create a sensor product from a csv object"""
         ...

@@ -1,7 +1,7 @@
 # dependancies:
 import datetime as dt
 
-from api_wrappers.scraperWrapper import ScraperWrapper
+from api_wrappers.SensorFactoryWrapper import SensorFactoryWrapper
 from core.authentication import AuthHandler
 from core.models import Sensors as ModelSensor
 from core.models import SensorTypes as ModelSensorTypes  # TODO
@@ -71,9 +71,9 @@ def add_plume_sensors(serialnumbers: SchemaPlumeSerialNumbers, response: Respons
     if auth_handler.checkRoleAboveUser(payload) == False:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authorized")
 
-    api = ScraperWrapper()
+    sfw = SensorFactoryWrapper()
 
-    sensor_platforms = api.fetch_plume_platform_lookupids(serialnumbers.serial_numbers)
+    sensor_platforms = sfw.fetch_plume_platform_lookupids(serialnumbers.serial_numbers)
 
     addedSensors = {}
 

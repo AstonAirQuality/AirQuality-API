@@ -5,7 +5,7 @@ import json
 from os import environ as env
 from typing import Tuple
 
-from api_wrappers.scraperWrapper import ScraperWrapper
+from api_wrappers.SensorFactoryWrapper import SensorFactoryWrapper
 from core.models import SensorSummaries
 from core.schema import Log as SchemaLog
 
@@ -39,7 +39,7 @@ dateRegex = "\s+(?:0[1-9]|[12][0-9]|3[01])[-/.](?:0[1-9]|1[012])[-/.](?:19\d{2}|
 
 #     startDate, endDate = convertDateRangeStringToDate(start, end)
 
-#     SensorFactoryWrapper = ScraperWrapper()
+#     SensorFactoryWrapper = SensorFactoryWrapper()
 
 #     #TODO get a dictionary {sensor_type: {sensor_id: stationary_box}} from the database
 
@@ -58,7 +58,7 @@ async def upsert_scheduled_ingest_active_sensors(
 
     startDate, endDate = convertDateRangeStringToDate(start, end)
 
-    api = ScraperWrapper()
+    api = SensorFactoryWrapper()
 
     sensor_dict = get_lookupids_of_active_sensors_by_type(sensor_type_ids)
 

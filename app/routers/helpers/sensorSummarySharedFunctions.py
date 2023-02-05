@@ -118,7 +118,6 @@ def searchQueryFilters(query: any, spatial_query_type: str, geom: str, sensor_id
     return query
 
 
-# TODO 05/02/2023 i renamed this function to JsonToSensorReadable. any dependencies on this function should be updated
 def JsonToSensorReadable(results: list) -> list[SensorReadable]:
     """converts a list of sensor summaries into a list of SensorReadables.
     :param results: list of sensor summaries

@@ -12,7 +12,7 @@ from api_wrappers.concrete.factories.plume_factory import PlumeFactory
 
 
 class SensorFactoryWrapper:
-    """Wrapper class for fetching sensor data from the different apis"""
+    """Wrapper class for all the different sensor factories, which fetch sensor data from the different apis"""
 
     def __init__(self):
         """initialise the api wrappers and load the environment variables"""

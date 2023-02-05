@@ -21,10 +21,10 @@ class APITimeoutException(IOError):
 
 
 class PlumeFactory(SensorFactory):
-    """API wrapper for the Plume dashboard."""
+    """Concrete Factory class which creates Plume Sensor Products using the Plume dashboard & API."""
 
     def __init__(self, email: str, password: str, API_KEY: str, org_number: int):
-        """Initializes the Plume API wrapper.
+        """Initializes the Plume Factory.
         :param email: email address of the Plume account
         :param password: password of the Plume account
         :param API_KEY: API key of the Plume account
