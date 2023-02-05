@@ -43,7 +43,7 @@ class SensorTypes(Base):
     __tablename__ = "SensorTypes"
     id = Column(Integer, primary_key=True)
     name = Column(String(50), nullable=False)
-    description = Column(String(50), nullable=False)
+    description = Column(String(250), nullable=False)
 
 
 class Sensors(Base):

@@ -32,7 +32,7 @@ def add_log(log: SchemaLog):
 #################################################################################################################################
 #                                                  Read                                                                         #
 #################################################################################################################################
-@logsRouter.get("/read")
+@logsRouter.get("")
 def get_log(payload=Depends(auth_handler.auth_wrapper)):
     """get all logs from the database
     :param payload: auth payload
@@ -47,7 +47,7 @@ def get_log(payload=Depends(auth_handler.auth_wrapper)):
     return result
 
 
-@logsRouter.get("/read/{log_date}")
+@logsRouter.get("/findByDate/{log_date}")
 def get_log(log_date: str, payload=Depends(auth_handler.auth_wrapper)):
     """get a log from the database by date
     :param log_date: date of the log
@@ -74,7 +74,7 @@ def get_log(log_date: str, payload=Depends(auth_handler.auth_wrapper)):
 #################################################################################################################################
 #                                                  Delete                                                                       #
 #################################################################################################################################
-@logsRouter.delete("/delete/{log_date}")
+@logsRouter.delete("/{log_date}")
 def delete_log(log_date: str, payload=Depends(auth_handler.auth_wrapper)):
     """delete a log from the database by date
     :param log_date: date of the log

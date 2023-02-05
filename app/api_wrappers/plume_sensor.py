@@ -5,7 +5,6 @@ import io
 from typing import Any, List
 
 import pandas as pd
-
 from api_wrappers.Sensor_DTO import SensorDTO
 
 
@@ -22,7 +21,7 @@ class PlumeSensor(SensorDTO):
         """
         super().__init__(id_, dataframe)
 
-    def join_dataframes(self, mdf):
+    def join_dataframes(self, mdf: pd.DataFrame):
         """Combines the measurement dataframe with the existing dataframe.
         :param mdf: The measurement dataframe."""
         self.df = pd.concat([self.df, mdf], axis=1)

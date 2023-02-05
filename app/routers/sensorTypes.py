@@ -15,7 +15,7 @@ auth_handler = AuthHandler()
 #################################################################################################################################
 #                                                  Create                                                                       #
 #################################################################################################################################
-@sensorsTypesRouter.post("/create", response_model=SchemaSensorType)
+@sensorsTypesRouter.post("", response_model=SchemaSensorType)
 def add_sensorType(sensorType: SchemaSensorType, payload=Depends(auth_handler.auth_wrapper)):
     """create a sensor type using the sensor type schema
     :param sensorType: sensor type schema
@@ -37,7 +37,7 @@ def add_sensorType(sensorType: SchemaSensorType, payload=Depends(auth_handler.au
 #################################################################################################################################
 #                                                  Read                                                                         #
 #################################################################################################################################
-@sensorsTypesRouter.get("/read")
+@sensorsTypesRouter.get("")
 def get_sensorTypes():
     """read all sensor types and return a json of sensor types
     :return: sensor types"""
@@ -49,7 +49,7 @@ def get_sensorTypes():
     return result
 
 
-@sensorsTypesRouter.get("/read/paginated/{page}/{limit}")
+@sensorsTypesRouter.get("/{page}/{limit}")
 def get_sensorTypes_paginated(page: int, limit: int):
     """read all sensor types and return a json of sensor types
     :return: sensor types"""
@@ -64,7 +64,7 @@ def get_sensorTypes_paginated(page: int, limit: int):
 #################################################################################################################################
 #                                                  Update                                                                       #
 #################################################################################################################################
-@sensorsTypesRouter.put("/update/{sensorType_id}", response_model=SchemaSensorType)
+@sensorsTypesRouter.put("/{sensorType_id}", response_model=SchemaSensorType)
 def update_sensorType(sensorType_id: int, sensorType: SchemaSensorType, payload=Depends(auth_handler.auth_wrapper)):
     """update a sensor type using the sensor type schema
     :param sensorType_id: sensor type id
@@ -86,7 +86,7 @@ def update_sensorType(sensorType_id: int, sensorType: SchemaSensorType, payload=
 #################################################################################################################################
 #                                                  Delete                                                                       #
 #################################################################################################################################
-@sensorsTypesRouter.delete("/delete/{sensorType_id}")
+@sensorsTypesRouter.delete("/{sensorType_id}")
 def delete_sensorType(sensorType_id: int, payload=Depends(auth_handler.auth_wrapper)):
     """delete a sensor type using the sensor type id
     :param sensorType_id: sensor type id

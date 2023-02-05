@@ -3,7 +3,6 @@ import datetime as dt
 from core.models import SensorSummaries as ModelSensorSummary
 from db.database import SessionLocal
 from fastapi import APIRouter, HTTPException, Query, status
-
 from routers.helpers.helperfunctions import convertDateRangeStringToDate
 from routers.helpers.sensorSummarySharedFunctions import (
     searchQueryFilters,
@@ -19,7 +18,7 @@ db = SessionLocal()
 #                                                  Read                                                                         #
 #################################################################################################################################
 # TODO add param to read to allow aggregation of sensors into a single measurement_data json
-@sensorSummariesRouter.get("/read/{start}/{end}")
+@sensorSummariesRouter.get("/{start}/{end}")
 def get_sensorSummaries(
     start: str,
     end: str,
@@ -72,7 +71,7 @@ def get_sensorSummaries(
 
 # TODO include stationary bool and geom in the query. for stationary sensors use its geom for the bounding boxes in the geojson.
 # for non stationary sensors calculate the bounding box from the sensor readings
-@sensorSummariesRouter.get("/readasgeojson/{start}/{end}")
+@sensorSummariesRouter.get("/as-geojson/{start}/{end}")
 def get_geojson_Export_of_sensorSummaries(
     start: str,
     end: str,

@@ -67,7 +67,7 @@ class SensorDTO:
 
         # return sensor_summaries
 
-    def generate_geomertyString(self, df: pd.DataFrame):
+    def generate_geomertyString(self, df: pd.DataFrame) -> str:
         """generates a geometry string from a dataframe of sensor data
         :param df: dataframe of sensor data
         :return: geometry string
@@ -90,7 +90,7 @@ class SensorDTO:
 
         return geometry_string
 
-    def get_centre_of_polygon(self, geometryString: str):
+    def get_centre_of_polygon(self, geometryString: str) -> Tuple[float, float]:
         """gets the centre point of a polygon string, by averaging the x and y coordinates
         :param geometryString: string of the geometry of the polygon (e.g POLYGON ((long,lat)) )
         :return: tuple of the centre point (long,lat)
@@ -197,6 +197,7 @@ class SensorDTO:
         return data
 
     ####################################################################################################################################
+    # TODO: move these functions to a separate file
     # NOTE: these functions below are only used to convert and process sensor summaries from the postgres database to a sensorDTO object.
     #####################################################################################################################################
 

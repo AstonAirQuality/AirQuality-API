@@ -12,7 +12,6 @@ from core.schema import Log as SchemaLog
 # sensor summary
 from dotenv import load_dotenv
 from fastapi import APIRouter, BackgroundTasks, HTTPException, Query, status
-
 from routers.helpers.helperfunctions import convertDateRangeStringToDate
 from routers.helpers.sensorsSharedFunctions import (
     get_active_sensors_for_scraping,
@@ -30,8 +29,22 @@ backgroundTasksRouter = APIRouter()
 # TODO add leap year check
 dateRegex = "\s+(?:0[1-9]|[12][0-9]|3[01])[-/.](?:0[1-9]|1[012])[-/.](?:19\d{2}|20\d{2}|2100)\b"
 
+# @backgroundTasksRouter.put("/upsert/sensor-data-ingestion-Byid/{start}/{end}")
+# async def upsert_sensorsummary_byid(
+#     start: str = Query(regex=dateRegex),
+#     end: str = Query(regex=dateRegex),
+#     sensor_ids: list[int] = Query(default=[], min_length=1),
+# ):
+#     """start a background task to ingest sensor data by sensor id. must be valid date string e.g. 20-08-2022,26-08-2022"""
 
-@backgroundTasksRouter.put("/upsert/scheduled-ingest-active-sensors/{start}/{end}")
+#     startDate, endDate = convertDateRangeStringToDate(start, end)
+
+#     SensorFactoryWrapper = ScraperWrapper()
+
+#     #TODO get a dictionary {sensor_type: {sensor_id: stationary_box}} from the database
+
+
+@backgroundTasksRouter.put("/upsert/scheduled-active-sensor-data-ingestion/{start}/{end}")
 async def upsert_scheduled_ingest_active_sensors(
     start: str = Query(regex=dateRegex),
     end: str = Query(regex=dateRegex),

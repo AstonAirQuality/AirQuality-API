@@ -59,7 +59,7 @@ async def login(firebase_token=Header(default=None)):
 #################################################################################################################################
 #                                                  Firebase                                                                     #
 #################################################################################################################################
-@authRouter.delete("/delete-myaccount")
+@authRouter.delete("/user-account")
 async def delete_users(firebase_token: str, payload=Depends(auth_handler.auth_wrapper)):
     """delete a user from firebase
     :param firebase_token: firebase access token

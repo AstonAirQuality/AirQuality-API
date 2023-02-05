@@ -36,7 +36,7 @@ def get_users(payload=Depends(auth_handler.auth_wrapper)):
     return result
 
 
-@usersRouter.get("/read-from/{column}")
+@usersRouter.get("/read/from-column/{column}")
 def get_user_from_column(column: str, searchvalue: str, payload=Depends(auth_handler.auth_wrapper)):
     """query/read a user from searchvalue  and column name and return a json of the first user
     :param column: column to apply the filter on (uid, email, username)
@@ -72,7 +72,7 @@ def get_user_from_column(column: str, searchvalue: str, payload=Depends(auth_han
 #################################################################################################################################
 #                                                  Update                                                                       #
 #################################################################################################################################
-@usersRouter.put("/update/{uid}")
+@usersRouter.put("/{uid}")
 def update_user(uid: str, user: SchemaUser, payload=Depends(auth_handler.auth_wrapper)):
     """update a user using the user schema and uid
     :param uid: user uid
@@ -94,7 +94,7 @@ def update_user(uid: str, user: SchemaUser, payload=Depends(auth_handler.auth_wr
     return user
 
 
-@usersRouter.patch("/update-role/{uid}/{role}")
+@usersRouter.patch("/{uid}/{role}")
 def update_user_role(uid: str, role: str, payload=Depends(auth_handler.auth_wrapper)):
     """update a user using the user schema and uid
     :param uid: user uid
@@ -117,7 +117,7 @@ def update_user_role(uid: str, role: str, payload=Depends(auth_handler.auth_wrap
 #################################################################################################################################
 #                                                  Delete                                                                       #
 #################################################################################################################################
-@usersRouter.delete("/delete/{uid}")
+@usersRouter.delete("/{uid}")
 def delete_user(uid: str, payload=Depends(auth_handler.auth_wrapper)):
     """delete a user using the uid
     :param uid: user uid

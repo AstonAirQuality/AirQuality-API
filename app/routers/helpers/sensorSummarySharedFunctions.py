@@ -14,7 +14,7 @@ db = SessionLocal()
 #                                                  Create                                                                       #
 #################################################################################################################################
 # used for background tasks
-# @sensorSummariesRouter.post("/create", response_model=SchemaSensorSummary)
+# @sensorSummariesRouter.post("/", response_model=SchemaSensorSummary)
 def add_sensorSummary(sensorSummary: SchemaSensorSummary):
     """adds a sensor summary
     :param sensorSummary: sensor summary to add
@@ -53,7 +53,7 @@ def add_sensorSummary(sensorSummary: SchemaSensorSummary):
 #                                                  Update                                                                       #
 #################################################################################################################################
 # used for background tasks
-# @sensorSummariesRouter.put("/update", response_model=SchemaSensorSummary)
+# @sensorSummariesRouter.put("/", response_model=SchemaSensorSummary)
 def update_sensorSummary(sensorSummary: SchemaSensorSummary):
     """updates a sensor summary
     :param sensorSummary: sensor summary to update

@@ -11,11 +11,10 @@ from core.schema import Sensor as SchemaSensor
 from db.database import SessionLocal
 from fastapi import APIRouter, Depends, HTTPException, Query, Response, status
 from psycopg2.errors import ForeignKeyViolation, UniqueViolation
+from routers.helpers.spatialSharedFunctions import convertWKBtoWKT
 
 # error handling
 from sqlalchemy.exc import IntegrityError
-
-from routers.helpers.spatialSharedFunctions import convertWKBtoWKT
 
 sensorsRouter = APIRouter()
 
@@ -26,7 +25,7 @@ auth_handler = AuthHandler()
 #################################################################################################################################
 #                                                  Create                                                                       #
 #################################################################################################################################
-@sensorsRouter.post("/create", response_model=SchemaSensor)
+@sensorsRouter.post("", response_model=SchemaSensor)
 def add_sensor(sensor: SchemaSensor, payload=Depends(auth_handler.auth_wrapper)):
     """Adds a sensor to the database using the sensor schema
     :param sensor: Sensor object to be added to the database
@@ -61,7 +60,7 @@ def add_sensor(sensor: SchemaSensor, payload=Depends(auth_handler.auth_wrapper))
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
 
 
-@sensorsRouter.post("/create/plume")
+@sensorsRouter.post("/plume-sensors")
 def add_plume_sensors(serialnumbers: SchemaPlumeSerialNumbers, response: Response, payload=Depends(auth_handler.auth_wrapper)):
     """Adds plume sensor platforms by scraping the plume dashboard to fetch the lookupids of the inputted serial numbers
     :param serialnumbers: list of serial numbers
@@ -113,7 +112,7 @@ def add_plume_sensors(serialnumbers: SchemaPlumeSerialNumbers, response: Respons
 #################################################################################################################################
 #                                                  Read                                                                         #
 #################################################################################################################################
-@sensorsRouter.get("/read")
+@sensorsRouter.get("")
 def get_sensors():
     """Returns all sensors in the database
     :return: list of sensors"""
@@ -126,12 +125,13 @@ def get_sensors():
             results.append(res.to_json())
 
     except Exception as e:
+        db.rollback()
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
 
     return results
 
 
-@sensorsRouter.get("/read/join-users-sensor-types")
+@sensorsRouter.get("/joined")
 def get_sensors_joined(
     columns: list[str] = Query(default=["id", "lookup_id", "serial_number", "active", "stationary_box", "time_updated"]),
     join_sensor_types: bool = Query(default=True),
@@ -161,18 +161,20 @@ def get_sensors_joined(
         for row in result:
             row_as_dict = dict(row._mapping)
             row_as_dict["stationary_box"] = convertWKBtoWKT(row_as_dict["stationary_box"])
-            row_as_dict["username"] = str(row_as_dict["username"]) + " " + str(row_as_dict["uid"])  # join username and uid
-            del row_as_dict["uid"]
+            if "username" in row_as_dict and "uid" in row_as_dict:
+                row_as_dict["username"] = str(row_as_dict["username"]) + " " + str(row_as_dict["uid"])
+                del row_as_dict["uid"]
             results.append(row_as_dict)
 
     except Exception as e:
+        db.rollback()
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
 
     return results
 
 
 # get sensors joined paginated
-@sensorsRouter.get("/read/join-users-sensor-types/paginated/{page}/{limit}")
+@sensorsRouter.get("/joined/{page}/{limit}")
 def get_sensors_joined_paginated(
     page: int,
     limit: int,
@@ -208,11 +210,13 @@ def get_sensors_joined_paginated(
         for row in result:
             row_as_dict = dict(row._mapping)
             row_as_dict["stationary_box"] = convertWKBtoWKT(row_as_dict["stationary_box"])
-            row_as_dict["username"] = str(row_as_dict["username"]) + " " + str(row_as_dict["uid"])  # join username and uid
-            del row_as_dict["uid"]
+            if "username" in row_as_dict and "uid" in row_as_dict:
+                row_as_dict["username"] = str(row_as_dict["username"]) + " " + str(row_as_dict["uid"])
+                del row_as_dict["uid"]
             results.append(row_as_dict)
 
     except Exception as e:
+        db.rollback()
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
 
     return results
@@ -221,7 +225,7 @@ def get_sensors_joined_paginated(
 #################################################################################################################################
 #                                                  Update                                                                       #
 #################################################################################################################################
-@sensorsRouter.put("/update/{sensor_id}", response_model=SchemaSensor)
+@sensorsRouter.put("/{sensor_id}", response_model=SchemaSensor)
 def update_sensor(sensor_id: int, sensor: SchemaSensor, payload=Depends(auth_handler.auth_wrapper)):
     """Updates a sensor in the database by sensor id using the sensor schema
     :param sensor_id: id of the sensor to be updated
@@ -269,7 +273,7 @@ def update_sensor(sensor_id: int, sensor: SchemaSensor, payload=Depends(auth_han
     return sensor
 
 
-@sensorsRouter.patch("/update/active")
+@sensorsRouter.patch("/active-status")
 def set_active_sensors(
     sensor_serialnumbers: list[str] = Query(default=[]),
     active_state: bool = True,
@@ -296,7 +300,7 @@ def set_active_sensors(
 #################################################################################################################################
 #                                                  Delete                                                                       #
 #################################################################################################################################
-@sensorsRouter.delete("/delete/{sensor_id}", response_model=SchemaSensor)
+@sensorsRouter.delete("/{sensor_id}", response_model=SchemaSensor)
 def delete_sensor(sensor_id: int, payload=Depends(auth_handler.auth_wrapper)):
     """Deletes a sensor from the database
     :param sensor_id: id of the sensor to be deleted
