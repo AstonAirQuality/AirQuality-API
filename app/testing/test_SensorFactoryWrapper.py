@@ -3,19 +3,19 @@ import unittest  # The test framework
 from unittest import TestCase
 from unittest.mock import Mock, patch
 
-from api_wrappers.scraperWrapper import ScraperWrapper
+from api_wrappers.SensorFactoryWrapper import SensorFactoryWrapper
 from requests import Session
 
 
-class Test_scraperWraper(TestCase):
+class Test_SensorFactoryWrapper(TestCase):
     """
-    The following tests are for the ScraperWraper. Tests send requests to ensure that the API's we are dependent on are working as expected.
+    The following tests are for the SensorFactoryWrapper. Tests send requests to ensure that the API's we are dependent on are working as expected.
     """
 
     @classmethod
     def setUpClass(cls):
         """Setup the test environment once before all tests"""
-        cls.apiWrapper = ScraperWrapper()
+        cls.apiWrapper = SensorFactoryWrapper()
         pass
 
     @classmethod
@@ -30,6 +30,9 @@ class Test_scraperWraper(TestCase):
     def teardown(self):
         """Tear down the test environment after each test"""
         pass
+
+    def test_example(self):
+        self.assertEqual(1, 1)
 
     def test_fetch_plume_lookup_from_serialnumbers(self):
         sensor_platforms = self.apiWrapper.fetch_plume_platform_lookupids(["02:00:00:00:48:45", "02:00:00:00:48:13"])

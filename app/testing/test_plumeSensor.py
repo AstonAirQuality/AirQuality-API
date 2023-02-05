@@ -3,8 +3,8 @@ import unittest  # The test framework
 import zipfile
 from unittest import TestCase
 
-from api_wrappers.plume_api_wrapper import PlumeWrapper
-from api_wrappers.plume_sensor import PlumeSensor
+from api_wrappers.concrete.factories.plume_factory import PlumeFactory
+from api_wrappers.concrete.products.plume_sensor import PlumeSensor
 
 
 class Test_plumeSensor(TestCase):
@@ -31,7 +31,7 @@ class Test_plumeSensor(TestCase):
         pass
 
     def test_plume_from_mergedcsv(self):
-        zip_contents = PlumeWrapper.extract_zip_content(zipfile.ZipFile("./testing/test_data/plume_sensorData.zip", "r"), include_measurements=True)
+        zip_contents = PlumeFactory.extract_zip_content(zipfile.ZipFile("./testing/test_data/plume_sensorData.zip", "r"), include_measurements=True)
 
         (id_, buffer) = next(zip_contents)
         sensor = PlumeSensor.from_zip(sensor_id=id_, csv_file=buffer)
@@ -50,7 +50,7 @@ class Test_plumeSensor(TestCase):
         self.assertEqual(len(sensor.df), len(sensor.df.loc[~sensor.df.index.duplicated()]))
 
     def test_plume_from_csv(self):
-        zip_contents = PlumeWrapper.extract_zip_content(zipfile.ZipFile("./testing/test_data/plume_sensorData.zip", "r"), include_measurements=False)
+        zip_contents = PlumeFactory.extract_zip_content(zipfile.ZipFile("./testing/test_data/plume_sensorData.zip", "r"), include_measurements=False)
 
         (id_, buffer) = next(zip_contents)
         sensor = PlumeSensor.from_csv(sensor_id=id_, csv_file=buffer)
@@ -70,7 +70,7 @@ class Test_plumeSensor(TestCase):
         self.assertEqual(len(sensor.df), len(sensor.df.loc[~sensor.df.index.duplicated()]))
 
     def test_add_measurements_to_plume_from_csv(self):
-        zip_contents = PlumeWrapper.extract_zip_content(zipfile.ZipFile("./testing/test_data/plume_sensorData.zip", "r"), include_measurements=False)
+        zip_contents = PlumeFactory.extract_zip_content(zipfile.ZipFile("./testing/test_data/plume_sensorData.zip", "r"), include_measurements=False)
 
         (id_, buffer) = next(zip_contents)
         sensor = PlumeSensor.from_csv(sensor_id=id_, csv_file=buffer)

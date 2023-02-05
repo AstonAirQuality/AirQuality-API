@@ -1,4 +1,4 @@
-from api_wrappers.Sensor_DTO import SensorDTO
+from api_wrappers.data_transfer_object.sensor_readable import SensorReadable
 from core.models import SensorSummaries as ModelSensorSummary
 from core.schema import GeoJsonExport
 from core.schema import SensorSummary as SchemaSensorSummary
@@ -118,10 +118,11 @@ def searchQueryFilters(query: any, spatial_query_type: str, geom: str, sensor_id
     return query
 
 
-def JsonToSensorDTO(results: list) -> list[SensorDTO]:
-    """converts a list of sensor summaries into a list of sensor DTOs.
+# TODO 05/02/2023 i renamed this function to JsonToSensorReadable. any dependencies on this function should be updated
+def JsonToSensorReadable(results: list) -> list[SensorReadable]:
+    """converts a list of sensor summaries into a list of SensorReadables.
     :param results: list of sensor summaries
-    :return: list of sensor DTOs"""
+    :return: list of SensorReadables"""
 
     # group sensors by id into a dictionary dict[sensor_id] = dict{json_ : measurement data, "boundingBox": geom}
     sensor_dict = {}
@@ -131,10 +132,10 @@ def JsonToSensorDTO(results: list) -> list[SensorDTO]:
         else:
             sensor_dict[sensorSummary["sensor_id"]] = [{"json_": sensorSummary["measurement_data"], "boundingBox": sensorSummary["geom"] if sensorSummary["stationary"] == True else None}]
 
-    # convert list of measurement data into a sensorDTO
+    # convert list of measurement data into a SensorReadable
     sensors = []
     for (sensor_id, data) in sensor_dict.items():
-        sensors.append(SensorDTO.from_json_list(sensor_id, data))
+        sensors.append(SensorReadable.from_json_list(sensor_id, data))
 
     return sensors
 
@@ -146,7 +147,7 @@ def sensorSummariesToGeoJson(results: list, averaging_methods: list[str], averag
     :param averaging_frequency: frequency of averaging the sensor summaries
     :return: list of geojsons"""
 
-    sensors = JsonToSensorDTO(results)
+    sensors = JsonToSensorReadable(results)
 
     geoJsons = []
     for sensor in sensors:

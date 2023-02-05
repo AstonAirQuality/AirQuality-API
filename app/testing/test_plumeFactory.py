@@ -10,12 +10,12 @@ from unittest.mock import Mock, patch
 # from requests import Session
 import pandas as pd
 import requests
-from api_wrappers.plume_api_wrapper import PlumeWrapper
-from api_wrappers.plume_sensor import PlumeSensor
+from api_wrappers.concrete.factories.plume_factory import PlumeFactory
+from api_wrappers.concrete.products.plume_sensor import PlumeSensor
 from dotenv import load_dotenv
 
 
-class Test_apiWrapper(TestCase):
+class Test_plumeFactory(TestCase):
     """
     The following tests are for the Plume API Wrapper. Tests use mock data to ensure that the API wrapper is working as expected.
     """
@@ -26,7 +26,8 @@ class Test_apiWrapper(TestCase):
         :param cls: The class object
         """
         load_dotenv()
-        cls.pw = PlumeWrapper(env["PLUME_EMAIL"], env["PLUME_PASSWORD"], env["PLUME_FIREBASE_API_KEY"], env["PLUME_ORG_NUM"])
+        # the env variables are set in the .env file. They must match the ones in the .env file
+        cls.pf = PlumeFactory(env["PLUME_EMAIL"], env["PLUME_PASSWORD"], env["PLUME_FIREBASE_API_KEY"], env["PLUME_ORG_NUM"])
         pass
 
     @classmethod
@@ -56,9 +57,9 @@ class Test_apiWrapper(TestCase):
         mocked_get.return_value.json.return_value = json.load(file)
         file.close()
 
-        sensor_platforms = self.pw.fetch_lookup_ids(["02:00:00:00:48:45", "02:00:00:00:48:13"])
+        sensor_platforms = self.pf.fetch_lookup_ids(["02:00:00:00:48:45", "02:00:00:00:48:13"])
 
-        mocked_get.assert_called_with("https://api-preprod.plumelabs.com/2.0/user/organizations/{org}/sensors".format(org=self.pw.org))
+        mocked_get.assert_called_with("https://api-preprod.plumelabs.com/2.0/user/organizations/{org}/sensors".format(org=self.pf.org))
 
         expected = {"02:00:00:00:48:45": 18749, "02:00:00:00:48:13": 18699}
         self.assertEqual(sensor_platforms, expected)
@@ -77,11 +78,11 @@ class Test_apiWrapper(TestCase):
         file.close()
         mocked_get.return_value.json.return_value = json_
 
-        sensor_data = self.pw.get_sensor_measurement_data(sensor_id, start, end)
+        sensor_data = self.pf.get_sensor_measurement_data(sensor_id, start, end)
 
         mocked_get.assert_called_with(
             "https://api-preprod.plumelabs.com/2.0/user/organizations/{org}/sensors/{sensorId}/measures?start_date={start}&end_date={end}&offset={offset}".format(
-                org=self.pw.org, sensorId=18749, start=int(start.timestamp()), end=int(end.timestamp()), offset=2000
+                org=self.pf.org, sensorId=18749, start=int(start.timestamp()), end=int(end.timestamp()), offset=2000
             )
         )
 
@@ -99,7 +100,7 @@ class Test_apiWrapper(TestCase):
         mocked_get.return_value.ok = True
         mocked_get.return_value.content = sensor_zip_bytes
 
-        sensors = self.pw.extract_zip("https://example.com", include_measurements=False)
+        sensors = self.pf.extract_zip("https://example.com", include_measurements=False)
 
         mocked_get.assert_called_with("https://example.com", stream=True)
 
@@ -114,10 +115,10 @@ class Test_apiWrapper(TestCase):
         end = dt.datetime(2022, 9, 12)
         link = "https://example.com"
 
-        with patch.object(PlumeWrapper, "extract_zip") as mocked_sensors_from_zip:
-            mocked_sensors_from_zip.return_value = self.pw.extract_zip_content(zipfile.ZipFile("./testing/test_data/plume_sensorData.zip", "r"), include_measurements=False)
+        with patch.object(PlumeFactory, "extract_zip") as mocked_sensors_from_zip:
+            mocked_sensors_from_zip.return_value = self.pf.extract_zip_content(zipfile.ZipFile("./testing/test_data/plume_sensorData.zip", "r"), include_measurements=False)
 
-            sensors = self.pw.get_sensor_location_data([sensor_id], start, end, link)
+            sensors = self.pf.get_sensor_location_data([sensor_id], start, end, link)
 
             mocked_sensors_from_zip.assert_called_with(link, include_measurements=False)
 
@@ -135,13 +136,13 @@ class Test_apiWrapper(TestCase):
         start = dt.datetime(2022, 9, 10)
         end = dt.datetime(2022, 9, 12)
 
-        with patch.object(PlumeWrapper, "get_sensor_location_data") as mocked_sensor_location_only:
+        with patch.object(PlumeFactory, "get_sensor_location_data") as mocked_sensor_location_only:
             # bad zip data will be empty or will throw a bad zip file error so we set the return value to be empty to imitate this behavior
             mocked_sensor_location_only.return_value = []
-            with patch.object(PlumeWrapper, "get_sensor_measurement_data") as mocked_append_measurements:
+            with patch.object(PlumeFactory, "get_sensor_measurement_data") as mocked_append_measurements:
                 mocked_append_measurements.return_value = []
 
-            with patch.object(PlumeWrapper, "get_sensors_measurement_only") as mocked_sensor_measurement_only:
+            with patch.object(PlumeFactory, "get_sensors_measurement_only") as mocked_sensor_measurement_only:
 
                 file = open("testing/test_data/plume_measurements.json", "r")
                 json_ = json.load(file)
@@ -149,7 +150,7 @@ class Test_apiWrapper(TestCase):
 
                 mocked_sensor_measurement_only.return_value = [PlumeSensor.from_json(sensor_id, json_["measures"])]
 
-                sensors = self.pw.get_sensors(sensor_dict, start, end)
+                sensors = self.pf.get_sensors(sensor_dict, start, end)
 
                 mocked_sensor_location_only.assert_called_with([sensor_id], start, end, link=None)
                 mocked_append_measurements.assert_not_called()
@@ -181,22 +182,22 @@ class Test_apiWrapper(TestCase):
         start = dt.datetime(2022, 9, 10)
         end = dt.datetime(2022, 9, 12)
 
-        with patch.object(PlumeWrapper, "get_sensor_location_data") as mocked_sensor_location_only:
-            sensor_items = self.pw.extract_zip_content(zipfile.ZipFile("./testing/test_data/plume_sensorData.zip", "r"), include_measurements=False)
+        with patch.object(PlumeFactory, "get_sensor_location_data") as mocked_sensor_location_only:
+            sensor_items = self.pf.extract_zip_content(zipfile.ZipFile("./testing/test_data/plume_sensorData.zip", "r"), include_measurements=False)
             (mock_id, mock_buffer) = next(sensor_items)
             mocked_sensor_location_only.return_value = [PlumeSensor.from_csv(mock_id, mock_buffer)]
 
-            with patch.object(PlumeWrapper, "get_sensor_measurement_data") as mocked_append_measurements:
+            with patch.object(PlumeFactory, "get_sensor_measurement_data") as mocked_append_measurements:
                 file = open("testing/test_data/plume_measurements.json", "r")
                 json_ = json.load(file)
                 file.close()
                 mocked_append_measurements.return_value = json_["measures"]
 
-                with patch.object(PlumeWrapper, "get_sensors_measurement_only") as mocked_sensor_measurement_only:
+                with patch.object(PlumeFactory, "get_sensors_measurement_only") as mocked_sensor_measurement_only:
 
                     mocked_sensor_measurement_only.return_value = None
 
-                    sensors = self.pw.get_sensors(sensor_dict, start, end)
+                    sensors = self.pf.get_sensors(sensor_dict, start, end)
 
                     mocked_sensor_location_only.assert_called_with([sensor_id], start, end, link=None)
                     mocked_append_measurements.assert_called_with(str(sensor_id), start, end)
@@ -221,22 +222,22 @@ class Test_apiWrapper(TestCase):
         start = dt.datetime(2022, 9, 10)
         end = dt.datetime(2022, 9, 12)
 
-        with patch.object(PlumeWrapper, "get_sensor_location_data") as mocked_sensor_location_only:
-            sensor_items = self.pw.extract_zip_content(zipfile.ZipFile("./testing/test_data/plume_sensorData.zip", "r"), include_measurements=False)
+        with patch.object(PlumeFactory, "get_sensor_location_data") as mocked_sensor_location_only:
+            sensor_items = self.pf.extract_zip_content(zipfile.ZipFile("./testing/test_data/plume_sensorData.zip", "r"), include_measurements=False)
             (mock_id, mock_buffer) = next(sensor_items)
             mocked_sensor_location_only.return_value = [PlumeSensor.from_csv(mock_id, mock_buffer)]
 
-            with patch.object(PlumeWrapper, "get_sensor_measurement_data") as mocked_append_measurements:
+            with patch.object(PlumeFactory, "get_sensor_measurement_data") as mocked_append_measurements:
                 file = open("testing/test_data/plume_measurements.json", "r")
                 json_ = json.load(file)
                 file.close()
                 mocked_append_measurements.return_value = json_["measures"]
 
-                with patch.object(PlumeWrapper, "get_sensors_measurement_only") as mocked_sensor_measurement_only:
+                with patch.object(PlumeFactory, "get_sensors_measurement_only") as mocked_sensor_measurement_only:
 
                     mocked_sensor_measurement_only.return_value = None
 
-                    sensors = self.pw.get_sensors(sensor_dict, start, end)
+                    sensors = self.pf.get_sensors(sensor_dict, start, end)
 
                     mocked_sensor_location_only.assert_called_with([sensor_id], start, end, link=None)
                     mocked_append_measurements.assert_called_with(str(sensor_id), start, end)
@@ -261,17 +262,17 @@ class Test_apiWrapper(TestCase):
         start = dt.datetime(2022, 9, 10)
         end = dt.datetime(2022, 9, 12)
 
-        with patch.object(PlumeWrapper, "get_sensor_location_data") as mocked_sensor_location_only:
+        with patch.object(PlumeFactory, "get_sensor_location_data") as mocked_sensor_location_only:
             # bad zip data will be empty or will throw a bad zip file error so we set the return value to be empty to imitate this behavior
             mocked_sensor_location_only.return_value = []
-            with patch.object(PlumeWrapper, "get_sensor_measurement_data") as mocked_append_measurements:
+            with patch.object(PlumeFactory, "get_sensor_measurement_data") as mocked_append_measurements:
                 mocked_append_measurements.return_value = []
 
-                with patch.object(PlumeWrapper, "get_sensors_measurement_only") as mocked_sensor_measurement_only:
+                with patch.object(PlumeFactory, "get_sensors_measurement_only") as mocked_sensor_measurement_only:
 
                     mocked_sensor_measurement_only.return_value = None
 
-                    sensors = self.pw.get_sensors(sensor_dict, start, end)
+                    sensors = self.pf.get_sensors(sensor_dict, start, end)
 
                     mocked_sensor_location_only.assert_called_with([sensor_id], start, end, link=None)
                     mocked_append_measurements.assert_not_called()
@@ -285,14 +286,14 @@ class Test_apiWrapper(TestCase):
         start = dt.datetime(2022, 9, 10)
         end = dt.datetime(2022, 9, 12)
 
-        with patch.object(PlumeWrapper, "extract_zip") as mocked_sensors_from_zip:
-            mocked_sensors_from_zip.return_value = self.pw.extract_zip_content(zipfile.ZipFile("./testing/test_data/plume_sensorData.zip", "r"), include_measurements=True)
+        with patch.object(PlumeFactory, "extract_zip") as mocked_sensors_from_zip:
+            mocked_sensors_from_zip.return_value = self.pf.extract_zip_content(zipfile.ZipFile("./testing/test_data/plume_sensorData.zip", "r"), include_measurements=True)
 
-            with patch.object(PlumeWrapper, "get_zip_file_link") as mocked_get_zip_link:
+            with patch.object(PlumeFactory, "get_zip_file_link") as mocked_get_zip_link:
 
                 mocked_get_zip_link.return_value = "https://example.com"
 
-                sensors = self.pw.get_sensors_merged_from_zip([sensor_id], start, end)
+                sensors = self.pf.get_sensors_merged_from_zip([sensor_id], start, end)
 
                 mocked_get_zip_link.assert_called_with([sensor_id], start, end, include_measurements=True)
                 mocked_sensors_from_zip.assert_called_with("https://example.com", include_measurements=True)

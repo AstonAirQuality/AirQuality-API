@@ -5,13 +5,14 @@ import io
 from typing import Any, List
 
 import pandas as pd
-from api_wrappers.Sensor_DTO import SensorDTO
+from api_wrappers.data_transfer_object.sensor_writeable import SensorWritable
+from api_wrappers.interfaces.sensor_product import SensorProduct
 
 
-class PlumeSensor(SensorDTO):
+class PlumeSensor(SensorProduct, SensorWritable):
     """Per sensor object designed to wrap the csv/json files returned by the Plume API.
-    Extends the SensorDTO class.
-    :param SensorDTO: SensorDTO class to inherit from.
+    Extends the SensorWritable class.
+    :param SensorWritable: SensorWritable class to inherit from.
     """
 
     def __init__(self, id_, dataframe: pd.DataFrame):

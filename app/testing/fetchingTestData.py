@@ -7,19 +7,19 @@ from os import environ as env
 
 import pandas as pd
 import requests  # TODO remove
-from api_wrappers.plume_api_wrapper import PlumeWrapper
+from api_wrappers.concrete.factories.plume_factory import PlumeFactory
 from dotenv import load_dotenv
 
 
 class FetchTestData:
     def __init__(self):
         load_dotenv()
-        self.pw = PlumeWrapper(env["PLUME_EMAIL"], env["PLUME_PASSWORD"], env["PLUME_FIREBASE_API_KEY"], env["PLUME_ORG_NUM"])
+        self.pf = PlumeFactory(env["PLUME_EMAIL_TEST"], env["PLUME_PASSWORD_TEST"], env["PLUME_FIREBASE_API_KEY"], env["PLUME_ORG_NUM"])
 
     def write_measurement_data_to_testdata_directory(self, sensor_id, start_date, end_date):
         """Fetches the measurement data for a given sensor"""
         try:
-            sensor_data = {"measures": self.pw.get_sensor_measurement_data(sensor_id, start_date, end_date)}
+            sensor_data = {"measures": self.pf.get_sensor_measurement_data(sensor_id, start_date, end_date)}
             with open("./testing/test_data/plume_measurements.json", "w") as f:
                 json.dump(sensor_data, f)
 
@@ -80,17 +80,17 @@ if __name__ == "__main__":
 # import json
 # from os import environ as env
 
-# from api_wrappers.plume_api_wrapper import PlumeWrapper
+# from api_wrappers.plume_api_wrapper import PlumeFactory
 # from dotenv import load_dotenv
 
 # load_dotenv()
-# pw = PlumeWrapper(env["PLUME_EMAIL"], env["PLUME_PASSWORD"], env["PLUME_FIREBASE_API_KEY"], env["PLUME_ORG_NUM"])
+# pf = PlumeFactory(env["PLUME_EMAIL"], env["PLUME_PASSWORD"], env["PLUME_FIREBASE_API_KEY"], env["PLUME_ORG_NUM"])
 
 # sensor_id = 18749
 # start = dt.datetime(2022, 9, 10)
 # end = dt.datetime(2022, 9, 12)
 
-# data = pw.get_sensor_measurement_data(sensor_id, start, end)
+# data = pf.get_sensor_measurement_data(sensor_id, start, end)
 # data = {"measures": data}
 
 # # Directly from dictionary

@@ -8,10 +8,8 @@ import zipfile
 from typing import Iterator, List, Tuple
 
 import requests
-
-# class dependancies
-from api_wrappers.base_wrapper import BaseWrapper
-from api_wrappers.plume_sensor import PlumeSensor
+from api_wrappers.concrete.products.plume_sensor import PlumeSensor
+from api_wrappers.interfaces.sensor_factory import SensorFactory
 
 
 class APITimeoutException(IOError):
@@ -22,7 +20,7 @@ class APITimeoutException(IOError):
     pass
 
 
-class PlumeWrapper(BaseWrapper):
+class PlumeFactory(SensorFactory):
     """API wrapper for the Plume dashboard."""
 
     def __init__(self, email: str, password: str, API_KEY: str, org_number: int):
@@ -266,7 +264,7 @@ class PlumeWrapper(BaseWrapper):
             raise IOError(f"Failed to download zip file from link: {link}")
         zip_ = zipfile.ZipFile(io.BytesIO(res.content))
 
-        return PlumeWrapper.extract_zip_content(zip_, include_measurements)
+        return PlumeFactory.extract_zip_content(zip_, include_measurements)
 
     @staticmethod
     def extract_zip_content(zip_: zipfile.ZipFile, include_measurements: bool) -> Iterator[Tuple[str, io.StringIO]]:
