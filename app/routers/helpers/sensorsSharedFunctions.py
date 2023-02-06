@@ -8,22 +8,24 @@ from routers.helpers.spatialSharedFunctions import convertWKBtoWKT
 
 db = SessionLocal()
 
-# used by background tasks
-def get_active_sensors_for_scraping(type_ids: list[int] = Query(default=[])):
+
+def get_sensor_dict(idtype: str, ids: list[int] = Query(default=[])):
     """Get all active sensors data scraping information from the database
     :param type_ids: list of sensor type ids to filter by
     :return: list of sensor data scraping information"""
     try:
-        result = (
-            db.query(
-                ModelSensorTypes.name.label("type_name"),
-                ModelSensor.lookup_id.label("lookup_id"),
-                ModelSensor.stationary_box.label("stationary_box"),
-            )
-            .filter(ModelSensor.active == True, ModelSensor.type_id.in_(type_ids))
-            .join(ModelSensorTypes, isouter=True)
-            .all()
-        )
+        query = db.query(
+            ModelSensorTypes.name.label("type_name"),
+            ModelSensor.lookup_id.label("lookup_id"),
+            ModelSensor.stationary_box.label("stationary_box"),
+        ).join(ModelSensorTypes, isouter=True)
+
+        if idtype == "sensor_type_id":
+            query = query.filter(ModelSensor.active == True, ModelSensor.type_id.in_(ids))
+        elif idtype == "sensor_id":
+            query = query.filter(ModelSensor.id.in_(ids))
+        result = query.all()
+
         # because the query returned row type we must convert wkb to wkt string to be be api friendly
         results = []
         for row in result:
@@ -34,6 +36,62 @@ def get_active_sensors_for_scraping(type_ids: list[int] = Query(default=[])):
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
     return results
+
+
+# # used by background tasks
+# def get_active_sensor_dict_from_type_id(type_ids: list[int] = Query(default=[])):
+#     """Get all active sensors data scraping information from the database
+#     :param type_ids: list of sensor type ids to filter by
+#     :return: list of sensor data scraping information"""
+#     try:
+#         result = (
+#             db.query(
+#                 ModelSensorTypes.name.label("type_name"),
+#                 ModelSensor.lookup_id.label("lookup_id"),
+#                 ModelSensor.stationary_box.label("stationary_box"),
+#             )
+#             .filter(ModelSensor.active == True, ModelSensor.type_id.in_(type_ids))
+#             .join(ModelSensorTypes, isouter=True)
+#             .all()
+#         )
+#         # because the query returned row type we must convert wkb to wkt string to be be api friendly
+#         results = []
+#         for row in result:
+#             row_as_dict = dict(row._mapping)
+#             row_as_dict["stationary_box"] = convertWKBtoWKT(row_as_dict["stationary_box"])
+#             results.append(row_as_dict)
+
+#     except Exception as e:
+#         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
+#     return results
+
+
+# # used by background tasks
+# def get_sensor_dict_from_id(sensor_ids: list[int] = Query(default=[])):
+#     """Get all active sensors data scraping information from the database
+#     :param type_ids: list of sensor type ids to filter by
+#     :return: list of sensor data scraping information"""
+#     try:
+#         result = (
+#             db.query(
+#                 ModelSensorTypes.name.label("type_name"),
+#                 ModelSensor.lookup_id.label("lookup_id"),
+#                 ModelSensor.stationary_box.label("stationary_box"),
+#             )
+#             .filter(ModelSensor.id.in_(sensor_ids))
+#             .join(ModelSensorTypes, isouter=True)
+#             .all()
+#         )
+#         # because the query returned row type we must convert wkb to wkt string to be be api friendly
+#         results = []
+#         for row in result:
+#             row_as_dict = dict(row._mapping)
+#             row_as_dict["stationary_box"] = convertWKBtoWKT(row_as_dict["stationary_box"])
+#             results.append(row_as_dict)
+
+#     except Exception as e:
+#         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
+#     return results
 
 
 # used by background tasks

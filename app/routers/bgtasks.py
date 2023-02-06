@@ -14,7 +14,7 @@ from dotenv import load_dotenv
 from fastapi import APIRouter, BackgroundTasks, HTTPException, Query, status
 from routers.helpers.helperfunctions import convertDateRangeStringToDate
 from routers.helpers.sensorsSharedFunctions import (
-    get_active_sensors_for_scraping,
+    get_sensor_dict,
     get_sensor_id_and_serialnum_from_lookup_id,
     set_last_updated,
 )
@@ -29,45 +29,38 @@ backgroundTasksRouter = APIRouter()
 # TODO add leap year check
 dateRegex = "\s+(?:0[1-9]|[12][0-9]|3[01])[-/.](?:0[1-9]|1[012])[-/.](?:19\d{2}|20\d{2}|2100)\b"
 
-# @backgroundTasksRouter.put("/upsert/sensor-data-ingestion-Byid/{start}/{end}")
-# async def upsert_sensorsummary_byid(
-#     start: str = Query(regex=dateRegex),
-#     end: str = Query(regex=dateRegex),
-#     sensor_ids: list[int] = Query(default=[], min_length=1),
-# ):
-#     """start a background task to ingest sensor data by sensor id. must be valid date string e.g. 20-08-2022,26-08-2022"""
 
-#     startDate, endDate = convertDateRangeStringToDate(start, end)
-
-#     SensorFactoryWrapper = SensorFactoryWrapper()
-
-#     #TODO get a dictionary {sensor_type: {sensor_id: stationary_box}} from the database
-
-
-@backgroundTasksRouter.put("/upsert/scheduled-active-sensor-data-ingestion/{start}/{end}")
-async def upsert_scheduled_ingest_active_sensors(
+# @backgroundTasksRouter.put("/upsert/sensor-data-ingestion-by-IdList/{start}/{end}/{type_of_id}")
+async def upsert_sensor_summary_by_id_list(
     start: str = Query(regex=dateRegex),
     end: str = Query(regex=dateRegex),
-    sensor_type_ids: list[int] = Query(default=[1, 2, 3]),
+    id_list: list[int] = Query(default=[]),
+    type_of_id: str = Query(default="sensor_id"),
+    log_timestamp: str = Query(default=dt.datetime.today().strftime("%Y-%m-%d %H:%M:%S")),
 ):
-    """create a scheduled ingest task of the active sensors. must be valid date string e.g. 20-08-2022,26-08-2022
-    :param start: start date of the ingest in format dd-mm-yyyy
-    :param end: end date of the ingest in format dd-mm-yyyy
-    :param sensor_type_ids: list of sensor type ids to ingest
-    :return: dict of log data or string message for no active sensors found"""
+    """start a background task to ingest sensor data using a list of ids. The type of id must be specified
+    :param start: start date of the data to be ingested. (e.g 20-08-2022)
+    :param end: end date of the data to be ingested (e.g 26-08-2022)
+    :param id_list: list of ids
+    :param type_of_id: type of id. Can be sensor_id or sensor_type_id
+    :param log_timestamp: timestamp of the log
+    """
 
     startDate, endDate = convertDateRangeStringToDate(start, end)
 
-    api = SensorFactoryWrapper()
+    sfw = SensorFactoryWrapper()
 
-    sensor_dict = get_lookupids_of_active_sensors_by_type(sensor_type_ids)
+    if type_of_id == "sensor_id":
+        sensor_dict = get_lookupids_of_sensors(id_list, "sensor_id")
+    elif type_of_id == "sensor_type_id":
+        sensor_dict = get_lookupids_of_sensors(id_list, "sensor_type_id")
 
     if sensor_dict:
         upsert_log = []
-        # for each sensor type, fetch the data from the api and write to the database
+        # for each sensor type, fetch the data from the sfw and write to the database
         for (sensorType, dict_lookupid_stationaryBox) in sensor_dict.items():
             if sensorType == "Plume":
-                for sensorSummary in api.fetch_plume_data(startDate, endDate, dict_lookupid_stationaryBox):
+                for sensorSummary in sfw.fetch_plume_data(startDate, endDate, dict_lookupid_stationaryBox):
                     lookupid = sensorSummary.sensor_id
                     (sensorSummary.sensor_id, sensor_serial_number) = get_sensor_id_and_serialnum_from_lookup_id(str(lookupid))
                     try:
@@ -83,30 +76,43 @@ async def upsert_scheduled_ingest_active_sensors(
                 continue
 
         # return timestamp and sensor id of the summaries that were successfully written to the database
-        return update_sensor_last_updated(upsert_log)
+        return update_sensor_last_updated(upsert_log, log_timestamp)
     else:
         return "No active sensors found"
 
 
-@backgroundTasksRouter.get("/cron/ingest-active-sensors")
-async def aws_cronjob(background_tasks: BackgroundTasks):
+@backgroundTasksRouter.get("/schedule/ingest-bysensorid/{start}/{end}")
+async def schedule_data_ingest_task_by_sensorid(background_tasks: BackgroundTasks, start: str = Query(regex=dateRegex), end: str = Query(regex=dateRegex), sensor_ids: list[int] = Query(default=[])):
     """
-    This function is called by AWS Lambda to run the scheduled ingest task
+    This function is called
+    """
+    log_timestamp = dt.datetime.today().strftime("%Y-%m-%d %H:%M:%S")
+    background_tasks.add_task(upsert_sensor_summary_by_id_list, start, end, sensor_ids, "sensor_id", log_timestamp)
+
+    return {"task_id": log_timestamp, "task_message": "task sent to backend"}
+
+
+# TODO make compatible with sensor type 2 and 3
+@backgroundTasksRouter.get("/cron/ingest-active-sensors")
+async def schedule_data_ingest_task_of_active_sensors_by_sensorTypeId(background_tasks: BackgroundTasks):
+    """
+    This function is called by AWS Lambda to run the scheduled ingest task for plume sensors
     """
     start, end = get_dates(-1)
-    background_tasks.add_task(upsert_scheduled_ingest_active_sensors, start, end, sensor_type_ids=[1])
-    return {"message": "task sent to backend"}
+    log_timestamp = dt.datetime.today().strftime("%Y-%m-%d %H:%M:%S")
+    background_tasks.add_task(upsert_sensor_summary_by_id_list, start, end, [1], "sensor_type_id", log_timestamp)
+    return {"task_id": log_timestamp, "task_message": "task sent to backend"}
 
 
 #################################################################################################################################
 #                                              helper functions                                                                 #
 #################################################################################################################################
-def get_lookupids_of_active_sensors_by_type(type_ids: list[int]) -> dict[int, dict[str, str]]:
+def get_lookupids_of_sensors(ids: list[int], idtype: str) -> dict[int, dict[str, str]]:
     """
     Returns dict: where dict[sensor_type_name][lookup_id] = stationary_box
 
     """
-    sensors = get_active_sensors_for_scraping(type_ids)
+    sensors = get_sensor_dict(idtype, ids)
 
     # group sensors by type into a dictionary dict[sensor_type][lookup_id] = stationary_box
     sensor_dict = {}
@@ -126,7 +132,7 @@ def get_dates(days: int) -> Tuple[str, str]:
     return (dt.datetime.today() + dt.timedelta(days)).strftime("%d-%m-%Y"), dt.datetime.today().strftime("%d-%m-%Y")
 
 
-def update_sensor_last_updated(upsert_log: list[list]) -> dict:
+def update_sensor_last_updated(upsert_log: list[list], log_timestamp: str) -> dict:
     """
     Logs sensor data that was successfully written to the database and updates the last_updated field of the sensor
     """
@@ -143,6 +149,9 @@ def update_sensor_last_updated(upsert_log: list[list]) -> dict:
         else:
             log_dictionary[timestamp] = {id_: {"serial_number": sensor_serial_number, "status": success_status, "message": error_message}}
 
-    add_log(SchemaLog(log_data=json.dumps(log_dictionary)))
+    add_log(
+        log_timestamp,
+        SchemaLog(log_data=json.dumps(log_dictionary)),
+    )
 
     return log_dictionary

@@ -15,12 +15,12 @@ auth_handler = AuthHandler()
 #################################################################################################################################
 #                                                  Create                                                                       #
 #################################################################################################################################
-def add_log(log: SchemaLog):
+def add_log(log_timestamp: str, log: SchemaLog):
     """add a log to the database
     :param log: log schema
     :return: log object"""
     try:
-        log = ModelLogs(date=dt.datetime.today(), data=log.log_data)
+        log = ModelLogs(date=dt.datetime.strptime(log_timestamp, "%Y-%m-%d %H:%M:%S"), data=log.log_data)
         db.add(log)
         db.commit()
     except Exception as e:
