@@ -1,0 +1,41 @@
+version: "3.8"
+
+services:
+
+  db:
+    container_name: test_db
+    build:
+      context: ./app/db
+      dockerfile: ./Dockerfile
+    restart: always
+    ports:
+      - 5432:5432
+    environment:
+      - POSTGRES_USER=${DB_USER_TEST}
+      - POSTGRES_PASSWORD=${DB_PASSWORD_TEST}
+      - POSTGRES_DB=${DB_NAME_TEST}
+
+  app:
+    container_name: test_app
+    build:
+      context: ./
+      dockerfile: ./app/Dockerfile
+    command: bash -c "alembic upgrade head && uvicorn main:app --host 0.0.0.0 --port 8000 --reload"
+    volumes:
+      - ./app:/app
+    ports:
+      - 8000:8000
+    depends_on:
+      - db
+    restart: always
+    environment:
+      DATABASE_URL: ${DATABASE_URL}
+      PLUME_EMAIL: "${PLUME_EMAIL}"
+      PLUME_PASSWORD: "${PLUME_PASSWORD}"
+      PLUME_FIREBASE_API_KEY: "${PLUME_FIREBASE_API_KEY}"
+      PLUME_ORG_NUM: "${PLUME_ORG_NUM}"
+      FASTAPI_SENTRY_DSN: "${FASTAPI_SENTRY_DSN}"
+      PRODUCTION_MODE: "${PRODUCTION_MODE}"
+      AWS_STAGE_NAME: "${AWS_STAGE_NAME}"
+      AWS_REGION: "${AWS_REGION}"
+      JWT_SECRET: "${JWT_SECRET}"

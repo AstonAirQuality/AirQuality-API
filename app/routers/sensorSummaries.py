@@ -71,7 +71,7 @@ def get_sensorSummaries(
 
 # TODO include stationary bool and geom in the query. for stationary sensors use its geom for the bounding boxes in the geojson.
 # for non stationary sensors calculate the bounding box from the sensor readings
-@sensorSummariesRouter.get("/as-geojson/{start}/{end}")
+@sensorSummariesRouter.get("/as-geojson/{start}/{end}/{averaging_frequency}")
 def get_geojson_Export_of_sensorSummaries(
     start: str,
     end: str,

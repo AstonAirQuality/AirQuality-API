@@ -11,8 +11,11 @@ install Docker desktop - https://docs.docker.com/desktop/install/windows-install
 
 ## Building containers from docker compose 
 **Ensure you are in the root project directory and the env file is in the project root directory**
+### Building development container stack
 run the command ```docker-compose up```
-
+### Building test container stack
+run the command  ```docker-compose -f docker-compose-testenv.yml -p test up -d```
+delete test container ```docker-compose -f docker-compose-testenv.yml -p test down --volumes```
 ## Exiting Docker
 if using docker desktop you can simply click stop running containers for "app"
 if using docker was initialised using a CMD then press **Ctrl + C** or press twice to force close  **Ctrl + C , Ctrl + C**

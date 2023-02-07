@@ -47,10 +47,11 @@ def get_log(payload=Depends(auth_handler.auth_wrapper)):
     return result
 
 
+# TODO get all logs in that day. (not just the first one)
 @logsRouter.get("/findByDate/{log_date}")
 def get_log(log_date: str, payload=Depends(auth_handler.auth_wrapper)):
     """get a log from the database by date
-    :param log_date: date of the log
+    :param log_date: date of the log. Format: YYYY-MM-DD
     :param payload: auth payload
     :return: log object"""
     if auth_handler.checkRoleAdmin(payload) == False:

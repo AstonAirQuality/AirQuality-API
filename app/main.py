@@ -62,14 +62,13 @@ openapi_prefix = f"/{stage}" if stage else "/"
 
 app = FastAPI(title="Aston Air Quality API", description=description, root_path=openapi_prefix)
 
-
+app.include_router(authRouter, prefix="/auth", tags=["auth"])
 app.include_router(sensorsRouter, prefix="/sensor", tags=["sensor"])
 app.include_router(sensorsTypesRouter, prefix="/sensor-type", tags=["sensor-type"])
 app.include_router(sensorSummariesRouter, prefix="/sensor-summary", tags=["sensor-summary"])
 app.include_router(backgroundTasksRouter, prefix="/api-task", tags=["api-task"])
 app.include_router(usersRouter, prefix="/user", tags=["user"])
 app.include_router(logsRouter, prefix="/data-ingestion-logs", tags=["data-ingestion-logs"])
-app.include_router(authRouter, prefix="/auth", tags=["auth"])
 
 
 # TODO change this to a more secure origin

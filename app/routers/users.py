@@ -22,7 +22,7 @@ load_dotenv()
 #################################################################################################################################
 #                                                  Read                                                                         #
 #################################################################################################################################
-@usersRouter.get("/read")
+@usersRouter.get("")
 def get_users(payload=Depends(auth_handler.auth_wrapper)):
     """read all users and return a json of users
     :return: users"""
@@ -36,7 +36,7 @@ def get_users(payload=Depends(auth_handler.auth_wrapper)):
     return result
 
 
-@usersRouter.get("/read/from-column/{column}")
+@usersRouter.get("/read-from/{column}")
 def get_user_from_column(column: str, searchvalue: str, payload=Depends(auth_handler.auth_wrapper)):
     """query/read a user from searchvalue  and column name and return a json of the first user
     :param column: column to apply the filter on (uid, email, username)

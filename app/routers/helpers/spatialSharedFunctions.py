@@ -28,14 +28,14 @@ def spatialQueryBuilder(query: any, model: any, column_name: str, spatial_query_
         query = query.filter(geom_column.ST_Contains(geom))
     elif spatial_query_type == "overlaps":
         query = query.filter(geom_column.ST_Overlaps(geom))
-    elif spatial_query_type == "equals":
-        query = query.filter(geom_column.ST_Equals(geom))
-    elif spatial_query_type == "disjoint":
-        query = query.filter(geom_column.ST_Disjoint(geom))
-    elif spatial_query_type == "touches":
-        query = query.filter(geom_column.ST_Touches(geom))
-    elif spatial_query_type == "crosses":
-        query = query.filter(geom_column.ST_Crosses(geom))
+    # elif spatial_query_type == "equals":
+    #     query = query.filter(geom_column.ST_Equals(geom))
+    # elif spatial_query_type == "disjoint":
+    #     query = query.filter(geom_column.ST_Disjoint(geom))
+    # elif spatial_query_type == "touches":
+    #     query = query.filter(geom_column.ST_Touches(geom))
+    # elif spatial_query_type == "crosses":
+    #     query = query.filter(geom_column.ST_Crosses(geom))
     else:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid geom_type")
 
