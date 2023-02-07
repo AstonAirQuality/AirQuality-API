@@ -98,10 +98,12 @@ class SensorType(BaseModel):
     """SensorType Schema extends BaseModel used to validate form data from the API
     :name (str)
     :description (str)
+    :properties (Dict[str, str])
     """
 
     name: str
     description: str
+    properties: Dict[str, str]
 
     class Config:
         orm_mode = True

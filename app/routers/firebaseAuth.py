@@ -103,7 +103,7 @@ async def sign_up_with_firebase(email: str, password: str):
 if env["PRODUCTION_MODE"] != "TRUE":
 
     @authRouter.post("/dev-login")
-    async def dev_login(uid: str, role: str):  #
+    async def dev_login(uid: str, role: str):
         """Use this to login as a user with a specific uid and role bypassing authentication with firebase token (for dev only).
         \n This endpoint is only available in dev mode.
         :param uid: firebase
