@@ -76,7 +76,6 @@ class Test_sensorWritable(TestCase):
             # Skip sensor summaries that have no geometries (These sensors will not be included in the database. They can only exist through fetching merged csv files)
             # TODO validate geomerty is in WKT format
             if sensor_summary.geom != None:
-                print(sensor_summary.geom)
                 expectedGeom = "POLYGON((-1.83631 52.425392,-1.83631 52.425603,-1.836288 52.425603,-1.836288 52.425392,-1.83631 52.425392))"
                 self.assertTrue(sensor_summary.geom == expectedGeom)
 

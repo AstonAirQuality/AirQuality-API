@@ -1,16 +1,14 @@
 import unittest
 from unittest import TestCase, TestSuite
 
+from testing.api.test_api_route_sensorType import Test_Api_Sensor_Type
 from testing.application_config import admin_session, database_config
-from testing.test_api_route_sensor import Test_Api_Sensor
-from testing.test_example import Test_Api_Example
 
 
 def suite():
     """Test suite for all tests in the testing directory."""
-    example_tests = unittest.TestLoader().loadTestsFromTestCase(Test_Api_Example)
-    sensor_tests = unittest.TestLoader().loadTestsFromTestCase(Test_Api_Sensor)
-    suite = unittest.TestSuite([sensor_tests, example_tests])
+    sensorType_tests = unittest.TestLoader().loadTestsFromTestCase(Test_Api_Sensor_Type)
+    suite = unittest.TestSuite([sensorType_tests])
     return suite
 
 

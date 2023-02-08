@@ -1,13 +1,16 @@
-import unittest
+import datetime as dt
+import unittest  # The test framework
+
+# enviroment variables dependacies
+from os import environ as env
 from unittest import TestCase
+from unittest.mock import Mock, patch
 
 from core.models import SensorTypes as ModelSensorType
-from fastapi.testclient import TestClient
-from main import app
 from testing.application_config import admin_session, database_config
 
 
-class Test_Api_1_Sensor_Type(TestCase):
+class Test_Api_Sensor_Type(TestCase):
     """
     The following tests are for the API endpoints
     """
@@ -15,10 +18,9 @@ class Test_Api_1_Sensor_Type(TestCase):
     @classmethod
     def setUpClass(cls):
         """Setup the test environment once before all tests"""
-        cls.client = TestClient(app)
-        cls.client = admin_session(cls.client)
+        cls.session = admin_session()
         cls.db = database_config()
-        pass
+        cls_sensor_type_id = 1
 
     @classmethod
     def tearDownClass(cls):
@@ -33,16 +35,17 @@ class Test_Api_1_Sensor_Type(TestCase):
         """Tear down the test environment after each test"""
         pass
 
-    def test_1_db_connection(self):
+    def test_db_connection(self):
         """Test that the database is connected"""
         self.assertIsNotNone(self.db)
+        self.db.query(ModelSensorType).first()
 
-    def test_2_post_sensor_type(self):
+    def test_post_sensor_type(self):
         """Test the post sensor type route of the API."""
 
         sensorType = {"name": "plume", "description": "single sensor platform", "properties": {"NO2": "ppb", "VOC": "ppb", "pm10": "ppb", "pm2.5": "ppb", "pm1": "ppb"}}
 
-        response = self.client.post("/sensor-type", json=sensorType)
+        response = self.session.post("http://localhost:8000/sensor-type", json=sensorType)
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json(), sensorType)
 
@@ -50,49 +53,50 @@ class Test_Api_1_Sensor_Type(TestCase):
         db_sensor_type = self.db.query(ModelSensorType).filter(ModelSensorType.name == "plume").first()
         self.assertEqual(db_sensor_type.name, "plume")
 
-    def test_3_get_sensor_type(self):
+    def test_get_sensor_type(self):
         """Test the get sensor type route of the API."""
-        response = self.client.get("/sensor-type")
-        self.assertEqual(response.status_code, 200)
-        self.assertTrue("id" in response.json()[0])
 
-    def test_4_get_sensor_type_paginated(self):
+        expected_response = [{"id": 1, "name": "plume", "description": "single sensor platform", "properties": {"NO2": "ppb", "VOC": "ppb", "pm10": "ppb", "pm2.5": "ppb", "pm1": "ppb"}}]
+        response = self.session.get("http://localhost:8000/sensor-type")
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json(), expected_response)
+
+    def test_get_sensor_type_paginated(self):
         """Test the get sensor type paginated route of the API."""
-        response = self.client.get("/sensor-type/1/1")
-        self.assertEqual(response.status_code, 200)
-        self.assertTrue("id" in response.json()[0])
 
-    def test_5_put_sensor_type(self):
+        expected_response = [{"id": 1, "name": "plume", "description": "single sensor platform", "properties": {"NO2": "ppb", "VOC": "ppb", "pm10": "ppb", "pm2.5": "ppb", "pm1": "ppb"}}]
+        response = self.session.get("http://localhost:8000/sensor-type/1/1")
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json(), expected_response)
+
+    def test_put_sensor_type(self):
         """Test the put sensor type route of the API."""
 
         sensorType = {"name": "plume", "description": "updated description", "properties": {"NO2": "ppb", "VOC": "ppb", "pm10": "ppb", "pm2.5": "ppb", "pm1": "ppb"}}
 
-        response = self.client.put("/sensor-type/1", json=sensorType)
+        response = self.session.put("http://localhost:8000/sensor-type/1", json=sensorType)
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json(), sensorType)
 
         # check that the sensor was updated to the database
-        db_sensor_type = self.db.query(ModelSensorType).filter(ModelSensorType.id == 1).first()
+        db_sensor_type = self.db.query(ModelSensorType).filter(ModelSensorType.name == "plume").first()
         self.assertEqual(db_sensor_type.description, "updated description")
 
-    def test_6_delete_sensor_type(self):
+    def test_delete_sensor_type(self):
         """Test the delete sensor type route of the API."""
 
-        # create a sensor type to delete
-        sensor_type = ModelSensorType(name="delete_test", description="test", properties={"NO2": "ppb", "VOC": "ppb", "pm10": "ppb", "pm2.5": "ppb", "pm1": "ppb"})
-        self.db.add(sensor_type)
-        self.db.commit()
-
-        # get the id of the sensor type
-        sensor_type_id = self.db.query(ModelSensorType).filter(ModelSensorType.name == "delete_test").first().id
-
-        response = self.client.delete(f"/sensor-type/{sensor_type_id}")
+        response = self.session.delete("http://localhost:8000/sensor-type/1")
         self.assertEqual(response.status_code, 200)
 
         # check that the sensor was deleted from the database
-        db_sensor_type = self.db.query(ModelSensorType).filter(ModelSensorType.name == "test").first()
+        db_sensor_type = self.db.query(ModelSensorType).filter(ModelSensorType.name == "plume").first()
         self.assertIsNone(db_sensor_type)
 
 
 if __name__ == "__main__":
     unittest.main()
+
+
+# TODO do api endpoint tests by making a request to the endpoint and checking the response
+# create a test for each endpoint
+# create a test docker container to run the tests in

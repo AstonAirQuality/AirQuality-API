@@ -1,14 +1,17 @@
-import unittest
+import datetime as dt
+import unittest  # The test framework
+
+# enviroment variables dependacies
+from os import environ as env
 from unittest import TestCase
+from unittest.mock import Mock, patch
 
 from core.models import Sensors as ModelSensor
 from core.models import SensorTypes as ModelSensorType
-from fastapi.testclient import TestClient
-from main import app
 from testing.application_config import admin_session, database_config
 
 
-class Test_Api_2_Sensor(TestCase):
+class Test_Api_Sensor(TestCase):
     """
     The following tests are for the API endpoints
     """
@@ -16,37 +19,25 @@ class Test_Api_2_Sensor(TestCase):
     @classmethod
     def setUpClass(cls):
         """Setup the test environment once before all tests"""
-        cls.client = TestClient(app)
-        cls.client = admin_session(cls.client)
+        cls.session = admin_session()
         cls.db = database_config()
         cls.sensor_id = 1
-        cls.sensor_type_id = 1
 
         # add a sensor type to the database
         try:
             result = cls.db.query(ModelSensorType).first()
-            # if the sensor type does not exist then add it to the database and get the id
             if result is None:
-                sensorType = ModelSensorType(name="test_sensor_type", description="test_sensor_type", properties={"NO2": "ppb", "VOC": "ppb", "pm10": "ppb", "pm2.5": "ppb", "pm1": "ppb"})
+                sensorType = ModelSensorType(name="plume", description="description", properties={"NO2": "ppb", "VOC": "ppb", "pm10": "ppb", "pm2.5": "ppb", "pm1": "ppb"})
                 cls.db.add(sensorType)
                 cls.db.commit()
-                cls.sensor_type_id = sensorType.id
-            else:
-                cls.sensor_type_id = result.id
 
-            # creating a test sensor
+            # if the test sensor is already in the database then get the id
             res = cls.db.query(ModelSensor).filter(ModelSensor.lookup_id == "test_sensor").first()
             if res is not None:
-                sensor = ModelSensor(lookup_id="test_sensor", serial_number="test_sensor", type_id=cls.sensor_type_id, active=True, user_id=None, stationary_box=None)
-                cls.db.add(sensor)
-                cls.db.commit()
-                cls.sensor_id = sensor.id
-            else:
                 cls.sensor_id = res.id
 
         except Exception as e:
             cls.db.rollback()
-        pass
 
     @classmethod
     def tearDownClass(cls):
@@ -61,29 +52,30 @@ class Test_Api_2_Sensor(TestCase):
         """Tear down the test environment after each test"""
         pass
 
-    def test_1_db_connection(self):
+    def test_db_connection(self):
         """Test that the database is connected"""
         self.assertIsNotNone(self.db)
+        self.db.query(ModelSensor).first()
 
-    def test_2_post_sensor(self):
+    def test_post_sensor(self):
         """Test the post sensor route of the API."""
 
-        sensor = {"lookup_id": "test_post_sensor", "serial_number": "test_post_sensor", "type_id": self.sensor_type_id, "active": True, "user_id": None, "stationary_box": None}
+        sensor = {"lookup_id": "test_sensor", "serial_number": "test_sensor", "type_id": 1, "active": True, "user_id": None, "stationary_box": None}
 
-        response = self.client.post("/sensor", json=sensor)
+        response = self.session.post("http://localhost:8000/sensor", json=sensor)
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json(), sensor)
 
         # check that the sensor was added to the database
-        db_sensor = self.db.query(ModelSensor).filter(ModelSensor.lookup_id == "test_post_sensor").first()
-        self.assertEqual(db_sensor.lookup_id, "test_post_sensor")
+        db_sensor = self.db.query(ModelSensor).filter(ModelSensor.lookup_id == "test_sensor").first()
+        self.assertEqual(db_sensor.lookup_id, "test_sensor")
 
-    def test_3_post_plume_sensor(self):
+    def test_post_plume_sensor(self):
         """Test the post sensor route of the API."""
 
         plume_serial_numbers = {"serial_numbers": ["02:00:00:00:48:45"]}
 
-        response = self.client.post("/sensor/plume-sensors", json=plume_serial_numbers)
+        response = self.session.post("http://localhost:8000/sensor/plume-sensors", json=plume_serial_numbers)
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json(), {"02:00:00:00:48:45": 18749})
 
@@ -91,58 +83,50 @@ class Test_Api_2_Sensor(TestCase):
         db_sensor = self.db.query(ModelSensor).filter(ModelSensor.lookup_id == "18749").first()
         self.assertEqual(db_sensor.lookup_id, "18749")
 
-    def test_4_get_sensor(self):
+    def test_get_sensor(self):
         """Test the get sensor route of the API."""
-        response = self.client.get("/sensor")
+        response = self.session.get("http://localhost:8000/sensor")
         self.assertEqual(response.status_code, 200)
         self.assertTrue("lookup_id" in response.json()[0])
 
-    def test_5_put_sensor(self):
+    def test_put_sensor(self):
         """Test the put sensor route of the API, by updating the sensor whose sensor_id is 1, with a stationary box."""
         stationary_box = "POLYGON((0 0,0 1,1 1,1 0,0 0))"
-        sensor = {"lookup_id": "test_sensor", "serial_number": "test_sensor", "type_id": self.sensor_type_id, "active": True, "user_id": None, "stationary_box": stationary_box}
+        sensor = {"lookup_id": "test_sensor", "serial_number": "test_sensor", "type_id": 1, "active": True, "user_id": None, "stationary_box": stationary_box}
 
-        response = self.client.put(f"/sensor/{self.sensor_id}", json=sensor)
+        response = self.session.put(f"http://localhost:8000/sensor/{self.sensor_id}", json=sensor)
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json(), sensor)
 
         # check that the sensor was updated in the database
-        db_sensor = self.db.query(ModelSensor).filter(ModelSensor.serial_number == "test_sensor").first()
+        db_sensor = self.db.query(ModelSensor).filter(ModelSensor.lookup_id == "test_sensor").first()
         self.assertIsNotNone(db_sensor.stationary_box)
 
-    def test_6_patch_sensor_active_state(self):
+    def test_patch_sensor_active_state(self):
         """Test the patch sensor active state route of the API."""
         query_data = {"sensor_serialnumbers": "test_sensor", "active_state": False}
-        response = self.client.patch(f"/sensor/active-status", params=query_data)
+        response = self.session.patch(f"http://localhost:8000/sensor/active-status", params=query_data)
         self.assertEqual(response.status_code, 200)
 
         # check that the sensor was updated in the database
-        db_sensor = self.db.query(ModelSensor).filter(ModelSensor.serial_number == "test_sensor").first()
+        db_sensor = self.db.query(ModelSensor).filter(ModelSensor.lookup_id == "test_sensor").first()
         self.assertIsNotNone(db_sensor)
         self.assertEqual(db_sensor.active, False)
 
-    def test_7_delete_sensor(self):
+    def test_delete_sensor(self):
         """Test the delete sensor route of the API."""
-
-        res = self.db.query(ModelSensor).filter(ModelSensor.serial_number == "test_delete_sensor").first()
-        if res is not None:
-            delete_sensor_id = res.id
-
-        # create a sensor to delete
-        else:
-            sensor = ModelSensor(lookup_id="test_delete_sensor", serial_number="test_delete_sensor", type_id=self.sensor_type_id, active=True, user_id=None, stationary_box=None)
-            self.db.add(sensor)
-            self.db.commit()
-            delete_sensor_id = sensor.id
-
-        # delete the sensor
-        response = self.client.delete(f"/sensor/{delete_sensor_id}")
+        response = self.session.delete(f"http://localhost:8000/sensor/{self.sensor_id}")
         self.assertEqual(response.status_code, 200)
 
         # check that the sensor was deleted from the database
-        db_sensor = self.db.query(ModelSensor).filter(ModelSensor.id == delete_sensor_id).first()
+        db_sensor = self.db.query(ModelSensor).filter(ModelSensor.id == self.sensor_id).first()
         self.assertIsNone(db_sensor)
 
 
 if __name__ == "__main__":
     unittest.main()
+
+
+# TODO do api endpoint tests by making a request to the endpoint and checking the response
+# create a test for each endpoint
+# create a test docker container to run the tests in

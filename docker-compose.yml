@@ -40,7 +40,7 @@ services:
       - db
     restart: always
     environment:
-      DATABASE_URL: ${DATABASE_URL}
+      DATABASE_URL: ${DATABASE_URL_DEV}
       PLUME_EMAIL: "${PLUME_EMAIL}"
       PLUME_PASSWORD: "${PLUME_PASSWORD}"
       PLUME_FIREBASE_API_KEY: "${PLUME_FIREBASE_API_KEY}"

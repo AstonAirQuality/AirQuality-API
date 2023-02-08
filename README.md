@@ -48,11 +48,13 @@ Run the following commands to create a virtual python enviornment for this proje
 # Testing
 from the project root directory run the commands ```cd app```
 
-Run tests without coverage ```python -m unittest discover -s testing -p 'test_*.py'```
+Run tests without coverage ```python -m unittest discover -s testing -p test_*.py```
 
-Run tests with coverage ```python -m coverage run -m unittest discover -s testing -p 'test_*.py'```
+Run tests with coverage ```python -m coverage run -m unittest discover -s testing -p test_*.py```
 
-View coverage report ```python -m coverage html```  
+View coverage report ```python -m coverage report```  #
+
+export coverage in html ```python -m coverage html```  
 
 for more information see
 - https://www.pythontutorial.net/python-unit-testing/python-unittest-coverage/
