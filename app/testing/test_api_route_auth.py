@@ -55,6 +55,10 @@ class Test_Api_3_Auth(TestCase):
         access_token = response.json()["access_token"]
         self.client.headers.update({"Authorization": f"Bearer {access_token}"})
 
+        # test that the user is in the database
+        db_user = self.db.query(ModelUser).filter(ModelUser.email == "test@test.com").first()
+        self.assertIsNotNone(db_user)
+
     def test_3_login(self):
         """Test the sign in route of the API (firebase and python web app)"""
 

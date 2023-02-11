@@ -46,17 +46,21 @@ def get_user_from_column(column: str, searchvalue: str, payload=Depends(auth_han
     # query all users which match the searchvalue (only used for username searching)
     queryAll = False
 
-    if column == "email" and auth_handler.checkRoleAdmin(payload) == False:
+    if column not in ["uid", "email", "username", "role"]:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid column name")
+
+    elif column == "email" and auth_handler.checkRoleAdmin(payload) == False:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authorized")
+
     # only allow read if user is admin or the user is reading their own data
-    elif column == "uid" and (auth_handler.checkRoleAdmin(payload) == False or searchvalue != payload["sub"]):
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authorized")
+    elif column == "uid" and searchvalue != payload["sub"]:
+        if auth_handler.checkRoleAdmin(payload) == False:
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=f"Not authorized")
+
     elif column == "username" or column == "role":
         queryAll = True
         if auth_handler.checkRoleAdmin(payload) == False:
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authorized")
-    elif column not in ["uid", "email", "username", "role"]:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid column name")
 
     try:
         if queryAll:
@@ -78,20 +82,26 @@ def update_user(uid: str, user: SchemaUser, payload=Depends(auth_handler.auth_wr
     :param uid: user uid
     :param user: user schema
     :return: user"""
-    # only allow update if user is admin or the user is reading their own data
+
+    updated_user = user.dict()
+
+    if updated_user["role"] not in auth_handler.valid_roles:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"Invalid role. Valid roles are: {auth_handler.valid_roles}")
+
     if auth_handler.checkRoleAdmin(payload) == False:
         if uid != payload["sub"]:
-            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authorized")
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authorized to update another user")
         else:
-            if user.role == "admin":
-                raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authorized to promote a user to admin")
+            # if user is not admin, then remove the role from the user object. This will prevent the user from updating their own role
+            updated_user.pop("role", None)
+
     try:
-        db.query(ModelUser).filter(ModelUser.uid == uid).update(user.dict())
+        db.query(ModelUser).filter(ModelUser.uid == uid).update(updated_user)
         db.commit()
     except Exception as e:
         db.rollback()
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
-    return user
+    return updated_user
 
 
 @usersRouter.patch("/{uid}/{role}")

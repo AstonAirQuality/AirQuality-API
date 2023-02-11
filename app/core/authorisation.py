@@ -12,6 +12,7 @@ class Roles(Enum):
 class Authorisation:
     def __init__(self):
         self.roles = Roles
+        self.valid_roles = [member.value for member in Roles]
 
     def checkRoleAdmin(self, payload: dict) -> bool:
         """checks if the user role is an admin
