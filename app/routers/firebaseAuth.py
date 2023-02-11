@@ -5,6 +5,7 @@ from config.firebaseConfig import PyreBaseAuth
 from core.authentication import AuthHandler
 from core.schema import User as SchemaUser
 from fastapi import APIRouter, Depends, Header, HTTPException, Query, status
+from fastapi.responses import JSONResponse
 from routers.helpers.usersSharedFunctions import add_user
 from routers.users import delete_user
 
@@ -41,7 +42,7 @@ async def signup(firebase_token=Header(default=None), username: str = Query(None
 
     # TODO use login function to login the user
     (access_token, role, name) = auth_handler.encode_token(firebase_token)
-    return {"access_token": access_token, "role": role, "name": name}
+    return JSONResponse(status_code=status.HTTP_200_OK, content={"access_token": access_token, "role": role, "username": name})
 
 
 @authRouter.post("/login")
@@ -53,14 +54,14 @@ async def login(firebase_token=Header(default=None)):
     (access_token, role, name) = auth_handler.encode_token(firebase_token)
 
     # login the user
-    return {"access_token": access_token, "role": role, "name": name}
+    return JSONResponse(status_code=status.HTTP_200_OK, content={"access_token": access_token, "role": role, "username": name})
 
 
 #################################################################################################################################
 #                                                  Firebase                                                                     #
 #################################################################################################################################
 @authRouter.delete("/user-account")
-async def delete_users(firebase_token: str, payload=Depends(auth_handler.auth_wrapper)):
+async def delete_user_account(firebase_token=Header(default=None), payload=Depends(auth_handler.auth_wrapper)):
     """delete a user from firebase
     :param firebase_token: firebase access token
     return: user record from firebase
@@ -68,8 +69,14 @@ async def delete_users(firebase_token: str, payload=Depends(auth_handler.auth_wr
     try:
         delete_user(payload["sub"], payload=payload)
         jsonResponse = PyreBaseAuth.delete_user(firebase_token)
+        jsonResponse["message"] = "User deleted"
+    except HTTPException as e:
+        if e.status_code == status.HTTP_404_NOT_FOUND:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User does not exist")
+        else:
+            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Could not delete user")
     except Exception as e:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid token")
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
 
     return jsonResponse
 

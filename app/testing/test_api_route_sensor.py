@@ -124,16 +124,11 @@ class Test_Api_2_Sensor(TestCase):
     def test_7_delete_sensor(self):
         """Test the delete sensor route of the API."""
 
-        res = self.db.query(ModelSensor).filter(ModelSensor.serial_number == "test_delete_sensor").first()
-        if res is not None:
-            delete_sensor_id = res.id
-
         # create a sensor to delete
-        else:
-            sensor = ModelSensor(lookup_id="test_delete_sensor", serial_number="test_delete_sensor", type_id=self.sensor_type_id, active=True, user_id=None, stationary_box=None)
-            self.db.add(sensor)
-            self.db.commit()
-            delete_sensor_id = sensor.id
+        sensor = ModelSensor(lookup_id="test_delete_sensor", serial_number="test_delete_sensor", type_id=self.sensor_type_id, active=True, user_id=None, stationary_box=None)
+        self.db.add(sensor)
+        self.db.commit()
+        delete_sensor_id = sensor.id
 
         # delete the sensor
         response = self.client.delete(f"/sensor/{delete_sensor_id}")
