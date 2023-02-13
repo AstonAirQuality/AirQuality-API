@@ -57,10 +57,41 @@ You can:
 * **delete account**.
 """
 
+tags_metadata = [
+    {
+        "name": "auth",
+        "description": "Firebase authentication.",
+    },
+    {
+        "name": "sensor",
+        "description": "Operations with sensors.",
+    },
+    {
+        "name": "sensor-type",
+        "description": "Operations with sensor types.",
+    },
+    {
+        "name": "sensor-summary",
+        "description": "Operations with sensor summaries.",
+    },
+    {
+        "name": "api-task",
+        "description": "Operations with background tasks.",
+    },
+    {
+        "name": "user",
+        "description": "Operations with users.",
+    },
+    {
+        "name": "data-ingestion-logs",
+        "description": "Operations with logs.",
+    },
+]
+
 stage = env.get("AWS_STAGE_NAME", None)
 openapi_prefix = f"/{stage}" if stage else "/"
 
-app = FastAPI(title="Aston Air Quality API", description=description, root_path=openapi_prefix)
+app = FastAPI(title="Aston Air Quality API", openapi_tags=tags_metadata, description=description, root_path=openapi_prefix)
 
 app.include_router(authRouter, prefix="/auth", tags=["auth"])
 app.include_router(sensorsRouter, prefix="/sensor", tags=["sensor"])

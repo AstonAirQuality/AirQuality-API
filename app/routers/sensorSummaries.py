@@ -1,4 +1,5 @@
 import datetime as dt
+from enum import Enum
 
 from core.models import SensorSummaries as ModelSensorSummary
 from db.database import SessionLocal
@@ -15,26 +16,53 @@ sensorSummariesRouter = APIRouter()
 db = SessionLocal()
 
 #################################################################################################################################
+#                                                  Enums                                                                        #
+#################################################################################################################################
+class sensorSummaryColumns(str, Enum):
+    sensor_id = "sensor_id"
+    measurement_count = "measurement_count"
+    measurement_data = "measurement_data"
+    stationary = "stationary"
+    geom = "geom"
+    timestamp = "timestamp"
+
+
+class spatialQueryType(str, Enum):
+    intersects = "intersects"
+    contains = "contains"
+    within = "within"
+    overlaps = "overlaps"
+
+
+class averagingMethod(str, Enum):
+    mean = "mean"
+    count = "count"
+    median = "median"
+    min = "min"
+    max = "max"
+
+
+#################################################################################################################################
 #                                                  Read                                                                         #
 #################################################################################################################################
 # TODO add param to read to allow aggregation of sensors into a single measurement_data json
-@sensorSummariesRouter.get("/{start}/{end}")
+@sensorSummariesRouter.get("")
 def get_sensorSummaries(
-    start: str,
-    end: str,
-    columns: list[str] = Query(default=["sensor_id", "measurement_count", "geom", "timestamp"]),
-    spatial_query_type: str = Query(None),
-    geom: str = Query(None),
+    start: str = Query(..., description="format dd-mm-yyyy"),
+    end: str = Query(..., description="format dd-mm-yyyy"),
+    columns: list[sensorSummaryColumns] = Query(...),
+    spatial_query_type: spatialQueryType = Query(None),
+    geom: str = Query(None, description="format: WKT string. **Required if spatial_query_type is provided**"),
     sensor_ids: list[int] = Query(default=[]),
 ):
     """read sensor summaries given a date range (e.g /read/28-09-2022/30-09-2022) and any optional filters then return a json of sensor summaries
-    :param start: start date of the query in the format dd-mm-yyyy
-    :param end: end date of the query in the format dd-mm-yyyy
-    :param columns: list of columns to return from the sensor summaries table
-    :param spatial_query_type: type of spatial query to perform (e.g intersects, contains, within ) - see spatialQueryBuilder for more info
-    :param geom: geometry to use in the spatial query (e.g POINT(0 0), POLYGON((0 0, 0 1, 1 1, 1 0, 0 0)) ) - see spatialQueryBuilder for more info
-    :param sensor_ids: list of sensor ids to filter by if none then all sensors that match the above filters will be returned
-    :return: sensor summaries"""
+    \n :param start: start date of the query in the format dd-mm-yyyy
+    \n :param end: end date of the query in the format dd-mm-yyyy
+    \n :param columns: list of columns to return from the sensor summaries table
+    \n :param spatial_query_type: type of spatial query to perform (e.g intersects, contains, within ) - see spatialQueryBuilder for more info
+    \n :param geom: geometry to use in the spatial query (e.g POINT(0 0), POLYGON((0 0, 0 1, 1 1, 1 0, 0 0)) ) - see spatialQueryBuilder for more info
+    \n :param sensor_ids: list of sensor ids to filter by if none then all sensors that match the above filters will be returned
+    \n :return: sensor summaries"""
 
     (startDate, endDate) = convertDateRangeStringToDate(start, end)
 
@@ -54,12 +82,12 @@ def get_sensorSummaries(
         results = []
         for row in query_result:
             row_as_dict = dict(row._mapping)
-            # TODO check if geom column is there?
-            try:
-                row_as_dict["timestamp_UTC"] = row_as_dict.pop("timestamp")
+            if "geom" in row_as_dict:
                 row_as_dict["geom"] = convertWKBtoWKT(row_as_dict["geom"])
-            except KeyError:
-                pass
+
+            if "timestamp" in row_as_dict:
+                row_as_dict["timestamp_UTC"] = row_as_dict.pop("timestamp")
+
             results.append(row_as_dict)
 
     except Exception as e:
@@ -71,24 +99,25 @@ def get_sensorSummaries(
 
 # TODO include stationary bool and geom in the query. for stationary sensors use its geom for the bounding boxes in the geojson.
 # for non stationary sensors calculate the bounding box from the sensor readings
-@sensorSummariesRouter.get("/as-geojson/{start}/{end}/{averaging_frequency}")
+@sensorSummariesRouter.get("/as-geojson")
 def get_geojson_Export_of_sensorSummaries(
-    start: str,
-    end: str,
-    spatial_query_type: str = Query(None),
-    geom: str = Query(None),
-    averaging_methods: list[str] = Query(default=["mean", "count"]),
-    averaging_frequency: str = Query(None),
+    start: str = Query(..., description=" format: dd-mm-yyyy"),
+    end: str = Query(..., description="format: dd-mm-yyyy"),
+    averaging_frequency: str = Query(..., description="examples: 'H', '8H' , 'D', 'M', 'Y'"),
+    averaging_methods: list[averagingMethod] = Query(...),
+    spatial_query_type: spatialQueryType = Query(None),
+    geom: str = Query(None, description="format: WKT string. **Required if spatial_query_type is provided**"),
     sensor_ids: list[int] = Query(default=[]),
 ):
     """read sensor summaries given a date range and any optional filters then return as geojson
-    :param start: start date of tthe query in the format dd-mm-yyyy
-    :param end: end date of the query in the format dd-mm-yyyy
-    :param spatial_query_type: type of spatial query to perform e.g intersects, contains, within
-    :param geom: geometry to use in the spatial query e.g POINT(0 0), POLYGON((0 0, 0 1, 1 1, 1 0, 0 0))
-    :param averaging_methods: list of averaging methods to use e.g mean, count
-    :param averaging_frequency: frequency to average the data by e.g H, D, M, Y
-    :param sensor_ids: list of sensor ids to filter by, if none then all sensors that match the above filters will be returned
+    \n :param start: start date of tthe query in the format dd-mm-yyyy
+    \n :param end: end date of the query in the format dd-mm-yyyy
+    \n :param spatial_query_type: type of spatial query to perform e.g intersects, contains, within
+    \n :param geom: geometry to use in the spatial query in a WKT format e.g POINT(0 0), POLYGON((0 0, 0 1, 1 1, 1 0, 0 0))
+    \n :param averaging_methods: list of averaging methods to use e.g mean, count
+    \n :param averaging_frequency: frequency to average the data by e.g H, D, M, Y
+    \n :param sensor_ids: list of sensor ids to filter by, if none then all sensors that match the above filters will be returned
+    \n :return: geojson of sensor summaries
     """
 
     (startDate, endDate) = convertDateRangeStringToDate(start, end)
@@ -107,13 +136,11 @@ def get_geojson_Export_of_sensorSummaries(
         results = []
         for row in query_result:
             row_as_dict = dict(row._mapping)
-            # TODO check if geom column is there?
-            try:
-                row_as_dict["timestamp_UTC"] = row_as_dict.pop("timestamp")
+            if "geom" in row_as_dict:
                 row_as_dict["geom"] = convertWKBtoWKT(row_as_dict["geom"])
-            except KeyError:
-                pass
-            results.append(row_as_dict)
+
+            if "timestamp" in row_as_dict:
+                row_as_dict["timestamp_UTC"] = row_as_dict.pop("timestamp")
 
     except Exception as e:
         db.rollback()

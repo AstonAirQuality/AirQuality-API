@@ -59,7 +59,7 @@ async def upsert_sensor_summary_by_id_list(
         upsert_log = []
         # for each sensor type, fetch the data from the sfw and write to the database
         for (sensorType, dict_lookupid_stationaryBox) in sensor_dict.items():
-            if sensorType == "Plume":
+            if sensorType.lower() == "plume":
                 for sensorSummary in sfw.fetch_plume_data(startDate, endDate, dict_lookupid_stationaryBox):
                     lookupid = sensorSummary.sensor_id
                     (sensorSummary.sensor_id, sensor_serial_number) = get_sensor_id_and_serialnum_from_lookup_id(str(lookupid))
@@ -68,10 +68,10 @@ async def upsert_sensor_summary_by_id_list(
                         upsert_log.append([sensorSummary.sensor_id, sensorSummary.timestamp, sensor_serial_number, True, "success"])
                     except Exception as e:
                         upsert_log.append([sensorSummary.sensor_id, sensorSummary.timestamp, sensor_serial_number, False, str(e)])
-            elif sensorType == "Zephyr":
+            elif sensorType.lower() == "zephyr":
                 # TODO add api call for sensor type 2
                 continue
-            elif sensorType == "SensorCommunity":
+            elif sensorType.lower() == "sensorcommunity":
                 # TODO add api call for sensor type 3
                 continue
 

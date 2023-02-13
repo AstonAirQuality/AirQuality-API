@@ -161,13 +161,14 @@ class Test_Api_6_SensorSummary(TestCase):
     #     self.assertIsNotNone(response.json())
     #     self.assertTrue(len(response.json()) > 0)
 
+    # TODO - fix this test
     def test_7_get_sensorSummary_as_geojson(self):
         """Test that the sensor summary is returned as geojson"""
         # 27/09/2022 23:00
 
         response = self.client.get(
-            "/sensor-summary/as-geojson/27-09-2022/28-09-2022/D",
-            params={"columns": ["sensor_id", "measurement_count", "geom", "timestamp"], "averaging_method": ["mean", "count"]},
+            "/sensor-summary/as-geojson/27-09-2022/28-09-2022",
+            params={"columns": ["sensor_id", "measurement_count", "geom", "timestamp"], "averaging_method": ["mean", "count"], "averaging_frequency": "D"},
         )
         self.assertEqual(response.status_code, 200)
         self.assertIsNotNone(response.json())

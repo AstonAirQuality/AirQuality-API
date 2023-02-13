@@ -19,8 +19,8 @@ auth_handler = AuthHandler()
 @sensorsTypesRouter.post("", response_model=SchemaSensorType)
 def add_sensorType(sensorType: SchemaSensorType, payload=Depends(auth_handler.auth_wrapper)):
     """create a sensor type using the sensor type schema
-    :param sensorType: sensor type schema
-    :return: sensor type"""
+    \n :param sensorType: sensor type schema
+    \n :return: sensor type"""
 
     if auth_handler.checkRoleAdmin(payload) == False:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authorized")
@@ -41,7 +41,7 @@ def add_sensorType(sensorType: SchemaSensorType, payload=Depends(auth_handler.au
 @sensorsTypesRouter.get("")
 def get_sensorTypes():
     """read all sensor types and return a json of sensor types
-    :return: sensor types"""
+    \n :return: sensor types"""
     try:
         # NOTE: using the model ModelSensorType does not allow for response to be ordered by id,name,description,properties we must explicitly state the columns if we want to order the response
         result = db.query(ModelSensorType.id, ModelSensorType.name, ModelSensorType.description, ModelSensorType.properties).all()
@@ -53,7 +53,7 @@ def get_sensorTypes():
 @sensorsTypesRouter.get("/{page}/{limit}")
 def get_sensorTypes_paginated(page: int, limit: int):
     """read all sensor types and return a json of sensor types
-    :return: sensor types"""
+    \n :return: sensor types"""
     try:
         # NOTE: using the model ModelSensorType does not allow for response to be ordered by id,name,description,properties we must explicitly state the columns if we want to order the response
         result = db.query(ModelSensorType.id, ModelSensorType.name, ModelSensorType.description, ModelSensorType.properties).offset((page - 1) * limit).limit(limit).all()
@@ -68,9 +68,9 @@ def get_sensorTypes_paginated(page: int, limit: int):
 @sensorsTypesRouter.put("/{sensorType_id}", response_model=SchemaSensorType)
 def update_sensorType(sensorType_id: int, sensorType: SchemaSensorType, payload=Depends(auth_handler.auth_wrapper)):
     """update a sensor type using the sensor type schema
-    :param sensorType_id: sensor type id
-    :param sensorType: sensor type schema
-    :return: sensor type"""
+    \n :param sensorType_id: sensor type id
+    \n :param sensorType: sensor type schema
+    \n :return: sensor type"""
     if auth_handler.checkRoleAdmin(payload) == False:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authorized")
 
@@ -90,8 +90,8 @@ def update_sensorType(sensorType_id: int, sensorType: SchemaSensorType, payload=
 @sensorsTypesRouter.delete("/{sensorType_id}")
 def delete_sensorType(sensorType_id: int, payload=Depends(auth_handler.auth_wrapper)):
     """delete a sensor type using the sensor type id
-    :param sensorType_id: sensor type id
-    :return: sensor type"""
+    \n :param sensorType_id: sensor type id
+    \n :return: sensor type"""
     if auth_handler.checkRoleAdmin(payload) == False:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authorized")
 
