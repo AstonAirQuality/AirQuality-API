@@ -4,7 +4,7 @@ from unittest import TestCase
 from core.models import Users as ModelUser
 from fastapi.testclient import TestClient
 from main import app
-from testing.application_config import admin_session, database_config
+from testing.application_config import database_config
 
 
 class Test_Api_3_Auth(TestCase):
@@ -17,7 +17,6 @@ class Test_Api_3_Auth(TestCase):
         """Setup the test environment once before all tests"""
         cls.client = TestClient(app)
         cls.client.headers.update({"Content-Type": "application/json"})
-        # cls.client = admin_session(cls.client)
         cls.db = database_config()
         cls.user_credentials = {"email": "test@test.com", "password": "testpassword"}
 

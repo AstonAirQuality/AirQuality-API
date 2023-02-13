@@ -52,9 +52,9 @@ Run tests without coverage ```python -m unittest discover -s testing -p test_*.p
 
 Run tests with coverage ```python -m coverage run -m unittest discover -s testing -p test_*.py```
 
-View coverage report ```python -m coverage report```  #
+View coverage report ```python -m coverage report --omit="*/testing*" ```
 
-export coverage in html ```python -m coverage html```  
+export coverage in html ```python -m coverage html --omit="*/testing*```  
 
 for more information see
 - https://www.pythontutorial.net/python-unit-testing/python-unittest-coverage/

@@ -8,7 +8,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
 
-def admin_session(client: TestClient):
+def authenticate_client(client: TestClient, role: str = "admin"):
     response = client.post("http://localhost:8000/auth/dev-login", params={"uid": "admin", "role": "admin"})
     client.headers.update({"Content-Type": "application/json"})
     client.headers.update({"Authorization": f"Bearer {response.json()}"})

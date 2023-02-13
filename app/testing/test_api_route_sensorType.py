@@ -4,7 +4,7 @@ from unittest import TestCase
 from core.models import SensorTypes as ModelSensorType
 from fastapi.testclient import TestClient
 from main import app
-from testing.application_config import admin_session, database_config
+from testing.application_config import authenticate_client, database_config
 
 
 class Test_Api_1_Sensor_Type(TestCase):
@@ -16,7 +16,7 @@ class Test_Api_1_Sensor_Type(TestCase):
     def setUpClass(cls):
         """Setup the test environment once before all tests"""
         cls.client = TestClient(app)
-        cls.client = admin_session(cls.client)
+        cls.client = authenticate_client(cls.client, role="admin")
         cls.db = database_config()
         pass
 
