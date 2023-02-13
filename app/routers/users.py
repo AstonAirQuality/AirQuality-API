@@ -25,7 +25,7 @@ load_dotenv()
 @usersRouter.get("")
 def get_users(payload=Depends(auth_handler.auth_wrapper)):
     """read all users and return a json of users
-    :return: users"""
+    \n:return: users"""
     if auth_handler.checkRoleAdmin(payload) == False:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authorized")
 
@@ -39,9 +39,9 @@ def get_users(payload=Depends(auth_handler.auth_wrapper)):
 @usersRouter.get("/read-from/{column}")
 def get_user_from_column(column: str, searchvalue: str, payload=Depends(auth_handler.auth_wrapper)):
     """query/read a user from searchvalue  and column name and return a json of the first user
-    :param column: column to apply the filter on (uid, email, username)
-    :param searchvalue : user searchvalue
-    :return: user"""
+    \n :param column: column to apply the filter on (uid, email, username)
+    \n :param searchvalue : user searchvalue
+    \n:return: user"""
 
     # query all users which match the searchvalue (only used for username searching)
     queryAll = False
@@ -79,9 +79,9 @@ def get_user_from_column(column: str, searchvalue: str, payload=Depends(auth_han
 @usersRouter.put("/{uid}")
 def update_user(uid: str, user: SchemaUser, payload=Depends(auth_handler.auth_wrapper)):
     """update a user using the user schema and uid
-    :param uid: user uid
-    :param user: user schema
-    :return: user"""
+    \n :param uid: user uid
+    \n :param user: user schema
+    \n:return: user"""
 
     updated_user = user.dict()
 
@@ -107,9 +107,9 @@ def update_user(uid: str, user: SchemaUser, payload=Depends(auth_handler.auth_wr
 @usersRouter.patch("/{uid}/{role}")
 def update_user_role(uid: str, role: str, payload=Depends(auth_handler.auth_wrapper)):
     """update a user using the user schema and uid
-    :param uid: user uid
-    :param role: user role
-    :return: user"""
+    \n :param uid: user uid
+    \n :param role: user role
+    \n:return: user"""
 
     # only allow update if user is admin only
     if auth_handler.checkRoleAdmin(payload) == False:
@@ -130,8 +130,8 @@ def update_user_role(uid: str, role: str, payload=Depends(auth_handler.auth_wrap
 @usersRouter.delete("/{uid}")
 def delete_user(uid: str, payload=Depends(auth_handler.auth_wrapper)):
     """delete a user using the uid
-    :param uid: user uid
-    :return: user"""
+    \n :param uid: user uid
+    \n:return: user"""
 
     # only allow delete if user is admin or the user is deleting their own data
     if auth_handler.checkRoleAdmin(payload) == False:

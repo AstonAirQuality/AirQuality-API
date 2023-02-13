@@ -6,12 +6,21 @@ from os import environ as env
 from typing import Tuple
 
 from api_wrappers.SensorFactoryWrapper import SensorFactoryWrapper
+from core.authentication import AuthHandler
 from core.models import SensorSummaries
 from core.schema import Log as SchemaLog
 
 # sensor summary
 from dotenv import load_dotenv
-from fastapi import APIRouter, BackgroundTasks, HTTPException, Query, status
+from fastapi import (
+    APIRouter,
+    BackgroundTasks,
+    Depends,
+    Header,
+    HTTPException,
+    Query,
+    status,
+)
 from routers.helpers.helperfunctions import convertDateRangeStringToDate
 from routers.helpers.sensorsSharedFunctions import (
     get_sensor_dict,
@@ -23,7 +32,7 @@ from routers.logs import add_log
 
 load_dotenv()
 
-
+auth_handler = AuthHandler()
 backgroundTasksRouter = APIRouter()
 
 # TODO add leap year check
@@ -82,10 +91,23 @@ async def upsert_sensor_summary_by_id_list(
 
 
 @backgroundTasksRouter.get("/schedule/ingest-bysensorid/{start}/{end}")
-async def schedule_data_ingest_task_by_sensorid(background_tasks: BackgroundTasks, start: str = Query(regex=dateRegex), end: str = Query(regex=dateRegex), sensor_ids: list[int] = Query(default=[])):
+async def schedule_data_ingest_task_by_sensorid(
+    background_tasks: BackgroundTasks,
+    start: str = Query(regex=dateRegex),
+    end: str = Query(regex=dateRegex),
+    sensor_ids: list[int] = Query(default=[], description="list of sensor ids to search for"),
+    payload=Depends(auth_handler.auth_wrapper),
+):
     """
-    This function is called
+    Run by admins to schedule the data ingest task in the background for a list of sensors by sensor id
+    \n :param start: start date of the data to be ingested. (e.g 20-08-2022)
+    \n :param end: end date of the data to be ingested (e.g 26-08-2022)
+    \n :param sensor_ids: list of sensor ids
+    \n :return: task_id and task_message
     """
+    if auth_handler.checkRoleAdmin(payload) == False:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authorized")
+
     log_timestamp = dt.datetime.today().strftime("%Y-%m-%d %H:%M:%S")
     background_tasks.add_task(upsert_sensor_summary_by_id_list, start, end, sensor_ids, "sensor_id", log_timestamp)
 
@@ -94,10 +116,13 @@ async def schedule_data_ingest_task_by_sensorid(background_tasks: BackgroundTask
 
 # TODO make compatible with sensor type 2 and 3
 @backgroundTasksRouter.get("/cron/ingest-active-sensors")
-async def schedule_data_ingest_task_of_active_sensors_by_sensorTypeId(background_tasks: BackgroundTasks):
+async def schedule_data_ingest_task_of_active_sensors_by_sensorTypeId(background_tasks: BackgroundTasks, cron_job_token=Header(...)):
     """
     This function is called by AWS Lambda to run the scheduled ingest task for plume sensors
     """
+    if cron_job_token != env["CRON_JOB_TOKEN"]:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authorized")
+
     start, end = get_dates(-1)
     log_timestamp = dt.datetime.today().strftime("%Y-%m-%d %H:%M:%S")
     background_tasks.add_task(upsert_sensor_summary_by_id_list, start, end, [1], "sensor_type_id", log_timestamp)

@@ -17,8 +17,8 @@ auth_handler = AuthHandler()
 #################################################################################################################################
 def add_log(log_timestamp: str, log: SchemaLog):
     """add a log to the database
-    :param log: log schema
-    :return: log object"""
+    \n :param log: log schema
+    \n :return: log object"""
     try:
         log = ModelLogs(date=dt.datetime.strptime(log_timestamp, "%Y-%m-%d %H:%M:%S"), data=log.log_data)
         db.add(log)
@@ -35,8 +35,8 @@ def add_log(log_timestamp: str, log: SchemaLog):
 @logsRouter.get("")
 def get_log(payload=Depends(auth_handler.auth_wrapper)):
     """get all logs from the database
-    :param payload: auth payload
-    :return: log object"""
+    \n :param payload: auth payload
+    \n :return: log object"""
 
     if auth_handler.checkRoleAdmin(payload) == False:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authorized")
@@ -51,9 +51,9 @@ def get_log(payload=Depends(auth_handler.auth_wrapper)):
 @logsRouter.get("/findByDate/{log_date}")
 def get_log(log_date: str, payload=Depends(auth_handler.auth_wrapper)):
     """get a log from the database by date
-    :param log_date: date of the log. Format: YYYY-MM-DD
-    :param payload: auth payload
-    :return: log object"""
+    \n :param log_date: date of the log. Format: YYYY-MM-DD
+    \n :param payload: auth payload
+    \n :return: log object"""
     if auth_handler.checkRoleAdmin(payload) == False:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authorized")
 
@@ -78,9 +78,9 @@ def get_log(log_date: str, payload=Depends(auth_handler.auth_wrapper)):
 @logsRouter.delete("/{log_date}")
 def delete_log(log_date: str, payload=Depends(auth_handler.auth_wrapper)):
     """delete a log from the database by date
-    :param log_date: date of the log
-    :param payload: auth payload
-    :return: log object"""
+    \n :param log_date: date of the log
+    \n :param payload: auth payload
+    \n :return: log object"""
     if auth_handler.checkRoleAdmin(payload) == False:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authorized")
 

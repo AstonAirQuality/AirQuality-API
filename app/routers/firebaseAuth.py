@@ -14,7 +14,7 @@ auth_handler = AuthHandler()
 
 
 @authRouter.post("/signup")
-async def signup(firebase_token=Header(default=None), username: str = Query(None)):
+async def signup(firebase_token=Header(...), username: str = Query(...)):
     """sign up a user with firebase token and username
     \n :param firebase_token: firebase access token
     \n :param username: username
@@ -46,7 +46,7 @@ async def signup(firebase_token=Header(default=None), username: str = Query(None
 
 
 @authRouter.post("/login")
-async def login(firebase_token=Header(default=None)):
+async def login(firebase_token=Header(...)):
     """login a user with firebase token
     \n :param firebase_token: firebase access token
     \n :return: dict of user data and custom jwt token"""
@@ -61,7 +61,7 @@ async def login(firebase_token=Header(default=None)):
 #                                                  Firebase                                                                     #
 #################################################################################################################################
 @authRouter.delete("/user-account")
-async def delete_user_account(firebase_token=Header(default=None), payload=Depends(auth_handler.auth_wrapper)):
+async def delete_user_account(firebase_token=Header(...), payload=Depends(auth_handler.auth_wrapper)):
     """delete a user from firebase and the api's database
     \n :param firebase_token: firebase access token
     \n :return: user record from firebase
