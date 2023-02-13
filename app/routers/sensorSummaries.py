@@ -142,6 +142,8 @@ def get_geojson_Export_of_sensorSummaries(
             if "timestamp" in row_as_dict:
                 row_as_dict["timestamp_UTC"] = row_as_dict.pop("timestamp")
 
+            results.append(row_as_dict)
+
     except Exception as e:
         db.rollback()
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))

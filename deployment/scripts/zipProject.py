@@ -2,6 +2,8 @@ import os
 from os import path
 from zipfile import ZIP_DEFLATED, ZipFile
 
+# TODO ignore coverage
+
 
 def zip_directory(directory_path, isDependancy: bool):
     for folderName, subfolders, filenames in os.walk(directory_path):
@@ -9,7 +11,7 @@ def zip_directory(directory_path, isDependancy: bool):
             continue
 
         if isDependancy:
-            if folderName.endswith("testing") or folderName.endswith("test_data"):
+            if folderName.endswith("testing") or folderName.endswith("test_data") or folderName.endswith("test_api"):
                 continue
 
         for filename in filenames:

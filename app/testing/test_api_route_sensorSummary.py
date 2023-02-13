@@ -95,7 +95,7 @@ class Test_Api_6_SensorSummary(TestCase):
 
     def test_2_get_sensorSummary(self):
         """Test that the sensor summary is returned"""
-        response = self.client.get("/sensor-summary/27-09-2022/28-09-2022", params={"columns": ["sensor_id", "measurement_count", "geom", "timestamp"]})
+        response = self.client.get("/sensor-summary", params={"start": "27-09-2022", "end": "28-09-2022", "columns": ["sensor_id", "measurement_count", "geom", "timestamp"]})
         self.assertEqual(response.status_code, 200)
         self.assertIsNotNone(response.json())
         self.assertTrue(len(response.json()) > 0)
@@ -103,7 +103,7 @@ class Test_Api_6_SensorSummary(TestCase):
     def test_3_get_sensorSummary_with_measurement_data(self):
         """Test that the sensor summary is returned"""
 
-        response = self.client.get("/sensor-summary/27-09-2022/28-09-2022", params={"columns": ["sensor_id", "measurement_data", "geom", "timestamp"]})
+        response = self.client.get("/sensor-summary", params={"start": "27-09-2022", "end": "28-09-2022", "columns": ["sensor_id", "measurement_data", "geom", "timestamp"]})
         self.assertEqual(response.status_code, 200)
         self.assertIsNotNone(response.json())
         self.assertTrue(len(response.json()) > 0)
@@ -111,10 +111,12 @@ class Test_Api_6_SensorSummary(TestCase):
     def test_3_get_sensorSummary_spatial_intersect(self):
 
         response = self.client.get(
-            "/sensor-summary/27-09-2022/28-09-2022",
+            "/sensor-summary",
             params={
+                "start": "27-09-2022",
+                "end": "28-09-2022",
                 "columns": ["sensor_id", "measurement_count", "geom", "timestamp"],
-                "spatial_query_type": "intersect",
+                "spatial_query_type": "intersects",
                 "geom": "POLYGON ((-1.83631 52.425392, -1.83631 52.425603, -1.836288 52.425603, -1.836288 52.425392, -1.83631 52.425392))",
             },
         )
@@ -124,8 +126,10 @@ class Test_Api_6_SensorSummary(TestCase):
 
     def test_4_get_sensorSummary_spatial_within(self):
         response = self.client.get(
-            "/sensor-summary/27-09-2022/28-09-2022",
+            "/sensor-summary",
             params={
+                "start": "27-09-2022",
+                "end": "28-09-2022",
                 "columns": ["sensor_id", "measurement_count", "geom", "timestamp"],
                 "spatial_query_type": "within",
                 "geom": "POLYGON ((-1.83631 52.425392, -1.83631 52.425603, -1.836288 52.425603, -1.836288 52.425392, -1.83631 52.425392))",
@@ -137,8 +141,10 @@ class Test_Api_6_SensorSummary(TestCase):
 
     def test_5_get_sensorSummary_spatial_contains(self):
         response = self.client.get(
-            "/sensor-summary/27-09-2022/28-09-2022",
+            "/sensor-summary",
             params={
+                "start": "27-09-2022",
+                "end": "28-09-2022",
                 "columns": ["sensor_id", "measurement_count", "geom", "timestamp"],
                 "spatial_query_type": "contains",
                 "geom": "POLYGON ((-1.83631 52.425392, -1.83631 52.425603, -1.836288 52.425603, -1.836288 52.425392, -1.83631 52.425392))",
@@ -150,8 +156,10 @@ class Test_Api_6_SensorSummary(TestCase):
 
     # def test_6_get_sensorSummary_spatial_overlaps(self):
     #     response = self.client.get(
-    #         "/sensor-summary/27-09-2022/28-09-2022",
+    #         "/sensor-summary",
     #         params={
+    #             "start": "27-09-2022",
+    #             "end": "28-09-2022",
     #             "columns": ["sensor_id", "measurement_count", "geom", "timestamp"],
     #             "spatial_query_type": "overlaps",
     #             "geom": "POLYGON ((-1.83631 52.425392, -1.83631 52.425603, -1.836288 52.425603, -1.836288 52.425392, -1.83631 52.425392))",
@@ -164,11 +172,10 @@ class Test_Api_6_SensorSummary(TestCase):
     # TODO - fix this test
     def test_7_get_sensorSummary_as_geojson(self):
         """Test that the sensor summary is returned as geojson"""
-        # 27/09/2022 23:00
 
         response = self.client.get(
-            "/sensor-summary/as-geojson/27-09-2022/28-09-2022",
-            params={"columns": ["sensor_id", "measurement_count", "geom", "timestamp"], "averaging_method": ["mean", "count"], "averaging_frequency": "D"},
+            "/sensor-summary/as-geojson",
+            params={"start": "27-09-2022", "end": "28-09-2022", "columns": ["sensor_id", "measurement_count", "geom", "timestamp"], "averaging_methods": ["mean", "count"], "averaging_frequency": "H"},
         )
         self.assertEqual(response.status_code, 200)
         self.assertIsNotNone(response.json())

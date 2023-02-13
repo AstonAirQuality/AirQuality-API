@@ -1,6 +1,7 @@
 import datetime as dt
 import unittest
 import zipfile
+from os import environ as env
 from unittest import TestCase
 from unittest.mock import Mock, patch
 
@@ -11,14 +12,10 @@ from core.models import Logs as ModelLog
 from core.models import Sensors as ModelSensor
 from core.models import SensorSummaries as ModelSensorSummary
 from core.models import SensorTypes as ModelSensorType
+from dotenv import load_dotenv
 from fastapi.testclient import TestClient
 from main import app
-from routers.bgtasks import upsert_sensor_summary_by_id_list
 from testing.application_config import authenticate_client, database_config
-
-# from fastapi.testclient import TestClient
-# from main import app
-# from testing.application_config import authenticate_client, database_config
 
 
 class Test_Api_7_BackgroundTasks(TestCase):
@@ -70,6 +67,11 @@ class Test_Api_7_BackgroundTasks(TestCase):
         sensor = PlumeSensor(id_=id_, dataframe=sensor.df)
         cls.summaries = sensor.create_sensor_summaries(None)
 
+        # get the first summary
+        for summary in cls.summaries:
+            cls.summary = summary
+            break
+
     @classmethod
     def tearDownClass(cls):
         """Tear down the test environment once after all tests"""
@@ -90,10 +92,10 @@ class Test_Api_7_BackgroundTasks(TestCase):
 
     def test_1_upsert_sensor_summary_by_id_list(self):
         """Test the upsert sensor summary by id list route of the API"""
-        log_timestamp = dt.datetime.today().strftime("%Y-%m-%d %H:%M:%S")
-        with patch.object(SensorFactoryWrapper, "fetch_plume_data", return_value=[self.summaries]) as mock_fetch_plume_data:
-            response = upsert_sensor_summary_by_id_list(start="27-09-2022", end="28-09-2022", id_list=[self.sensor_type_id], type_of_id="sensor_type_id", log_timestamp=log_timestamp)
+        with patch.object(SensorFactoryWrapper, "fetch_plume_data", return_value=[self.summary]) as mock_fetch_plume_data:
+            response = self.client.get("/api-task/schedule/ingest-bysensorid/27-09-2022/28-09-2022", params={"sensor_ids": [self.sensor_type_id]})
             mock_fetch_plume_data.assert_called_once()
+            self.assertEqual(response.status_code, 200)
             self.assertNotEqual(response, "No active sensors found")
 
         # test that the sensor summary was added to the database
@@ -104,7 +106,33 @@ class Test_Api_7_BackgroundTasks(TestCase):
             self.db.rollback()
 
         # test that log was added to the database
-        log_date = dt.datetime.strptime(log_timestamp, "%Y-%m-%d")
+        log_date = dt.datetime.today()
+        end_date = (log_date + dt.timedelta(days=1)).strftime("%Y-%m-%d")
+        log_date = log_date.strftime("%Y-%m-%d")
+
+        try:
+            result = self.db.query(ModelLog).filter(ModelLog.date >= log_date, ModelLog.date < end_date).first()
+            self.assertIsNotNone(result)
+        except Exception:
+            self.db.rollback()
+
+    def test_2_upsert_sensor_summary_by_type_id_active_sensors(self):
+        """Test the upsert sensor summary by type id active sensors route of the API"""
+        with patch.object(SensorFactoryWrapper, "fetch_plume_data", return_value=[self.summary]) as mock_fetch_plume_data:
+            response = self.client.get("/api-task/cron/ingest-active-sensors", headers={"cron-job-token": env["CRON_JOB_TOKEN"]})
+            mock_fetch_plume_data.assert_called_once()
+            self.assertEqual(response.status_code, 200)
+            self.assertNotEqual(response, "No active sensors found")
+
+        # test that the sensor summary was added to the database
+        try:
+            res = self.db.query(ModelSensorSummary).filter(ModelSensorSummary.sensor_id == self.sensor_id).first()
+            self.assertIsNotNone(res)
+        except Exception as e:
+            self.db.rollback()
+
+        # test that log was added to the database
+        log_date = dt.datetime.today()
         end_date = (log_date + dt.timedelta(days=1)).strftime("%Y-%m-%d")
         log_date = log_date.strftime("%Y-%m-%d")
 

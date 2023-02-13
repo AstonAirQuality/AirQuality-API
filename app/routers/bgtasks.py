@@ -40,7 +40,7 @@ dateRegex = "\s+(?:0[1-9]|[12][0-9]|3[01])[-/.](?:0[1-9]|1[012])[-/.](?:19\d{2}|
 
 
 # @backgroundTasksRouter.put("/upsert/sensor-data-ingestion-by-IdList/{start}/{end}/{type_of_id}")
-async def upsert_sensor_summary_by_id_list(
+def upsert_sensor_summary_by_id_list(
     start: str = Query(regex=dateRegex),
     end: str = Query(regex=dateRegex),
     id_list: list[int] = Query(default=[]),

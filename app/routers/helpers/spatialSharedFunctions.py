@@ -20,7 +20,7 @@ def spatialQueryBuilder(query: any, model: any, column_name: str, spatial_query_
     geom = convertWKTtoWKB(geom)
     geom_column = getattr(model, column_name)
 
-    if spatial_query_type == "intersect":
+    if spatial_query_type == "intersects":
         query = query.filter(geom_column.ST_Intersects(geom))
     elif spatial_query_type == "within":
         query = query.filter(geom_column.ST_Within(geom))
