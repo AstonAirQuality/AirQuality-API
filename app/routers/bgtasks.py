@@ -9,6 +9,7 @@ from api_wrappers.SensorFactoryWrapper import SensorFactoryWrapper
 from core.authentication import AuthHandler
 from core.models import SensorSummaries
 from core.schema import Log as SchemaLog
+from core.schema import SensorSummary as SchemaSensorSummary
 
 # sensor summary
 from dotenv import load_dotenv
@@ -68,18 +69,15 @@ def upsert_sensor_summary_by_id_list(
         upsert_log = []
         # for each sensor type, fetch the data from the sfw and write to the database
         for (sensorType, dict_lookupid_stationaryBox) in sensor_dict.items():
+
             if sensorType.lower() == "plume":
                 for sensorSummary in sfw.fetch_plume_data(startDate, endDate, dict_lookupid_stationaryBox):
-                    lookupid = sensorSummary.sensor_id
-                    (sensorSummary.sensor_id, sensor_serial_number) = get_sensor_id_and_serialnum_from_lookup_id(str(lookupid))
-                    try:
-                        upsert_sensorSummary(sensorSummary)
-                        upsert_log.append([sensorSummary.sensor_id, sensorSummary.timestamp, sensor_serial_number, True, "success"])
-                    except Exception as e:
-                        upsert_log.append([sensorSummary.sensor_id, sensorSummary.timestamp, sensor_serial_number, False, str(e)])
+                    upsert_log = upsert_summary_and_log(sensorSummary, upsert_log)
+
             elif sensorType.lower() == "zephyr":
-                # TODO add api call for sensor type 2
-                continue
+                for sensorSummary in sfw.fetch_zephyr_data(startDate, endDate, dict_lookupid_stationaryBox):
+                    upsert_log = upsert_summary_and_log(sensorSummary, upsert_log)
+
             elif sensorType.lower() == "sensorcommunity":
                 # TODO add api call for sensor type 3
                 continue
@@ -88,6 +86,22 @@ def upsert_sensor_summary_by_id_list(
         return update_sensor_last_updated(upsert_log, log_timestamp)
     else:
         return "No active sensors found"
+
+
+def upsert_summary_and_log(sensorSummary: SchemaSensorSummary, upsert_log: list):
+    """upsert a sensor summary into the database
+    :param sensorSummary: sensor summary object
+    :param upsert_log: list of logs
+    """
+    lookupid = sensorSummary.sensor_id
+    (sensorSummary.sensor_id, sensor_serial_number) = get_sensor_id_and_serialnum_from_lookup_id(str(lookupid))
+    try:
+        upsert_sensorSummary(sensorSummary)
+        upsert_log.append([sensorSummary.sensor_id, sensorSummary.timestamp, sensor_serial_number, True, "success"])
+    except Exception as e:
+        upsert_log.append([sensorSummary.sensor_id, sensorSummary.timestamp, sensor_serial_number, False, str(e)])
+
+    return upsert_log
 
 
 @backgroundTasksRouter.get("/schedule/ingest-bysensorid/{start}/{end}")
@@ -114,9 +128,8 @@ async def schedule_data_ingest_task_by_sensorid(
     return {"task_id": log_timestamp, "task_message": "task sent to backend"}
 
 
-# TODO make compatible with sensor type 2 and 3
-@backgroundTasksRouter.get("/cron/ingest-active-sensors")
-async def schedule_data_ingest_task_of_active_sensors_by_sensorTypeId(background_tasks: BackgroundTasks, cron_job_token=Header(...)):
+@backgroundTasksRouter.get("/cron/ingest-active-sensors/{id_type}")
+async def schedule_data_ingest_task_of_active_sensors_by_sensorTypeId(background_tasks: BackgroundTasks, id_type: int, cron_job_token=Header(...)):
     """
     This function is called by AWS Lambda to run the scheduled ingest task for plume sensors
     """
@@ -125,7 +138,7 @@ async def schedule_data_ingest_task_of_active_sensors_by_sensorTypeId(background
 
     start, end = get_dates(-1)
     log_timestamp = dt.datetime.today().strftime("%Y-%m-%d %H:%M:%S")
-    background_tasks.add_task(upsert_sensor_summary_by_id_list, start, end, [1], "sensor_type_id", log_timestamp)
+    background_tasks.add_task(upsert_sensor_summary_by_id_list, start, end, [id_type], "sensor_type_id", log_timestamp)
     return {"task_id": log_timestamp, "task_message": "task sent to backend"}
 
 

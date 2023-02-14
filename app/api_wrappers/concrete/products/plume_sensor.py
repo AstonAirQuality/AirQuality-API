@@ -84,7 +84,7 @@ class PlumeSensor(SensorProduct, SensorWritable):
 
     @staticmethod
     # measurement data
-    def from_json(sensor_id: str, data: list) -> Any:
+    def from_json(sensor_id: str, data: list) -> SensorWritable:
         """Factory method builds PlumeSensor from file like object
         containing measurement json data.
         :param sensor_id: id number of sensor
@@ -113,7 +113,7 @@ class PlumeSensor(SensorProduct, SensorWritable):
             return PlumeSensor(sensor_id, df)
 
     @staticmethod
-    def from_csv(sensor_id: str, csv_file: io.StringIO) -> Any:
+    def from_csv(sensor_id: str, csv_file: io.StringIO) -> SensorWritable:
         """Factory method builds PlumeSensor from file like object
         containing location csv data.
         :param sensor_id: id number of sensor
@@ -137,7 +137,7 @@ class PlumeSensor(SensorProduct, SensorWritable):
             return PlumeSensor(sensor_id, df)
 
     @staticmethod
-    def from_zip(sensor_id: str, csv_file: io.StringIO) -> Any:
+    def from_zip(sensor_id: str, csv_file: io.StringIO) -> SensorWritable:
         """Factory method builds PlumeSensor from  file like object
         containing location csv data.
         :param sensor_id: id number of sensor

@@ -17,6 +17,20 @@
             "cwd": "${workspaceFolder}/app"
         },
         {
+            "name": "Python: Module - sensor_factories",
+            "type": "python",
+            "request": "launch",
+            "module": "api_wrappers.concrete.factories.${fileBasenameNoExtension}",
+            "cwd": "${workspaceFolder}/app"
+        },
+        {
+            "name": "Python: Module - sensor_products",
+            "type": "python",
+            "request": "launch",
+            "module": "api_wrappers.concrete.products.${fileBasenameNoExtension}",
+            "cwd": "${workspaceFolder}/app"
+        },
+        {
             "name": "Python: Module - routerhelpers",
             "type": "python",
             "request": "launch",

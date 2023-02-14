@@ -8,6 +8,7 @@ from unittest.mock import Mock, patch
 
 from api_wrappers.concrete.factories.plume_factory import PlumeFactory
 from api_wrappers.concrete.products.plume_sensor import PlumeSensor
+from api_wrappers.concrete.products.zephyr_sensor import ZephyrSensor
 from api_wrappers.data_transfer_object.sensor_writeable import SensorWritable
 from core.schema import SensorSummary as SchemaSensorSummary
 
@@ -82,6 +83,43 @@ class Test_sensorWritable(TestCase):
             self.assertTrue(sensor_summary.measurement_count > 0)
             self.assertIsNotNone(sensor_summary.measurement_data)
             self.assertEqual(sensor_summary.stationary, False)
+
+    def test_sensorSummary_from_zephyr_with_stationary_box(self):
+        file = open("testing/test_data/zephyr_814_sensor_data.json", "r")
+        json_ = json.load(file)
+        file.close()
+        sensor = ZephyrSensor.from_json("814", json_["slotB"])
+
+        self.assertTrue(isinstance(sensor, SensorWritable))
+
+        sensor_summaries = sensor.create_sensor_summaries(stationary_box=self.stationaryBox)
+        self.assertIsNotNone(sensor_summaries)
+
+        for sensor_summary in sensor_summaries:
+            self.assertTrue(isinstance(sensor_summary, SchemaSensorSummary))
+            self.assertEqual(str(sensor_summary.sensor_id), sensor.id)
+
+            self.assertTrue(sensor_summary.geom == self.stationaryBox)
+            self.assertTrue(sensor_summary.measurement_count > 0)
+            self.assertIsNotNone(sensor_summary.measurement_data)
+            self.assertEqual(sensor_summary.stationary, True)
+
+    def test_sensorSummary_from_zephyr_no_stationary_box(self):
+        file = open("testing/test_data/zephyr_814_sensor_data.json", "r")
+        json_ = json.load(file)
+        file.close()
+        sensor = ZephyrSensor.from_json("814", json_["slotB"])
+
+        self.assertTrue(isinstance(sensor, SensorWritable))
+
+        sensor_summaries = sensor.create_sensor_summaries(stationary_box=None)
+        self.assertIsNotNone(sensor_summaries)
+
+        for sensor_summary in sensor_summaries:
+            self.assertTrue(isinstance(sensor_summary, SchemaSensorSummary))
+            self.assertEqual(str(sensor_summary.sensor_id), sensor.id)
+            self.assertTrue(sensor_summary.geom == None)
+            self.assertTrue(sensor_summary.measurement_count > 0)
 
 
 if __name__ == "__main__":

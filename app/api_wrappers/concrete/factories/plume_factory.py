@@ -106,7 +106,7 @@ class PlumeFactory(SensorFactory):
 
     def get_sensors(self, sensor_dict: dict[str, str], start: dt.datetime, end: dt.datetime) -> list[PlumeSensor]:
         """Fetches data from the Plume API for a given list of sensor lookup ids in the specified timeframe.
-        :param sensor_dict: dict of sensor lookup ids
+        :param sensor_dict: A dictionary of lookup_ids and stationary_boxes [lookup_id:stationary_box]
         :param start: start time of the data
         :param end: end time of the data
         :return: list of PlumeSensor objects"""
@@ -288,3 +288,13 @@ class PlumeFactory(SensorFactory):
                     yield (pathlib.PurePath(name).parts[2].lstrip("sensor_"), io.StringIO(zip_.read(name).decode()))
                 else:
                     continue
+
+
+# if __name__ == "__main__":
+
+#     zip_contents = PlumeFactory.extract_zip_content(zipfile.ZipFile("./testing/test_data/plume_sensorData.zip", "r"), include_measurements=True)
+
+#     (id_, buffer) = next(zip_contents)
+#     sensor = PlumeSensor.from_zip(sensor_id=id_, csv_file=buffer)
+#     # print dataframe columns
+#     print(sensor.df.head())
