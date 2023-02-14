@@ -1,5 +1,6 @@
 import json
 import unittest  # The test framework
+import warnings
 import zipfile
 from unittest import TestCase
 
@@ -15,6 +16,7 @@ class Test_plumeSensor(TestCase):
     @classmethod
     def setUpClass(cls):
         """Setup the test environment once before all tests"""
+        warnings.simplefilter("ignore", ResourceWarning)
         pass
 
     @classmethod

@@ -1,5 +1,6 @@
 import datetime as dt
 import unittest
+import warnings
 from unittest import TestCase
 
 from core.models import Logs as ModelLogs
@@ -16,6 +17,7 @@ class Test_Api_5_Logs(TestCase):
     @classmethod
     def setUpClass(cls):
         """Setup the test environment once before all tests"""
+        warnings.simplefilter("ignore", ResourceWarning)
         cls.client = TestClient(app)
         cls.client = authenticate_client(cls.client, role="admin")
         cls.db = database_config()

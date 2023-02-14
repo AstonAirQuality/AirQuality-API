@@ -1,5 +1,6 @@
 import datetime as dt
 import unittest  # The test framework
+import warnings
 from unittest import TestCase
 from unittest.mock import Mock, patch
 
@@ -15,6 +16,7 @@ class Test_Api_Main(TestCase):
     @classmethod
     def setUpClass(cls):
         """Setup the test environment once before all tests"""
+        warnings.simplefilter("ignore", ResourceWarning)
         cls.client = TestClient(app)
         pass
 

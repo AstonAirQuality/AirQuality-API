@@ -1,6 +1,7 @@
 import datetime as dt
 import json
 import unittest  # The test framework
+import warnings
 import zipfile
 from io import StringIO
 from os import environ as env
@@ -25,6 +26,7 @@ class Test_plumeFactory(TestCase):
         """Setup the test environment once before all tests
         :param cls: The class object
         """
+        warnings.simplefilter("ignore", ResourceWarning)
         load_dotenv()
         # the env variables are set in the .env file. They must match the ones in the .env file
         cls.pf = PlumeFactory(env["PLUME_EMAIL"], env["PLUME_PASSWORD"], env["PLUME_FIREBASE_API_KEY"], env["PLUME_ORG_NUM"])

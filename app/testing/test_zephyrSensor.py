@@ -1,5 +1,6 @@
 import json
 import unittest  # The test framework
+import warnings
 from unittest import TestCase
 
 import pandas as pd
@@ -14,6 +15,7 @@ class Test_zephyrSensor(TestCase):
     @classmethod
     def setUpClass(cls):
         """Setup the test environment once before all tests"""
+        warnings.simplefilter("ignore", ResourceWarning)
         pass
 
     @classmethod

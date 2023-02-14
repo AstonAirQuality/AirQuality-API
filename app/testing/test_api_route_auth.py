@@ -1,4 +1,5 @@
 import unittest
+import warnings
 from unittest import TestCase
 
 from core.models import Users as ModelUser
@@ -15,6 +16,7 @@ class Test_Api_3_Auth(TestCase):
     @classmethod
     def setUpClass(cls):
         """Setup the test environment once before all tests"""
+        warnings.simplefilter("ignore", ResourceWarning)
         cls.client = TestClient(app)
         cls.client.headers.update({"Content-Type": "application/json"})
         cls.db = database_config()

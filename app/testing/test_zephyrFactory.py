@@ -1,6 +1,7 @@
 import datetime as dt
 import json
 import unittest  # The test framework
+import warnings
 from os import environ as env
 from unittest import TestCase
 from unittest.mock import patch
@@ -22,6 +23,7 @@ class Test_zephyrFactory(TestCase):
         """Setup the test environment once before all tests
         :param cls: The class object
         """
+        warnings.simplefilter("ignore", ResourceWarning)
         load_dotenv()
         # the env variables are set in the .env file. They must match the ones in the .env file
         cls.zf = ZephyrFactory(env["ZEPHYR_USERNAME"], env["ZEPHYR_PASSWORD"])

@@ -1,6 +1,7 @@
 import datetime as dt
 import json
 import unittest  # The test framework
+import warnings
 import zipfile
 from io import StringIO
 from unittest import TestCase
@@ -21,6 +22,7 @@ class Test_sensorWritable(TestCase):
     @classmethod
     def setUpClass(cls):
         """Setup the test environment once before all tests"""
+        warnings.simplefilter("ignore", ResourceWarning)
         cls.stationaryBox = "POLYGON ((-1.8364709615707395 52.42585638758735, -1.8365299701690674 52.42562740611671, -1.8360203504562376 52.42557179615147, -1.8359881639480589 52.42583676065077, -1.8364709615707395 52.42585638758735))"
         pass
 

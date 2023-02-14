@@ -1,4 +1,5 @@
 import unittest
+import warnings
 import zipfile
 from unittest import TestCase
 
@@ -26,6 +27,7 @@ class Test_Api_6_SensorSummary(TestCase):
     @classmethod
     def setUpClass(cls):
         """Setup the test environment once before all tests"""
+        warnings.simplefilter("ignore", ResourceWarning)
         cls.client = TestClient(app)
         cls.client = authenticate_client(cls.client, role="admin")
         cls.db = database_config()
