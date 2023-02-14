@@ -70,7 +70,10 @@ class Test_zephyrFactory(TestCase):
         end = dt.datetime(2023, 1, 2)
         slot = "B"
         mocked_get.return_value.ok = True
-        mocked_get.return_value.json.return_value = json.load(open("testing/test_data/zephyr_814_sensor_data.json", "r"))
+
+        file = open("testing/test_data/zephyr_814_sensor_data.json", "r")
+        mocked_get.return_value.json.return_value = json.load(file)
+        file.close()
 
         sensors = list(self.zf.get_sensors([id_], start, end, slot))
 
@@ -86,13 +89,13 @@ class Test_zephyrFactory(TestCase):
             "ambHumidity",
             "ambPressure",
             "ambTempC",
-            "dateTime",
+            "timestamp",
             "humidity",
             "latitude",
             "longitude",
             "particulatePM1",
             "particulatePM10",
-            "particulatePM25",
+            "particulatePM2.5",
             "tempC",
         ]
         for sensor in sensors:

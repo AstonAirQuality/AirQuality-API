@@ -43,13 +43,13 @@ class Test_zephyrSensor(TestCase):
             "ambHumidity",
             "ambPressure",
             "ambTempC",
-            "dateTime",
+            "timestamp",
             "humidity",
             "latitude",
             "longitude",
             "particulatePM1",
             "particulatePM10",
-            "particulatePM25",
+            "particulatePM2.5",
             "tempC",
         ]
 

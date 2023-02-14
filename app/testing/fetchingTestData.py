@@ -36,6 +36,7 @@ class FetchTestData:
         """Reads the sensor zip from the testdata directory"""
         with open("./testing/test_data/plume_sensor_data_with_locations.zip", "rb") as f:
             sensor_zip = f.read()
+            f.close()
         zip_ = zipfile.ZipFile(io.BytesIO(sensor_zip))
         for name in zip_.namelist():
 

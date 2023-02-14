@@ -29,7 +29,7 @@ class Test_Api_4_Users(TestCase):
     @classmethod
     def tearDownClass(cls):
         """Tear down the test environment once after all tests"""
-        pass
+        cls.db.close()
 
     def setup(self):
         """Setup the test environment before each test"""
@@ -65,7 +65,7 @@ class Test_Api_4_Users(TestCase):
         """Test the get user from column route of the API"""
         response = self.client.get("/user/read-from/role", params={"searchvalue": self.user.role})
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.json()["role"], self.user.role)
+        self.assertEqual(response.json()[0]["role"], self.user.role)
 
     def test_6_put_user(self):
         """Test the put user route of the API"""

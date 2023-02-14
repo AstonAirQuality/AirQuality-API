@@ -96,6 +96,7 @@ class Test_plumeFactory(TestCase):
 
         with open("./testing/test_data/plume_sensorData.zip", "rb") as f:
             sensor_zip_bytes = f.read()
+            f.close()
 
         mocked_get.return_value.ok = True
         mocked_get.return_value.content = sensor_zip_bytes

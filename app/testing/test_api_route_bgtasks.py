@@ -17,47 +17,18 @@ from core.models import SensorTypes as ModelSensorType
 from dotenv import load_dotenv
 from fastapi.testclient import TestClient
 from main import app
-from testing.application_config import authenticate_client, database_config
+from testing.application_config import (
+    authenticate_client,
+    database_config,
+    setUpSensor,
+    setUpSensorType,
+)
 
 
 class Test_Api_7_BackgroundTasks(TestCase):
     """
     The following tests are for the API endpoints
     """
-
-    @classmethod
-    def setUpSensorType(self, db, name, description, properties):
-        """Setup a sensor type in the database"""
-        try:
-            result = db.query(ModelSensorType).filter(ModelSensorType.name == name).first()
-            # if the sensor type does not exist then add it to the database and get the id
-            if result is None:
-                sensorType = ModelSensorType(name=name, description=description, properties=properties)
-                db.add(sensorType)
-                db.commit()
-                return sensorType.id
-            else:
-                return result.id
-        except Exception as e:
-            db.rollback()
-            raise e
-
-    @classmethod
-    def setUpSensor(self, db, lookup_id, serial_number, type_id, active, user_id, stationary_box):
-        """Setup a sensor in the database"""
-        try:
-            result = db.query(ModelSensor).filter(ModelSensor.lookup_id == lookup_id).first()
-            # if the sensor type does not exist then add it to the database and get the id
-            if result is None:
-                sensor = ModelSensor(lookup_id=lookup_id, serial_number=serial_number, type_id=type_id, active=active, user_id=user_id, stationary_box=stationary_box)
-                db.add(sensor)
-                db.commit()
-                return sensor.id
-            else:
-                return result.id
-        except Exception as e:
-            db.rollback()
-            raise e
 
     @classmethod
     def setUpClass(cls):
@@ -67,19 +38,19 @@ class Test_Api_7_BackgroundTasks(TestCase):
         cls.db = database_config()
 
         # add a plume sensor type to the database
-        cls.plume_sensor_type_id = cls.setUpSensorType(cls.db, "Plume", "test_plume", {"NO2": "ppb", "VOC": "ppb", "pm10": "ppb", "pm2.5": "ppb", "pm1": "ppb"})
+        cls.plume_sensor_type_id = setUpSensorType(cls.db, "Plume", "test_plume", {"NO2": "ppb", "VOC": "ppb", "pm10": "ppb", "pm2.5": "ppb", "pm1": "ppb"})
         # add a plume sensor to the database
-        cls.plume_sensor_id = cls.setUpSensor(cls.db, "18749", "02:00:00:00:48:45", cls.plume_sensor_type_id, True, None, None)
+        cls.plume_sensor_id = setUpSensor(cls.db, "18749", "02:00:00:00:48:45", cls.plume_sensor_type_id, True, None, None)
 
         # add a zephyr sensor type to the database
-        cls.zephyr_sensor_type_id = cls.setUpSensorType(
+        cls.zephyr_sensor_type_id = setUpSensorType(
             cls.db,
             "Zephyr",
             "test_zephyr",
             {"NO": "ppb", "NO2": "ppb", "O3": "ppb", "ambHumidity": "N/A", "ambPressure": "N/A", "ambTempC": "C", "humidity": "N/A", "pm10": "ppb", "pm2.5": "ppb", "pm1": "ppb", "tempC": "C"},
         )
         # add a zephyr sensor to the database
-        cls.zephyr_sensor_id = cls.setUpSensor(cls.db, "814", "814:Zephyr", cls.zephyr_sensor_type_id, True, None, None)
+        cls.zephyr_sensor_id = setUpSensor(cls.db, "814", "814:Zephyr", cls.zephyr_sensor_type_id, True, None, None)
 
         # plume sensor summary to be added to the database
         zip_contents = PlumeFactory.extract_zip_content(zipfile.ZipFile("./testing/test_data/plume_sensorData.zip", "r"), include_measurements=True)
@@ -99,14 +70,8 @@ class Test_Api_7_BackgroundTasks(TestCase):
     @classmethod
     def tearDownClass(cls):
         """Tear down the test environment once after all tests"""
-        try:
-            cls.db.delete(cls.db.query(ModelSensorType).filter(ModelSensorType.id == cls.plume_sensor_type_id).first())
-            cls.db.delete(cls.db.query(ModelSensor).filter(ModelSensor.id == cls.plume_sensor_id).first())
-            cls.db.delete(cls.db.query(ModelSensorType).filter(ModelSensorType.id == cls.zephyr_sensor_type_id).first())
-            cls.db.delete(cls.db.query(ModelSensor).filter(ModelSensor.id == cls.zephyr_sensor_id).first())
-            cls.db.commit()
-        except Exception as e:
-            cls.db.rollback()
+        cls.db.close()
+        pass
 
     def setup(self):
         """Setup the test environment before each test"""
@@ -133,7 +98,7 @@ class Test_Api_7_BackgroundTasks(TestCase):
     def test_1_plume_upsert_sensor_summary_by_id_list(self):
         """Test the upsert sensor summary by id list route of the API"""
         with patch.object(SensorFactoryWrapper, "fetch_plume_data", return_value=[self.plume_summary]) as mock_fetch_plume_data:
-            response = self.client.get("/api-task/schedule/ingest-bysensorid/27-09-2022/28-09-2022", params={"sensor_ids": [self.plume_sensor_type_id]})
+            response = self.client.get("/api-task/schedule/ingest-bysensorid/27-09-2022/28-09-2022", params={"sensor_ids": [self.plume_sensor_id]})
             mock_fetch_plume_data.assert_called_once()
             self.assertEqual(response.status_code, 200)
             self.assertNotEqual(response, "No active sensors found")
@@ -151,7 +116,7 @@ class Test_Api_7_BackgroundTasks(TestCase):
     def test_2_zephyr_upsert_sensor_summary_by_id_list(self):
         """Test the upsert sensor summary by id list route of the API"""
         with patch.object(SensorFactoryWrapper, "fetch_zephyr_data", return_value=[self.zephyr_summary]) as mock_fetch_zephyr_data:
-            response = self.client.get("/api-task/schedule/ingest-bysensorid/27-09-2022/28-09-2022", params={"sensor_ids": [self.zephyr_sensor_type_id]})
+            response = self.client.get("/api-task/schedule/ingest-bysensorid/27-09-2022/28-09-2022", params={"sensor_ids": [self.zephyr_sensor_id]})
             mock_fetch_zephyr_data.assert_called_once()
             self.assertEqual(response.status_code, 200)
             self.assertNotEqual(response, "No active sensors found")
@@ -169,7 +134,7 @@ class Test_Api_7_BackgroundTasks(TestCase):
     def test_3_upsert_sensor_summary_by_type_id_active_sensors(self):
         """Test the upsert sensor summary by type id active sensors route of the API"""
         with patch.object(SensorFactoryWrapper, "fetch_plume_data", return_value=[self.plume_summary]) as mock_fetch_plume_data:
-            response = self.client.get("/api-task/cron/ingest-active-sensors/1", headers={"cron-job-token": env["CRON_JOB_TOKEN"]})
+            response = self.client.get(f"/api-task/cron/ingest-active-sensors/{self.plume_sensor_type_id}", headers={"cron-job-token": env["CRON_JOB_TOKEN"]})
             mock_fetch_plume_data.assert_called_once()
             self.assertEqual(response.status_code, 200)
             self.assertNotEqual(response, "No active sensors found")

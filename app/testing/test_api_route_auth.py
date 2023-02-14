@@ -23,7 +23,7 @@ class Test_Api_3_Auth(TestCase):
     @classmethod
     def tearDownClass(cls):
         """Tear down the test environment once after all tests"""
-        pass
+        cls.db.close()
 
     def setup(self):
         """Setup the test environment before each test"""

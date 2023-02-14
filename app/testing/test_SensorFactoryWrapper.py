@@ -21,6 +21,7 @@ class Test_SensorFactoryWrapper(TestCase):
     @classmethod
     def tearDownClass(cls):
         """Tear down the test environment once after all tests"""
+        # cls.apiWrapper.pf.__session.close()
         pass
 
     def setup(self):

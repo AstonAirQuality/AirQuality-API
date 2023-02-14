@@ -22,3 +22,37 @@ def database_config():
     SessionLocal = sessionmaker(bind=engine)
     db = SessionLocal()
     return db
+
+
+def setUpSensorType(db, name, description, properties):
+    """Setup a sensor type in the database"""
+    try:
+        result = db.query(ModelSensorType).filter(ModelSensorType.name == name).first()
+        # if the sensor type does not exist then add it to the database and get the id
+        if result is None:
+            sensorType = ModelSensorType(name=name, description=description, properties=properties)
+            db.add(sensorType)
+            db.commit()
+            return sensorType.id
+        else:
+            return result.id
+    except Exception as e:
+        db.rollback()
+        raise e
+
+
+def setUpSensor(db, lookup_id, serial_number, type_id, active, user_id, stationary_box):
+    """Setup a sensor in the database"""
+    try:
+        result = db.query(ModelSensor).filter(ModelSensor.type_id == type_id and ModelSensor.lookup_id == lookup_id).first()
+        # if the sensor type does not exist then add it to the database and get the id
+        if result is None:
+            sensor = ModelSensor(lookup_id=lookup_id, serial_number=serial_number, type_id=type_id, active=active, user_id=user_id, stationary_box=stationary_box)
+            db.add(sensor)
+            db.commit()
+            return sensor.id
+        else:
+            return result.id
+    except Exception as e:
+        db.rollback()
+        raise e

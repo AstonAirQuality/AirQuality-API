@@ -1,7 +1,6 @@
 import datetime as dt
 import json
 import unittest  # The test framework
-import zipfile
 from io import StringIO
 from unittest import TestCase
 from unittest.mock import Mock, patch

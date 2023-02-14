@@ -10,7 +10,12 @@ from core.models import SensorTypes as ModelSensorType
 from fastapi.testclient import TestClient
 from main import app
 from routers.helpers.sensorSummarySharedFunctions import upsert_sensorSummary
-from testing.application_config import authenticate_client, database_config
+from testing.application_config import (
+    authenticate_client,
+    database_config,
+    setUpSensor,
+    setUpSensorType,
+)
 
 
 class Test_Api_6_SensorSummary(TestCase):
@@ -25,34 +30,11 @@ class Test_Api_6_SensorSummary(TestCase):
         cls.client = authenticate_client(cls.client, role="admin")
         cls.db = database_config()
 
-        # add a sensor type to the database
-        try:
-            result = cls.db.query(ModelSensorType).first()
-            # if the sensor type does not exist then add it to the database and get the id
-            if result is None:
-                sensorType = ModelSensorType(name="test_plume", description="test_plume", properties={"NO2": "ppb", "VOC": "ppb", "pm10": "ppb", "pm2.5": "ppb", "pm1": "ppb"})
-                cls.db.add(sensorType)
-                cls.db.commit()
-                cls.sensor_type_id = sensorType.id
-            else:
-                cls.sensor_type_id = result.id
+        # get/add a sensor type to the database
+        cls.sensor_type_id = setUpSensorType(cls.db, "Plume", "test_plume", {"NO2": "ppb", "VOC": "ppb", "pm10": "ppb", "pm2.5": "ppb", "pm1": "ppb"})
 
-        except Exception as e:
-            cls.db.rollback()
-
-        # add a plume sensor to the database
-        try:
-            result = cls.db.query(ModelSensor).filter(ModelSensor.lookup_id == "18749").first()
-            # if the sensor type does not exist then add it to the database and get the id
-            if result is None:
-                sensor = ModelSensor(lookup_id="18749", serial_number="02:00:00:00:48:45", type_id=cls.sensor_type_id, active=True, user_id=None, stationary_box=None)
-                cls.db.add(sensor)
-                cls.db.commit()
-                cls.sensor_id = sensor.id
-            else:
-                cls.sensor_id = result.id
-        except Exception as e:
-            cls.db.rollback()
+        # get/add a sensor to the database
+        cls.sensor_id = setUpSensor(cls.db, "test_sensor", "test_sensor", cls.sensor_type_id, True, None, None)
 
         # add a plume sensor summary to the database
         zip_contents = PlumeFactory.extract_zip_content(zipfile.ZipFile("./testing/test_data/plume_sensorData.zip", "r"), include_measurements=True)
@@ -73,13 +55,14 @@ class Test_Api_6_SensorSummary(TestCase):
     @classmethod
     def tearDownClass(cls):
         """Tear down the test environment once after all tests"""
-        try:
-            cls.db.delete(cls.db.query(ModelSensorType).filter(ModelSensorType.id == cls.sensor_type_id).first())
-            cls.db.delete(cls.db.query(ModelSensor).filter(ModelSensor.id == cls.sensor_id).first())
-            cls.db.delete(cls.db.query(ModelSensorSummary).filter(ModelSensorSummary.sensor_id == cls.sensor_id).all())
-            cls.db.commit()
-        except Exception as e:
-            cls.db.rollback()
+        # try:
+        #     cls.db.delete(cls.db.query(ModelSensorType).filter(ModelSensorType.id == cls.sensor_type_id).first())
+        #     cls.db.delete(cls.db.query(ModelSensor).filter(ModelSensor.id == cls.sensor_id).first())
+        #     cls.db.delete(cls.db.query(ModelSensorSummary).filter(ModelSensorSummary.sensor_id == cls.sensor_id).all())
+        #     cls.db.commit()
+        # except Exception as e:
+        #     cls.db.rollback()
+        cls.db.close()
 
     def setup(self):
         """Setup the test environment before each test"""
@@ -169,7 +152,7 @@ class Test_Api_6_SensorSummary(TestCase):
     #     self.assertIsNotNone(response.json())
     #     self.assertTrue(len(response.json()) > 0)
 
-    # TODO - fix this test
+    # TODO - assert geojson is valid
     def test_7_get_sensorSummary_as_geojson(self):
         """Test that the sensor summary is returned as geojson"""
 
