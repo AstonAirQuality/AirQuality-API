@@ -74,12 +74,6 @@ class SensorReadable(SensorDTO):
 
         geojson = {"type": "FeatureCollection", "features": []}
 
-        # infer the data types of the columns
-        df = df.infer_objects()
-        # cast latitudes and longitudes to float
-        df["latitude"] = df["latitude"].astype("float")
-        df["longitude"] = df["longitude"].astype("float")
-
         # loop through each row in the dataframe and convert each row to geojson feature format
         for _, row in self.df.iterrows():
 
@@ -106,6 +100,8 @@ class SensorReadable(SensorDTO):
             else:
                 # extract the min and max coords from the polygon POLYGON(minx miny, minx Maxy, maxx Maxy, maxx miny, minx miny)
                 coords = row["boundingBox"]["first"].split("(")[2].split(",")
+                # remove any whitespace after the comma
+                coords = [x.strip() for x in coords]
                 min_long, min_lat = (float(x) for x in coords[0].split(" "))
                 max_long, max_lat = (float(x) for x in coords[2].split(" "))
 
