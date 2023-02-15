@@ -47,7 +47,7 @@ def add_sensor(sensor: SchemaSensor, payload=Depends(auth_handler.auth_wrapper))
     try:
         db.add(sensor)
         db.commit()
-        return sensor
+        return sensor.to_json()
 
     except IntegrityError as e:
         if isinstance(e.orig, UniqueViolation):
@@ -319,4 +319,4 @@ def delete_sensor(sensor_id: int, payload=Depends(auth_handler.auth_wrapper)):
         db.rollback()
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
 
-    return sensor_deleted
+    return sensor_deleted.to_json()

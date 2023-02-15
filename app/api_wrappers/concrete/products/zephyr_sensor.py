@@ -21,6 +21,10 @@ class ZephyrSensor(SensorProduct, SensorWritable):
 
         # infer the data types of the columns
         df = df.infer_objects()
+        # cast latitudes and longitudes to float
+        df["latitude"] = df["latitude"].astype("float")
+        df["longitude"] = df["longitude"].astype("float")
+
         # set dateTime column to datetime
         df["dateTime"] = pd.to_datetime(df["dateTime"], unit="ns")
 
@@ -77,6 +81,7 @@ class ZephyrSensor(SensorProduct, SensorWritable):
 #     file.close()
 #     sensor = ZephyrSensor.from_json("814", json_["slotB"])
 #     # print dataframe columns
-#     # print(sensor.df.head())
+#     print(sensor.df.head())
+
 #     summaries = list(sensor.create_sensor_summaries(None))
 #     print(summaries[0])

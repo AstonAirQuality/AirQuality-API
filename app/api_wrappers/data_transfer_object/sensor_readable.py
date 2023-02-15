@@ -74,6 +74,12 @@ class SensorReadable(SensorDTO):
 
         geojson = {"type": "FeatureCollection", "features": []}
 
+        # infer the data types of the columns
+        df = df.infer_objects()
+        # cast latitudes and longitudes to float
+        df["latitude"] = df["latitude"].astype("float")
+        df["longitude"] = df["longitude"].astype("float")
+
         # loop through each row in the dataframe and convert each row to geojson feature format
         for _, row in self.df.iterrows():
 

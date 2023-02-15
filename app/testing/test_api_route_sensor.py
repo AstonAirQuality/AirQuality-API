@@ -59,7 +59,8 @@ class Test_Api_2_Sensor(TestCase):
     def test_2_post_sensor(self):
         """Test the post sensor route of the API."""
 
-        sensor = {"lookup_id": "test_post_sensor", "serial_number": "test_post_sensor", "type_id": self.sensor_type_id, "active": True, "user_id": None, "stationary_box": None}
+        geom = "POLYGON ((-122.419 37.774, -122.419 37.775, -122.418 37.775, -122.418 37.774, -122.419 37.774))"
+        sensor = {"lookup_id": "test_post_sensor", "serial_number": "test_post_sensor", "type_id": self.sensor_type_id, "active": True, "user_id": None, "stationary_box": geom}
 
         response = self.client.post("/sensor", json=sensor)
         self.assertEqual(response.status_code, 200)
