@@ -1,11 +1,16 @@
 import datetime as dt
 from enum import Enum
 
+from core.models import Sensors as ModelSensor
 from core.models import SensorSummaries as ModelSensorSummary
+from core.models import SensorTypes as ModelSensorType
 from db.database import SessionLocal
 from fastapi import APIRouter, HTTPException, Query, status
+from fastapi.encoders import jsonable_encoder
+from fastapi.responses import JSONResponse
 from routers.helpers.helperfunctions import convertDateRangeStringToDate
 from routers.helpers.sensorSummarySharedFunctions import (
+    deserializeMeasurementData,
     searchQueryFilters,
     sensorSummariesToGeoJson,
 )
@@ -54,6 +59,7 @@ def get_sensorSummaries(
     spatial_query_type: spatialQueryType = Query(None),
     geom: str = Query(None, description="format: WKT string. **Required if spatial_query_type is provided**"),
     sensor_ids: list[int] = Query(default=[]),
+    deserialize: bool = Query(False, description="if true then the measurement_data json will be deserialized into a python dict"),
 ):
     """read sensor summaries given a date range (e.g /read/28-09-2022/30-09-2022) and any optional filters then return a json of sensor summaries
     \n :param start: start date of the query in the format dd-mm-yyyy
@@ -87,6 +93,10 @@ def get_sensorSummaries(
 
             if "timestamp" in row_as_dict:
                 row_as_dict["timestamp_UTC"] = row_as_dict.pop("timestamp")
+
+            if "measurement_data" in row_as_dict and deserialize:
+                # convert the json string to a python dict
+                row_as_dict["measurement_data"] = jsonable_encoder(deserializeMeasurementData(row_as_dict["measurement_data"]))
 
             results.append(row_as_dict)
 
@@ -125,10 +135,25 @@ def get_geojson_Export_of_sensorSummaries(
     timestampStart = int(dt.datetime.timestamp(startDate.replace(tzinfo=dt.timezone.utc)))
     timestampEnd = int(dt.datetime.timestamp(endDate.replace(tzinfo=dt.timezone.utc)))
 
+    # append all the columns we want to return from the sensor summary table and the sensor type name from the sensor type table
+    fields = []
+    columns = ["sensor_id", "geom", "stationary", "measurement_data"]
+    for col in columns:
+        fields.append(getattr(ModelSensorSummary, col))
+
+    fields.append(getattr(ModelSensorType, "name").label("type_name"))
+    fields.append(getattr(ModelSensor, "id").label("model_sensor_id"))
+
     try:
-        query = db.query(ModelSensorSummary.sensor_id, ModelSensorSummary.geom, ModelSensorSummary.stationary, ModelSensorSummary.measurement_data).filter(
-            ModelSensorSummary.timestamp >= timestampStart, ModelSensorSummary.timestamp <= timestampEnd
-        )
+        query = db.query(*fields).select_from(ModelSensorSummary).filter(ModelSensorSummary.timestamp >= timestampStart, ModelSensorSummary.timestamp <= timestampEnd)
+
+        # join the sensor type table to get the sensor type name
+        query = query.join(ModelSensor, ModelSensorSummary.sensor_id == ModelSensor.id, isouter=True)
+        query = query.join(ModelSensorType, ModelSensor.type_id == ModelSensorType.id, isouter=True)
+
+        # query = db.query(ModelSensorSummary.sensor_id, ModelSensorSummary.geom, ModelSensorSummary.stationary, ModelSensorSummary.measurement_data).filter(
+        #     ModelSensorSummary.timestamp >= timestampStart, ModelSensorSummary.timestamp <= timestampEnd
+        # )
         query = searchQueryFilters(query, spatial_query_type, geom, sensor_ids)
         query_result = query.all()
 
@@ -141,6 +166,10 @@ def get_geojson_Export_of_sensorSummaries(
 
             if "timestamp" in row_as_dict:
                 row_as_dict["timestamp_UTC"] = row_as_dict.pop("timestamp")
+
+            # # add the sensor type name to the sensor id to make it easier to identify the sensor type in the geojson
+            # if "type_name" in row_as_dict:
+            #     row_as_dict["sensor_id"] = str(row_as_dict["sensor_id"]) + "_" + row_as_dict.pop("type_name")
 
             results.append(row_as_dict)
 

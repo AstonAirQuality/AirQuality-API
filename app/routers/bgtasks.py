@@ -104,7 +104,7 @@ def upsert_summary_and_log(sensorSummary: SchemaSensorSummary, upsert_log: list)
     return upsert_log
 
 
-@backgroundTasksRouter.get("/schedule/ingest-bysensorid/{start}/{end}")
+@backgroundTasksRouter.post("/schedule/ingest-bysensorid/{start}/{end}")
 async def schedule_data_ingest_task_by_sensorid(
     background_tasks: BackgroundTasks,
     start: str = Query(regex=dateRegex),

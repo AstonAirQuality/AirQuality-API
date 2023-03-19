@@ -162,4 +162,5 @@ class GeoJsonExport(BaseModel):
     """
 
     sensorid: int
+    sensorType: str
     geojson: Dict

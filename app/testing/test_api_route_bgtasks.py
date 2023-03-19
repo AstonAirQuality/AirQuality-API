@@ -100,7 +100,7 @@ class Test_Api_7_BackgroundTasks(TestCase):
     def test_1_plume_upsert_sensor_summary_by_id_list(self):
         """Test the upsert sensor summary by id list route of the API"""
         with patch.object(SensorFactoryWrapper, "fetch_plume_data", return_value=[self.plume_summary]) as mock_fetch_plume_data:
-            response = self.client.get("/api-task/schedule/ingest-bysensorid/27-09-2022/28-09-2022", params={"sensor_ids": [self.plume_sensor_id]})
+            response = self.client.post("/api-task/schedule/ingest-bysensorid/27-09-2022/28-09-2022", params={"sensor_ids": [self.plume_sensor_id]})
             mock_fetch_plume_data.assert_called_once()
             self.assertEqual(response.status_code, 200)
             self.assertNotEqual(response, "No active sensors found")
@@ -118,7 +118,7 @@ class Test_Api_7_BackgroundTasks(TestCase):
     def test_2_zephyr_upsert_sensor_summary_by_id_list(self):
         """Test the upsert sensor summary by id list route of the API"""
         with patch.object(SensorFactoryWrapper, "fetch_zephyr_data", return_value=[self.zephyr_summary]) as mock_fetch_zephyr_data:
-            response = self.client.get("/api-task/schedule/ingest-bysensorid/27-09-2022/28-09-2022", params={"sensor_ids": [self.zephyr_sensor_id]})
+            response = self.client.post("/api-task/schedule/ingest-bysensorid/27-09-2022/28-09-2022", params={"sensor_ids": [self.zephyr_sensor_id]})
             mock_fetch_zephyr_data.assert_called_once()
             self.assertEqual(response.status_code, 200)
             self.assertNotEqual(response, "No active sensors found")

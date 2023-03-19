@@ -1,3 +1,5 @@
+import json
+
 from api_wrappers.data_transfer_object.sensor_readable import SensorReadable
 from core.models import SensorSummaries as ModelSensorSummary
 from core.schema import GeoJsonExport
@@ -127,15 +129,18 @@ def JsonToSensorReadable(results: list) -> list[SensorReadable]:
     sensor_dict = {}
     for sensorSummary in results:
         if sensorSummary["sensor_id"] in sensor_dict:
-            sensor_dict[sensorSummary["sensor_id"]].append({"json_": sensorSummary["measurement_data"], "boundingBox": sensorSummary["geom"] if sensorSummary["stationary"] == True else None})
+            sensor_dict[sensorSummary["sensor_id"]].append(
+                {"sensor_type": sensorSummary["type_name"], "json_": sensorSummary["measurement_data"], "boundingBox": sensorSummary["geom"] if sensorSummary["stationary"] == True else None}
+            )
         else:
-            sensor_dict[sensorSummary["sensor_id"]] = [{"json_": sensorSummary["measurement_data"], "boundingBox": sensorSummary["geom"] if sensorSummary["stationary"] == True else None}]
+            sensor_dict[sensorSummary["sensor_id"]] = [
+                {"sensor_type": sensorSummary["type_name"], "json_": sensorSummary["measurement_data"], "boundingBox": sensorSummary["geom"] if sensorSummary["stationary"] == True else None}
+            ]
 
     # convert list of measurement data into a SensorReadable
     sensors = []
     for (sensor_id, data) in sensor_dict.items():
-        sensors.append(SensorReadable.from_json_list(sensor_id, data))
-
+        sensors.append([SensorReadable.from_json_list(sensor_id, data), data[0]["sensor_type"]])
     return sensors
 
 
@@ -149,7 +154,17 @@ def sensorSummariesToGeoJson(results: list, averaging_methods: list[str], averag
     sensors = JsonToSensorReadable(results)
 
     geoJsons = []
-    for sensor in sensors:
-        geoJsons.append(GeoJsonExport(sensorid=sensor.id, geojson=sensor.to_geojson(averaging_methods, averaging_frequency)))
+    for (sensor, sensorTypeString) in sensors:
+        geoJsons.append(GeoJsonExport(sensorid=sensor.id, sensorType=sensorTypeString, geojson=sensor.to_geojson(averaging_methods, averaging_frequency)))
 
     return geoJsons
+
+
+def deserializeMeasurementData(measurement_data: str) -> dict:
+    """deserializes the measurement data
+    :param measurement_data: measurement data to deserialize
+    :return: dictionary of deserialized measurement data"""
+
+    df = SensorReadable.JsonStringToDataframe(measurement_data, boundingBox=None)
+    df.drop(columns=["timestamp", "boundingBox"], inplace=True)
+    return df.to_dict(orient="index")

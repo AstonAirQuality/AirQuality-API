@@ -110,7 +110,7 @@ class SensorReadable(SensorDTO):
             # assign properties (measurement values) to the feature
             for col in measurement_columns:
                 for method in averaging_methods:
-                    feature["properties"][col + method] = row[col][method] if not math.isnan(row[col][method]) else None
+                    feature["properties"][col + "_" + method] = row[col][method] if not math.isnan(row[col][method]) else None
 
             # add datetime to the feature
             feature["properties"]["datetime_UTC"] = row.name
@@ -120,7 +120,7 @@ class SensorReadable(SensorDTO):
         return geojson
 
     @staticmethod
-    def JsonStringToDataframe(jsonb: tuple, boundingBox: str) -> pd.DataFrame:
+    def JsonStringToDataframe(jsonb: str, boundingBox: str) -> pd.DataFrame:
         """converts a jsonb string to a dataframe
         :param jsonb: jsonb string
         :param boundingBox: string of polygon
@@ -143,6 +143,9 @@ class SensorReadable(SensorDTO):
         df.insert(0, "date", pd.to_datetime(df.index, unit="s", errors="coerce"))
         df.reset_index(inplace=True)
         df.set_index("date", drop=True, inplace=True)
+
+        # amend dtypes for timestamp, latitude and longitude
+        df = df.astype({"timestamp": "int64", "latitude": "float64", "longitude": "float64"})
 
         # add bounding box to dataframe for stationary sensors
         if boundingBox:
