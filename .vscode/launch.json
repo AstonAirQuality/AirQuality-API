@@ -46,10 +46,10 @@
             "cwd": "${workspaceFolder}/app"
         },
         {
-            "name": "Python: Module - testing-api",
+            "name": "Python: Module - testing-suite",
             "type": "python",
             "request": "launch",
-            "module": "testing.api.${fileBasenameNoExtension}",
+            "module": "testing.suite.${fileBasenameNoExtension}",
             "cwd": "${workspaceFolder}/app"
         },
         ///////////////////////////Config for local debug//////////////////////////////////////

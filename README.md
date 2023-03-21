@@ -59,6 +59,10 @@ export coverage in html ```python -m coverage html --omit="*/testing*```
 for more information see
 - https://www.pythontutorial.net/python-unit-testing/python-unittest-coverage/
 
+## Using test suites and generating HTML reports
+amend the code in the HTMLTestRunner package, to do this see the link: https://stackoverflow.com/questions/71858651/attributeerror-htmltestresult-object-has-no-attribute-count-relevant-tb-lev 
+
+Then you can just run the TestRunner scripts which are lcoated in the testing/suites directory as python modules
 
 # Database migrations
 Running migrations is a little buggy because of the geoalchemy package. A few extra steps need to be taken to successfully run a migration

@@ -93,7 +93,15 @@ class Test_Api_6_SensorSummary(TestCase):
         self.assertIsNotNone(response.json())
         self.assertTrue(len(response.json()) > 0)
 
-    def test_3_get_sensorSummary_spatial_intersect(self):
+    def test_4_get_sensorSummary_with_deserialized_data(self):
+        """Test that the sensor summary is returned"""
+
+        response = self.client.get("/sensor-summary", params={"start": "27-09-2022", "end": "28-09-2022", "columns": ["sensor_id", "measurement_data", "geom", "timestamp"], "deserialized": True})
+        self.assertEqual(response.status_code, 200)
+        self.assertIsNotNone(response.json())
+        self.assertTrue(len(response.json()) > 0)
+
+    def test_5_get_sensorSummary_spatial_intersect(self):
 
         response = self.client.get(
             "/sensor-summary",
@@ -109,7 +117,7 @@ class Test_Api_6_SensorSummary(TestCase):
         self.assertIsNotNone(response.json())
         self.assertTrue(len(response.json()) > 0)
 
-    def test_4_get_sensorSummary_spatial_within(self):
+    def test_6_get_sensorSummary_spatial_within(self):
         response = self.client.get(
             "/sensor-summary",
             params={
@@ -124,7 +132,7 @@ class Test_Api_6_SensorSummary(TestCase):
         self.assertIsNotNone(response.json())
         self.assertTrue(len(response.json()) > 0)
 
-    def test_5_get_sensorSummary_spatial_contains(self):
+    def test_7_get_sensorSummary_spatial_contains(self):
         response = self.client.get(
             "/sensor-summary",
             params={
@@ -139,7 +147,7 @@ class Test_Api_6_SensorSummary(TestCase):
         self.assertIsNotNone(response.json())
         self.assertTrue(len(response.json()) > 0)
 
-    # def test_6_get_sensorSummary_spatial_overlaps(self):
+    # def test_8_get_sensorSummary_spatial_overlaps(self):
     #     response = self.client.get(
     #         "/sensor-summary",
     #         params={
@@ -155,7 +163,7 @@ class Test_Api_6_SensorSummary(TestCase):
     #     self.assertTrue(len(response.json()) > 0)
 
     # TODO - assert geojson is valid
-    def test_7_get_sensorSummary_as_geojson(self):
+    def test_9_get_sensorSummary_as_geojson(self):
         """Test that the sensor summary is returned as geojson"""
 
         response = self.client.get(

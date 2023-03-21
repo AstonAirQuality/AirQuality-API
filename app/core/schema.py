@@ -158,9 +158,10 @@ class PlumeSerialNumbers(BaseModel):
 class GeoJsonExport(BaseModel):
     """GeoJsonExport Schema extends BaseModel used to validate form data from the API
     :sensorid (int)
+    :sensorType (Optional[str])
     :geojson (Dict), GeoJSON format
     """
 
     sensorid: int
-    sensorType: str
+    sensorType: Optional[str] = None
     geojson: Dict

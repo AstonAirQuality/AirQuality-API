@@ -1,5 +1,6 @@
 import datetime as dt
 import json
+import time
 import unittest
 import warnings
 import zipfile
@@ -57,8 +58,7 @@ class Test_Api_7_BackgroundTasks(TestCase):
         # plume sensor summary to be added to the database
         zip_contents = PlumeFactory.extract_zip_content(zipfile.ZipFile("./testing/test_data/plume_sensorData.zip", "r"), include_measurements=True)
         (id_, buffer) = next(zip_contents)
-        sensor = PlumeSensor.from_zip(sensor_id=id_, csv_file=buffer)
-        sensor = PlumeSensor(id_=id_, dataframe=sensor.df)
+        sensor = PlumeSensor.from_zip(sensor_id="18749", csv_file=buffer)
         cls.plume_summary = list(sensor.create_sensor_summaries(None))[0]
 
         # zephyr sensor summary to be added to the database
@@ -99,6 +99,9 @@ class Test_Api_7_BackgroundTasks(TestCase):
 
     def test_1_plume_upsert_sensor_summary_by_id_list(self):
         """Test the upsert sensor summary by id list route of the API"""
+        # wait 1 second to ensure that the log date is different
+        time.sleep(1)
+
         with patch.object(SensorFactoryWrapper, "fetch_plume_data", return_value=[self.plume_summary]) as mock_fetch_plume_data:
             response = self.client.post("/api-task/schedule/ingest-bysensorid/27-09-2022/28-09-2022", params={"sensor_ids": [self.plume_sensor_id]})
             mock_fetch_plume_data.assert_called_once()
@@ -117,6 +120,8 @@ class Test_Api_7_BackgroundTasks(TestCase):
 
     def test_2_zephyr_upsert_sensor_summary_by_id_list(self):
         """Test the upsert sensor summary by id list route of the API"""
+        # wait 2 second to ensure that the log date is different
+        time.sleep(2)
         with patch.object(SensorFactoryWrapper, "fetch_zephyr_data", return_value=[self.zephyr_summary]) as mock_fetch_zephyr_data:
             response = self.client.post("/api-task/schedule/ingest-bysensorid/27-09-2022/28-09-2022", params={"sensor_ids": [self.zephyr_sensor_id]})
             mock_fetch_zephyr_data.assert_called_once()
@@ -135,6 +140,12 @@ class Test_Api_7_BackgroundTasks(TestCase):
 
     def test_3_upsert_sensor_summary_by_type_id_active_sensors(self):
         """Test the upsert sensor summary by type id active sensors route of the API"""
+        # wait 3 second to ensure that the log date is different
+        time.sleep(2)
+
+        # bug fix: the sensor id somehow gets set to plume_sensor_id instead of the lookupid
+        self.plume_summary.sensor_id = "18749"
+
         with patch.object(SensorFactoryWrapper, "fetch_plume_data", return_value=[self.plume_summary]) as mock_fetch_plume_data:
             response = self.client.get(f"/api-task/cron/ingest-active-sensors/{self.plume_sensor_type_id}", headers={"cron-job-token": env["CRON_JOB_TOKEN"]})
             mock_fetch_plume_data.assert_called_once()

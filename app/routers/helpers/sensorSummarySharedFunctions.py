@@ -120,7 +120,7 @@ def searchQueryFilters(query: any, spatial_query_type: str, geom: str, sensor_id
     return query
 
 
-def JsonToSensorReadable(results: list) -> list[SensorReadable]:
+def JsonToSensorReadable(results: list) -> list[tuple[SensorReadable, str]]:
     """converts a list of sensor summaries into a list of SensorReadables.
     :param results: list of sensor summaries
     :return: list of SensorReadables"""
@@ -128,14 +128,18 @@ def JsonToSensorReadable(results: list) -> list[SensorReadable]:
     # group sensors by id into a dictionary dict[sensor_id] = dict{json_ : measurement data, "boundingBox": geom}
     sensor_dict = {}
     for sensorSummary in results:
+        data_dict = {"sensor_type": None, "json_": sensorSummary["measurement_data"], "boundingBox": sensorSummary["geom"] if sensorSummary["stationary"] == True else None}
+
         if sensorSummary["sensor_id"] in sensor_dict:
-            sensor_dict[sensorSummary["sensor_id"]].append(
-                {"sensor_type": sensorSummary["type_name"], "json_": sensorSummary["measurement_data"], "boundingBox": sensorSummary["geom"] if sensorSummary["stationary"] == True else None}
-            )
+            # if type_name key exists in sensorSummary, add it to the data_dict, otherwise remove it from the data_dict
+            if "type_name" in sensorSummary:
+                data_dict["sensor_type"] = sensorSummary["type_name"]
+            else:
+                del data_dict["sensor_type"]
+
+            sensor_dict[sensorSummary["sensor_id"]].append(data_dict)
         else:
-            sensor_dict[sensorSummary["sensor_id"]] = [
-                {"sensor_type": sensorSummary["type_name"], "json_": sensorSummary["measurement_data"], "boundingBox": sensorSummary["geom"] if sensorSummary["stationary"] == True else None}
-            ]
+            sensor_dict[sensorSummary["sensor_id"]] = [data_dict]
 
     # convert list of measurement data into a SensorReadable
     sensors = []

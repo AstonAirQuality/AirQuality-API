@@ -14,7 +14,7 @@ from api_wrappers.data_transfer_object.sensor_writeable import SensorWritable
 from core.schema import SensorSummary as SchemaSensorSummary
 
 
-class Test_sensorWritable(TestCase):
+class Test_sensorWriteable(TestCase):
     """
     The following tests are for the ScraperWraper. Tests send requests to ensure that the API's we are dependent on are working as expected.
     """

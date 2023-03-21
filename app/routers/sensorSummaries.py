@@ -151,9 +151,6 @@ def get_geojson_Export_of_sensorSummaries(
         query = query.join(ModelSensor, ModelSensorSummary.sensor_id == ModelSensor.id, isouter=True)
         query = query.join(ModelSensorType, ModelSensor.type_id == ModelSensorType.id, isouter=True)
 
-        # query = db.query(ModelSensorSummary.sensor_id, ModelSensorSummary.geom, ModelSensorSummary.stationary, ModelSensorSummary.measurement_data).filter(
-        #     ModelSensorSummary.timestamp >= timestampStart, ModelSensorSummary.timestamp <= timestampEnd
-        # )
         query = searchQueryFilters(query, spatial_query_type, geom, sensor_ids)
         query_result = query.all()
 
