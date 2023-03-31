@@ -7,7 +7,7 @@ from requests.exceptions import HTTPError
 
 class Firebase:
     """Firebase Interface, Modified from pyrebase5 package
-    :reference: https://github.com/davidvartanian/Pyrebase
+    :reference: https://github.com/thisbejim/Pyrebase
 
     """
 

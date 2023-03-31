@@ -19,7 +19,7 @@ class SensorFactoryWrapper:
         """initialise the api wrappers and load the environment variables"""
         load_dotenv()
         self.zf = ZephyrFactory(env["ZEPHYR_USERNAME"], env["ZEPHYR_PASSWORD"])
-        self.pf = PlumeFactory(env["PLUME_EMAIL"], env["PLUME_PASSWORD"], env["PLUME_FIREBASE_API_KEY"], env["PLUME_ORG_NUM"])
+        # self.pf = PlumeFactory(env["PLUME_EMAIL"], env["PLUME_PASSWORD"], env["PLUME_FIREBASE_API_KEY"], env["PLUME_ORG_NUM"])
 
     def fetch_plume_platform_lookupids(self, serial_nums: list[str]) -> dict[str, str]:
         """Fetches a list of plume sensor lookup_ids from a list of serial numbers

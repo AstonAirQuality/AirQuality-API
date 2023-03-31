@@ -1,4 +1,3 @@
-from math import fabs
 from os import environ as env
 
 from dotenv import load_dotenv
@@ -8,8 +7,6 @@ from mangum import Mangum
 from routers.bgtasks import backgroundTasksRouter
 from routers.firebaseAuth import authRouter
 from routers.logs import logsRouter
-
-# routers
 from routers.sensors import sensorsRouter
 from routers.sensorSummaries import sensorSummariesRouter
 from routers.sensorTypes import sensorsTypesRouter
@@ -101,8 +98,6 @@ app.include_router(backgroundTasksRouter, prefix="/api-task", tags=["api-task"])
 app.include_router(usersRouter, prefix="/user", tags=["user"])
 app.include_router(logsRouter, prefix="/data-ingestion-logs", tags=["data-ingestion-logs"])
 
-
-# TODO change this to a more secure origin
 origins = ["*"]
 app.add_middleware(
     CORSMiddleware,

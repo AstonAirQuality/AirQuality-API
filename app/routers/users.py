@@ -32,6 +32,7 @@ def get_users(payload=Depends(auth_handler.auth_wrapper)):
     try:
         result = db.query(ModelUser).all()
     except Exception:
+        db.rollback()
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Could retrieve user")
     return result
 
@@ -68,6 +69,7 @@ def get_user_from_column(column: str, searchvalue: str, payload=Depends(auth_han
         else:
             result = db.query(ModelUser).filter(getattr(ModelUser, column) == searchvalue).first()
     except Exception:
+        db.rollback()
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Could retrieve user")
 
     return result

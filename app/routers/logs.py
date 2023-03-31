@@ -43,6 +43,7 @@ def get_log(payload=Depends(auth_handler.auth_wrapper)):
     try:
         result = db.query(ModelLogs).all()
     except Exception:
+        db.rollback()
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Could retrieve log")
     return result
 
@@ -64,6 +65,7 @@ def get_log(log_date: str, payload=Depends(auth_handler.auth_wrapper)):
     try:
         result = db.query(ModelLogs).filter(ModelLogs.date >= log_date, ModelLogs.date < end_date).first()
     except Exception:
+        db.rollback()
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Could retrieve log")
 
     return result
@@ -88,5 +90,6 @@ def delete_log(log_date: str, payload=Depends(auth_handler.auth_wrapper)):
         db.query(ModelLogs).filter(ModelLogs.date == log_date).delete()
         db.commit()
     except Exception:
+        db.rollback()
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Could not delete log")
     return {"message": "Log deleted successfully"}
