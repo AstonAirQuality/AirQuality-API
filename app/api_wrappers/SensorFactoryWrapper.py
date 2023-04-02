@@ -19,13 +19,14 @@ class SensorFactoryWrapper:
         """initialise the api wrappers and load the environment variables"""
         load_dotenv()
         self.zf = ZephyrFactory(env["ZEPHYR_USERNAME"], env["ZEPHYR_PASSWORD"])
-        # self.pf = PlumeFactory(env["PLUME_EMAIL"], env["PLUME_PASSWORD"], env["PLUME_FIREBASE_API_KEY"], env["PLUME_ORG_NUM"])
+        self.pf = PlumeFactory(env["PLUME_EMAIL"], env["PLUME_PASSWORD"], env["PLUME_FIREBASE_API_KEY"], env["PLUME_ORG_NUM"])
 
     def fetch_plume_platform_lookupids(self, serial_nums: list[str]) -> dict[str, str]:
         """Fetches a list of plume sensor lookup_ids from a list of serial numbers
         :param serial_nums: A list of plume sensor serial numbers
         return dict: {str(serial_num):str(lookup_id)}
         """
+        self.pf.login()
         return self.pf.fetch_lookup_ids(serial_nums)
 
     def fetch_plume_data(self, start: dt.datetime, end: dt.datetime, sensor_dict: dict[str, str]) -> Iterator[SchemaSensorSummary]:
@@ -36,7 +37,7 @@ class SensorFactoryWrapper:
         :param sensor_dict: A dictionary of lookup_ids and stationary_boxes [lookup_id:stationary_box]
         :return: A list of sensor summaries
         """
-
+        self.pf.login()
         for sensor in self.pf.get_sensors(sensor_dict, start, end):
             if sensor is not None:
                 yield from sensor.create_sensor_summaries(sensor_dict[sensor.id])
@@ -62,3 +63,8 @@ class SensorFactoryWrapper:
         for sensor in self.zf.get_sensors(list(sensor_dict.keys()), start, end, "B"):
             if sensor is not None:
                 yield from sensor.create_sensor_summaries(sensor_dict[sensor.id])
+
+
+# if __name__ == "__main__":
+#     sfw = SensorFactoryWrapper()
+#     print(sfw.fetch_plume_platform_lookupids(["02:00:00:00:48:45"]))

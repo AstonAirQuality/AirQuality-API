@@ -1,3 +1,4 @@
+import numpy as np
 import pandas as pd
 from api_wrappers.data_transfer_object.sensor_writeable import SensorWritable
 from api_wrappers.interfaces.sensor_product import SensorProduct
@@ -19,18 +20,18 @@ class ZephyrSensor(SensorProduct, SensorWritable):
         :param df: The measurement dataframe.
         :return: The prepared measurement dataframe."""
 
+        # drop rows with all NaN values
+        df.dropna(inplace=True)
+
         # infer the data types of the columns
         df = df.infer_objects()
-        # cast latitudes and longitudes to float
-        df["latitude"] = df["latitude"].astype("float")
-        df["longitude"] = df["longitude"].astype("float")
 
-        # set dateTime column to datetime
-        df["dateTime"] = pd.to_datetime(df["dateTime"], unit="ns")
+        # set localdateTime column to datetime type
+        df["localDateTime"] = pd.to_datetime(df["localDateTime"], unit="ns")
 
         df.rename(
             columns={
-                "dateTime": "timestamp",
+                "localDateTime": "timestamp",
                 "particulatePM25": "particulatePM2.5",
             },
             inplace=True,
@@ -44,8 +45,13 @@ class ZephyrSensor(SensorProduct, SensorWritable):
 
         df.set_index("date", drop=True, inplace=True)
         df = df.tz_convert("Europe/London")
-        # print(df.dtypes)
+
         df = df.loc[~df.index.duplicated()]
+
+        # add latitude and longitude columns with NaN values
+        df["latitude"] = np.nan
+        df["longitude"] = np.nan
+
         return df
 
     @staticmethod

@@ -30,10 +30,13 @@ class PlumeFactory(SensorFactory):
         :param API_KEY: API key of the Plume account
         :param org_number: organization number of the Plume account
         """
+        self.email = email
+        self.password = password
+        self.API_KEY = API_KEY
         self.org = str(org_number)
-        self.__session = self.__login(email, password, API_KEY)
+        self.__session = None
 
-    def __login(self, email, password, apiKey) -> requests.Session:
+    def login(self):
         """Logs into the Plume API
 
         The API uses Google Firebase for auth, each subsequent request to the API after login must
@@ -43,29 +46,31 @@ class PlumeFactory(SensorFactory):
         :param password: login password
         :return: Logged in session
         """
-        session = requests.Session()
-        res = requests.post(
-            f"https://www.googleapis.com/identitytoolkit/v3/relyingparty/verifyPassword?" f"key={apiKey}",
-            data={"email": email, "password": password, "returnSecureToken": True},
-            headers={"referer": "https://dashboard-flow.plumelabs.com/"},
-        )
-        if not res.ok:
-            raise IOError("Login failed")
+        if self.__session is None:
+            session = requests.Session()
+            res = requests.post(
+                f"https://www.googleapis.com/identitytoolkit/v3/relyingparty/verifyPassword?" f"key={self.API_KEY}",
+                data={"email": self.email, "password": self.password, "returnSecureToken": True},
+                headers={"referer": "https://dashboard-flow.plumelabs.com/"},
+            )
+            if not res.ok:
+                raise IOError("Login failed")
 
-        json_ = json.loads(res.content)
-        auth_token = json_["idToken"]
-        auth_key = json_["localId"]
-        json_ = json.loads(
-            session.post(
-                "https://api-preprod.plumelabs.com/2.0/user/token",
-                data={"auth_type": "FIREBASE", "auth_key": auth_key, "auth_token": auth_token, "auth_secret": ""},
-            ).content
-        )
-        bearer = json_["token"]
-        # add bearer to session header
-        session.headers["authorization"] = f"Bearer {bearer}"
+            json_ = json.loads(res.content)
+            auth_token = json_["idToken"]
+            auth_key = json_["localId"]
+            json_ = json.loads(
+                session.post(
+                    "https://api-preprod.plumelabs.com/2.0/user/token",
+                    data={"auth_type": "FIREBASE", "auth_key": auth_key, "auth_token": auth_token, "auth_secret": ""},
+                ).content
+            )
+            bearer = json_["token"]
+            # add bearer to session header
+            session.headers["authorization"] = f"Bearer {bearer}"
 
-        return session
+            # update session in class instance
+            self.__session = session
 
     ####################################################################################################################
     # def check_last_sync(self, days: int = 4) -> Iterator[tuple]:
