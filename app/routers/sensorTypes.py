@@ -46,6 +46,7 @@ def get_sensorTypes():
         # NOTE: using the model ModelSensorType does not allow for response to be ordered by id,name,description,properties we must explicitly state the columns if we want to order the response
         result = db.query(ModelSensorType.id, ModelSensorType.name, ModelSensorType.description, ModelSensorType.properties).all()
     except Exception:
+        db.rollback()
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Could retrieve sensorTypes")
     return result
 
@@ -58,6 +59,7 @@ def get_sensorTypes_paginated(page: int, limit: int):
         # NOTE: using the model ModelSensorType does not allow for response to be ordered by id,name,description,properties we must explicitly state the columns if we want to order the response
         result = db.query(ModelSensorType.id, ModelSensorType.name, ModelSensorType.description, ModelSensorType.properties).offset((page - 1) * limit).limit(limit).all()
     except Exception:
+        db.rollback()
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Could retrieve sensorTypes")
     return result
 

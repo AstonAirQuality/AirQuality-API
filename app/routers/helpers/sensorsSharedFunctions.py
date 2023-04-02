@@ -34,6 +34,7 @@ def get_sensor_dict(idtype: str, ids: list[int] = Query(default=[])):
             results.append(row_as_dict)
 
     except Exception as e:
+        db.rollback()
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
     return results
 
@@ -46,6 +47,7 @@ def get_sensor_id_and_serialnum_from_lookup_id(lookup_id: str):
     try:
         result = db.query(ModelSensor.id.label("id"), ModelSensor.serial_number.label("serial_number")).filter(ModelSensor.lookup_id == lookup_id).first()
     except Exception as e:
+        db.rollback()
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
     return result
 

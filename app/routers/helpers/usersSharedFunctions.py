@@ -37,6 +37,7 @@ def get_user_token_info(uid: str):
     try:
         result = db.query(ModelUser.role, ModelUser.username).filter(ModelUser.uid == uid).first()
     except Exception:
+        db.rollback()
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Could not retrieve user")
 
     return result
