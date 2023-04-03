@@ -10,6 +10,7 @@ from unittest.mock import Mock, patch
 
 from api_wrappers.concrete.factories.plume_factory import PlumeFactory
 from api_wrappers.concrete.products.plume_sensor import PlumeSensor
+from api_wrappers.concrete.products.sensorCommunity_sensor import SensorCommunitySensor
 from api_wrappers.concrete.products.zephyr_sensor import ZephyrSensor
 from api_wrappers.SensorFactoryWrapper import SensorFactoryWrapper
 from core.models import Logs as ModelLog
@@ -55,6 +56,11 @@ class Test_Api_7_BackgroundTasks(TestCase):
         # add a zephyr sensor to the database
         cls.zephyr_sensor_id = setUpSensor(cls.db, "814", "814:Zephyr", cls.zephyr_sensor_type_id, True, None, None)
 
+        # add a sensorCommunity sensor type to the database
+        cls.sensorCommunity_sensor_type_id = setUpSensorType(cls.db, "SensorCommunity", "test_sensorCommunity", {"NO2": "ppb", "VOC": "ppb", "pm10": "ppb", "pm2.5": "ppb", "pm1": "ppb"})
+        # add a sensorCommunity sensor to the database
+        cls.sensorCommunity_sensor_id = setUpSensor(cls.db, "60641,SDS011,60642,BME280", "60641,SDS011,60642,BME280:SensorCommunity", cls.sensorCommunity_sensor_type_id, True, None, None)
+
         # plume sensor summary to be added to the database
         zip_contents = PlumeFactory.extract_zip_content(zipfile.ZipFile("./testing/test_data/plume_sensorData.zip", "r"), include_measurements=True)
         (id_, buffer) = next(zip_contents)
@@ -65,9 +71,22 @@ class Test_Api_7_BackgroundTasks(TestCase):
         file = open("testing/test_data/zephyr_814_sensor_data.json", "r")
         json_ = json.load(file)
         file.close()
-        sensor = ZephyrSensor.from_json("814", json_["slotB"])
-
+        sensor = ZephyrSensor.from_json("814", json_["data"]["Unaveraged"]["slotB"])
         cls.zephyr_summary = list(sensor.create_sensor_summaries(None))[0]
+
+        # sensorCommunity sensor summary to be added to the database
+        csv_files = {60641: {0: None}, 60642: {0: None}}
+        sensor_id = "60641,SDS011,60642,BME280"
+
+        file = open("testing/test_data/2023-04-01_sds011_sensor_60641.csv", "r")
+        csv_files[60641][0] = file.read().encode()
+        file.close()
+
+        file = open("testing/test_data/2023-04-01_bme280_sensor_60642.csv", "r")
+        csv_files[60642][0] = file.read().encode()
+        file.close()
+        sensor = SensorCommunitySensor.from_csv(sensor_id, csv_files)
+        cls.sensorCommunity_summary = list(sensor.create_sensor_summaries(None))[0]
 
     @classmethod
     def tearDownClass(cls):
@@ -123,7 +142,7 @@ class Test_Api_7_BackgroundTasks(TestCase):
         # wait 2 second to ensure that the log date is different
         time.sleep(2)
         with patch.object(SensorFactoryWrapper, "fetch_zephyr_data", return_value=[self.zephyr_summary]) as mock_fetch_zephyr_data:
-            response = self.client.post("/api-task/schedule/ingest-bysensorid/27-09-2022/28-09-2022", params={"sensor_ids": [self.zephyr_sensor_id]})
+            response = self.client.post("/api-task/schedule/ingest-bysensorid/02-04-2023/03-04-2023", params={"sensor_ids": [self.zephyr_sensor_id]})
             mock_fetch_zephyr_data.assert_called_once()
             self.assertEqual(response.status_code, 200)
             self.assertNotEqual(response, "No active sensors found")
@@ -138,7 +157,27 @@ class Test_Api_7_BackgroundTasks(TestCase):
         # test that log was added to the database
         self.log_insert_shared_test()
 
-    def test_3_upsert_sensor_summary_by_type_id_active_sensors(self):
+    def test_3_sensorCommunity_upsert_sensor_summary_by_id_list(self):
+        """Test the upsert sensor summary by id list route of the API"""
+        # wait 3 second to ensure that the log date is different
+        time.sleep(2)
+        with patch.object(SensorFactoryWrapper, "fetch_sensorCommunity_data", return_value=[self.sensorCommunity_summary]) as mock_fetch_sensorCommunity_data:
+            response = self.client.post("/api-task/schedule/ingest-bysensorid/31-03-2023/01-04-2023", params={"sensor_ids": [self.sensorCommunity_sensor_id]})
+            mock_fetch_sensorCommunity_data.assert_called_once()
+            self.assertEqual(response.status_code, 200)
+            self.assertNotEqual(response, "No active sensors found")
+
+        # test that the sensor summary was added to the database
+        try:
+            res = self.db.query(ModelSensorSummary).filter(ModelSensorSummary.sensor_id == self.sensorCommunity_sensor_id).first()
+            self.assertIsNotNone(res)
+        except Exception as e:
+            self.db.rollback()
+
+        # test that log was added to the database
+        self.log_insert_shared_test()
+
+    def test_4_upsert_sensor_summary_by_type_id_active_sensors(self):
         """Test the upsert sensor summary by type id active sensors route of the API"""
         # wait 3 second to ensure that the log date is different
         time.sleep(2)

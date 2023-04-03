@@ -63,7 +63,7 @@ class SensorFactoryWrapper:
             if sensor is not None:
                 yield from sensor.create_sensor_summaries(sensor_dict[sensor.id])
 
-    def fetch_sensor_community_data(self, start: dt.datetime, end: dt.datetime, sensor_dict: dict[str, str]) -> Iterator[SchemaSensorSummary]:
+    def fetch_sensorCommunity_data(self, start: dt.datetime, end: dt.datetime, sensor_dict: dict[str, str]) -> Iterator[SchemaSensorSummary]:
         for sensor in self.scf.get_sensors(list(sensor_dict.keys()), start, end):
             if sensor is not None:
                 yield from sensor.create_sensor_summaries(sensor_dict[sensor.id])

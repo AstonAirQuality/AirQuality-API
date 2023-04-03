@@ -59,6 +59,7 @@ class Test_plumeFactory(TestCase):
         mocked_get.return_value.json.return_value = json.load(file)
         file.close()
 
+        self.pf.login()
         sensor_platforms = self.pf.fetch_lookup_ids(["02:00:00:00:48:45", "02:00:00:00:48:13"])
 
         mocked_get.assert_called_with("https://api-preprod.plumelabs.com/2.0/user/organizations/{org}/sensors".format(org=self.pf.org))
@@ -80,6 +81,7 @@ class Test_plumeFactory(TestCase):
         file.close()
         mocked_get.return_value.json.return_value = json_
 
+        self.pf.login()
         sensor_data = self.pf.get_sensor_measurement_data(sensor_id, start, end)
 
         mocked_get.assert_called_with(

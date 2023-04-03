@@ -9,6 +9,7 @@ from unittest.mock import Mock, patch
 
 from api_wrappers.concrete.factories.plume_factory import PlumeFactory
 from api_wrappers.concrete.products.plume_sensor import PlumeSensor
+from api_wrappers.concrete.products.sensorCommunity_sensor import SensorCommunitySensor
 from api_wrappers.concrete.products.zephyr_sensor import ZephyrSensor
 from api_wrappers.data_transfer_object.sensor_writeable import SensorWritable
 from core.schema import SensorSummary as SchemaSensorSummary
@@ -90,7 +91,7 @@ class Test_sensorWriteable(TestCase):
         file = open("testing/test_data/zephyr_814_sensor_data.json", "r")
         json_ = json.load(file)
         file.close()
-        sensor = ZephyrSensor.from_json("814", json_["slotB"])
+        sensor = ZephyrSensor.from_json("814", json_["data"]["Unaveraged"]["slotB"])
 
         self.assertTrue(isinstance(sensor, SensorWritable))
 
@@ -100,7 +101,6 @@ class Test_sensorWriteable(TestCase):
         for sensor_summary in sensor_summaries:
             self.assertTrue(isinstance(sensor_summary, SchemaSensorSummary))
             self.assertEqual(str(sensor_summary.sensor_id), sensor.id)
-
             self.assertTrue(sensor_summary.geom == self.stationaryBox)
             self.assertTrue(sensor_summary.measurement_count > 0)
             self.assertIsNotNone(sensor_summary.measurement_data)
@@ -110,7 +110,7 @@ class Test_sensorWriteable(TestCase):
         file = open("testing/test_data/zephyr_814_sensor_data.json", "r")
         json_ = json.load(file)
         file.close()
-        sensor = ZephyrSensor.from_json("814", json_["slotB"])
+        sensor = ZephyrSensor.from_json("814", json_["data"]["Unaveraged"]["slotB"])
 
         self.assertTrue(isinstance(sensor, SensorWritable))
 
@@ -121,6 +121,66 @@ class Test_sensorWriteable(TestCase):
             self.assertTrue(isinstance(sensor_summary, SchemaSensorSummary))
             self.assertEqual(str(sensor_summary.sensor_id), sensor.id)
             self.assertTrue(sensor_summary.geom == None)
+            self.assertTrue(sensor_summary.measurement_count > 0)
+
+    # TODO add sensorCommunity tests
+    def test_sensorSumamry_from_sensorCommunity_with_stationary_box(self):
+        csv_files = {60641: {0: None}, 60642: {0: None}}
+        sensor_id = "60641,SDS011,60642,BME280"
+
+        file = open("testing/test_data/2023-04-01_sds011_sensor_60641.csv", "r")
+        csv_files[60641][0] = file.read().encode()
+        file.close()
+
+        file = open("testing/test_data/2023-04-01_bme280_sensor_60642.csv", "r")
+        csv_files[60642][0] = file.read().encode()
+        file.close()
+
+        sensor = SensorCommunitySensor.from_csv(sensor_id, csv_files)
+
+        self.assertTrue(isinstance(sensor, SensorWritable))
+
+        sensor_summaries = sensor.create_sensor_summaries(stationary_box=self.stationaryBox)
+        self.assertIsNotNone(sensor_summaries)
+
+        expectedGeom = "POLYGON((-1.9301 52.445899999999995,-1.9301 52.4461,-1.9299 52.4461,-1.9299 52.445899999999995,-1.9301 52.445899999999995))"
+
+        for sensor_summary in sensor_summaries:
+            self.assertTrue(isinstance(sensor_summary, SchemaSensorSummary))
+            self.assertEqual(str(sensor_summary.sensor_id), sensor.id)
+            self.assertFalse(sensor_summary.geom == self.stationaryBox)
+            self.assertTrue(sensor_summary.geom == expectedGeom)
+            self.assertTrue(sensor_summary.measurement_count > 0)
+            self.assertIsNotNone(sensor_summary.measurement_data)
+            # because the sensor is not in the original stationary box, it should be marked as not stationary
+            self.assertFalse(sensor_summary.stationary)
+
+    def test_sensorSumamry_from_sensorCommunity_no_stationary_box(self):
+        csv_files = {60641: {0: None}, 60642: {0: None}}
+        sensor_id = "60641,SDS011,60642,BME280"
+
+        file = open("testing/test_data/2023-04-01_sds011_sensor_60641.csv", "r")
+        csv_files[60641][0] = file.read().encode()
+        file.close()
+
+        file = open("testing/test_data/2023-04-01_bme280_sensor_60642.csv", "r")
+        csv_files[60642][0] = file.read().encode()
+        file.close()
+
+        sensor = SensorCommunitySensor.from_csv(sensor_id, csv_files)
+
+        self.assertTrue(isinstance(sensor, SensorWritable))
+
+        sensor_summaries = sensor.create_sensor_summaries(stationary_box=None)
+        self.assertIsNotNone(sensor_summaries)
+
+        expectedGeom = "POLYGON((-1.9301 52.445899999999995,-1.9301 52.4461,-1.9299 52.4461,-1.9299 52.445899999999995,-1.9301 52.445899999999995))"
+        for sensor_summary in sensor_summaries:
+            self.assertTrue(isinstance(sensor_summary, SchemaSensorSummary))
+            self.assertEqual(str(sensor_summary.sensor_id), sensor.id)
+            self.assertTrue(sensor_summary.geom == expectedGeom)
+            # since a stationary box was not provided, the sensor summary should not be stationary
+            self.assertFalse(sensor_summary.stationary)
             self.assertTrue(sensor_summary.measurement_count > 0)
 
 

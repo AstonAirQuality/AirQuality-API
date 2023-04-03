@@ -82,7 +82,7 @@ def upsert_sensor_summary_by_id_list(
                 # if the cron job was used then we can use the same start and end date
                 if type_of_id == "sensor_type_id":
                     endDate = startDate
-                for sensorSummary in sfw.fetch_sensor_community_data(startDate, endDate, dict_lookupid_stationaryBox):
+                for sensorSummary in sfw.fetch_sensorCommunity_data(startDate, endDate, dict_lookupid_stationaryBox):
                     upsert_log = upsert_summary_and_log(sensorSummary, upsert_log)
                 continue
 
