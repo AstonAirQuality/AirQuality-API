@@ -68,8 +68,8 @@ class Test_zephyrFactory(TestCase):
         \n Uses mock data"""
 
         id_ = "814"
-        start = dt.datetime(2023, 1, 1)
-        end = dt.datetime(2023, 1, 2)
+        start = dt.datetime(2023, 3, 31)
+        end = dt.datetime(2023, 4, 1)
         slot = "B"
         mocked_get.return_value.ok = True
 
@@ -80,7 +80,8 @@ class Test_zephyrFactory(TestCase):
         sensors = list(self.zf.get_sensors([id_], start, end, slot))
 
         mocked_get.assert_called_with(
-            f"https://data.earthsense.co.uk/dataForViewBySlots/{self.zf.username}/{self.zf.password}/{id_}/{start.strftime('%Y%m%d%H%M')}/{end.strftime('%Y%m%d%H%M')}/{slot}/def/json/api"
+            f"https://data.earthsense.co.uk/measurementdata/v1/{id_}/{start.strftime('%Y%m%d%H%M')}/{end.strftime('%Y%m%d%H%M')}/B/0",
+            headers={"username": self.zf.username, "userkey": self.zf.password},
         )
 
         self.assertEqual(len(sensors), 1)
@@ -88,26 +89,26 @@ class Test_zephyrFactory(TestCase):
             "NO",
             "NO2",
             "O3",
+            "timestamp",
             "ambHumidity",
             "ambPressure",
             "ambTempC",
-            "timestamp",
             "humidity",
-            "latitude",
-            "longitude",
             "particulatePM1",
             "particulatePM10",
             "particulatePM2.5",
             "tempC",
+            "latitude",
+            "longitude",
         ]
         for sensor in sensors:
             self.assertTrue(isinstance(sensor, ZephyrSensor))
             self.assertEqual(sensor.id, "814")
             self.assertTrue(isinstance(sensor.df, pd.DataFrame))
-            # check that the dataframe has the correct columns
+            # check that the dataframe has the correct columns in any order
             self.assertEqual(
-                sensor.df.columns.tolist(),
-                expected_columns,
+                set(sensor.df.columns.tolist()),
+                set(expected_columns),
             )
 
 

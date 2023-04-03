@@ -26,25 +26,19 @@ class ZephyrSensor(SensorProduct, SensorWritable):
         # infer the data types of the columns
         df = df.infer_objects()
 
-        # set localdateTime column to datetime type
-        df["localDateTime"] = pd.to_datetime(df["localDateTime"], unit="ns")
+        # set dateTime column to datetime type
+        df["dateTime"] = pd.to_datetime(df["dateTime"], unit="ns")
 
         df.rename(
             columns={
-                "localDateTime": "timestamp",
+                "dateTime": "date",
+                "UTS": "timestamp",
                 "particulatePM25": "particulatePM2.5",
             },
             inplace=True,
         )
 
-        # insert a new column with the date converted to datetime
-        df.insert(0, "date", pd.to_datetime(df["timestamp"], unit="ns"))
-
-        # convert datetime into timestamp
-        df["timestamp"] = df["timestamp"].astype("int64") // 10**9
-
         df.set_index("date", drop=True, inplace=True)
-        df = df.tz_convert("Europe/London")
 
         df = df.loc[~df.index.duplicated()]
 
@@ -64,7 +58,7 @@ class ZephyrSensor(SensorProduct, SensorWritable):
         df = pd.DataFrame.from_records(data)
         df.drop("header", axis=0, inplace=True)
         df.drop("data_hash", axis=0, inplace=True)
-        df.drop("UTS", axis=1, inplace=True)
+        df.drop("localDateTime", axis=1, inplace=True)
 
         # explode function transform each element of a list to a row.
         # we can apply it to all the columns assuming they have the same number of elements in each list
@@ -85,9 +79,10 @@ class ZephyrSensor(SensorProduct, SensorWritable):
 #     file = open("testing/test_data/zephyr_814_sensor_data.json", "r")
 #     json_ = json.load(file)
 #     file.close()
-#     sensor = ZephyrSensor.from_json("814", json_["slotB"])
+#     sensor = ZephyrSensor.from_json("814", json_["data"]["Unaveraged"]["slotB"])
 #     # print dataframe columns
 #     print(sensor.df.head())
+#     print(sensor.df.columns.tolist())
 
 #     summaries = list(sensor.create_sensor_summaries(None))
 #     print(summaries[0])
