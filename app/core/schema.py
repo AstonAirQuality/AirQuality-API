@@ -15,14 +15,14 @@ class SensorSummary(BaseModel):
     :measurement_count (int)
     :measurement_data (str), JSON format
     :stationary (bool)
-    :sensor_id (int)"""
+    :sensor_id (str)"""
 
     timestamp: int
     geom: Optional[str] = None
     measurement_count: int
     measurement_data: str
     stationary: bool
-    sensor_id: int
+    sensor_id: str
 
     class Config:
         orm_mode = True

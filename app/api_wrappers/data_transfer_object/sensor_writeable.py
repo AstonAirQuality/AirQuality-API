@@ -76,6 +76,13 @@ class SensorWritable(SensorDTO):
             min_x = df["longitude"].min()
             max_x = df["longitude"].max()
 
+            # if there is only one location, then create a bounding box of 0.0001 degrees
+            if min_y == max_y and min_x == max_x:
+                min_y -= 0.0001
+                max_y += 0.0001
+                min_x -= 0.0001
+                max_x += 0.0001
+
             # POLYGON(minx miny,minx Maxy,maxx Maxy,maxx miny,minx miny)
             geometry_string = "POLYGON(({} {},{} {},{} {},{} {},{} {}))".format(min_x, min_y, min_x, max_y, max_x, max_y, max_x, min_y, min_x, min_y)
 

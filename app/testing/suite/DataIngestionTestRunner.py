@@ -3,6 +3,8 @@ from unittest import TestLoader, TestSuite
 from HtmlTestRunner import HTMLTestRunner
 from testing.test_plumeFactory import Test_plumeFactory
 from testing.test_plumeSensor import Test_plumeSensor
+from testing.test_sensorCommunityFactroy import Test_sensorCommunityFactory
+from testing.test_sensorCommunitySensor import Test_sensorCommunitySensor
 from testing.test_SensorFactoryWrapper import Test_SensorFactoryWrapper
 from testing.test_sensorReadable import Test_sensorReadable
 from testing.test_sensorWriteable import Test_sensorWriteable
@@ -17,9 +19,11 @@ test_4 = TestLoader().loadTestsFromTestCase(Test_sensorReadable)
 test_5 = TestLoader().loadTestsFromTestCase(Test_sensorWriteable)
 test_6 = TestLoader().loadTestsFromTestCase(Test_zephyrFactory)
 test_7 = TestLoader().loadTestsFromTestCase(Test_zephyrSensor)
+test_8 = TestLoader().loadTestsFromTestCase(Test_sensorCommunityFactory)
+test_9 = TestLoader().loadTestsFromTestCase(Test_sensorCommunitySensor)
 
 # run all tests in order (but test_7 is run first to issues with sensor ids)
-suite = TestSuite([test_1, test_2, test_3, test_4, test_5, test_6, test_7])
+suite = TestSuite([test_1, test_2, test_3, test_4, test_5, test_6, test_7, test_8, test_9])
 
 runner = HTMLTestRunner(
     output="testing/output",

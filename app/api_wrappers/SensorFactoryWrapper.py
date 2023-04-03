@@ -1,9 +1,11 @@
-# TODO add zephyr and other sensors to api functions and wrappers
 import datetime as dt
 from os import environ as env
 from typing import Iterator
 
 from api_wrappers.concrete.factories.plume_factory import PlumeFactory
+from api_wrappers.concrete.factories.sensorCommunity_factory import (
+    SensorCommunityFactory,
+)
 from api_wrappers.concrete.factories.zephyr_factory import ZephyrFactory
 
 # sensor summary
@@ -19,6 +21,7 @@ class SensorFactoryWrapper:
         """initialise the api wrappers and load the environment variables"""
         load_dotenv()
         self.zf = ZephyrFactory(env["ZEPHYR_USERNAME"], env["ZEPHYR_PASSWORD"])
+        self.scf = SensorCommunityFactory(env["SC_USERNAME"], env["SC_PASSWORD"])
         self.pf = PlumeFactory(env["PLUME_EMAIL"], env["PLUME_PASSWORD"], env["PLUME_FIREBASE_API_KEY"], env["PLUME_ORG_NUM"])
 
     def fetch_plume_platform_lookupids(self, serial_nums: list[str]) -> dict[str, str]:
@@ -49,22 +52,25 @@ class SensorFactoryWrapper:
     #         if sensor is not None:
     #             yield from sensor.create_sensor_summaries(sensor_dict[sensor.id])
 
-    # TODO add zephyr and other sensors to api functions and wrappers
-    # def fetch_zephyr_platform_lookupids(self, serial_nums: list[str]) -> dict[str, str]:
-
     def fetch_zephyr_platform_lookupids(self) -> list[str]:
         """Fetches a list of zephyr sensor lookup_ids
         return list: [str(lookup_id)]
         """
         return self.zf.fetch_lookup_ids()
 
-    # TODO add zephyr and other sensors to api functions and wrappers
-    def fetch_zephyr_data(self, start: dt.datetime, end: dt.datetime, sensor_dict: dict[str, str]):
+    def fetch_zephyr_data(self, start: dt.datetime, end: dt.datetime, sensor_dict: dict[str, str]) -> Iterator[SchemaSensorSummary]:
         for sensor in self.zf.get_sensors(list(sensor_dict.keys()), start, end, "B"):
+            if sensor is not None:
+                yield from sensor.create_sensor_summaries(sensor_dict[sensor.id])
+
+    def fetch_sensor_community_data(self, start: dt.datetime, end: dt.datetime, sensor_dict: dict[str, str]) -> Iterator[SchemaSensorSummary]:
+        for sensor in self.scf.get_sensors(list(sensor_dict.keys()), start, end):
             if sensor is not None:
                 yield from sensor.create_sensor_summaries(sensor_dict[sensor.id])
 
 
 # if __name__ == "__main__":
 #     sfw = SensorFactoryWrapper()
-#     print(sfw.fetch_plume_platform_lookupids(["02:00:00:00:48:45"]))
+#     summaries = list(sfw.fetch_sensor_community_data(dt.datetime(2023, 3, 31), dt.datetime(2023, 4, 1), {"60641,SDS011,60642,BME280": None}))
+#     for summary in summaries:
+#         print(summary.geom)

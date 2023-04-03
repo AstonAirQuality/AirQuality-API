@@ -79,7 +79,11 @@ def upsert_sensor_summary_by_id_list(
                     upsert_log = upsert_summary_and_log(sensorSummary, upsert_log)
 
             elif sensorType.lower() == "sensorcommunity":
-                # TODO add api call for sensor type 3
+                # if the cron job was used then we can use the same start and end date
+                if type_of_id == "sensor_type_id":
+                    endDate = startDate
+                for sensorSummary in sfw.fetch_sensor_community_data(startDate, endDate, dict_lookupid_stationaryBox):
+                    upsert_log = upsert_summary_and_log(sensorSummary, upsert_log)
                 continue
 
         # return timestamp and sensor id of the summaries that were successfully written to the database
