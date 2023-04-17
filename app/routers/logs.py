@@ -48,7 +48,6 @@ def get_log(payload=Depends(auth_handler.auth_wrapper)):
     return result
 
 
-# TODO get all logs in that day. (not just the first one)
 @logsRouter.get("/findByDate/{log_date}")
 def get_log(log_date: str, payload=Depends(auth_handler.auth_wrapper)):
     """get a log from the database by date
@@ -63,7 +62,7 @@ def get_log(log_date: str, payload=Depends(auth_handler.auth_wrapper)):
     log_date = log_date.strftime("%Y-%m-%d")
 
     try:
-        result = db.query(ModelLogs).filter(ModelLogs.date >= log_date, ModelLogs.date < end_date).first()
+        result = db.query(ModelLogs).filter(ModelLogs.date >= log_date, ModelLogs.date < end_date).all()
     except Exception:
         db.rollback()
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Could retrieve log")

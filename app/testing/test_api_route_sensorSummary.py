@@ -147,7 +147,21 @@ class Test_Api_6_SensorSummary(TestCase):
         self.assertIsNotNone(response.json())
         self.assertTrue(len(response.json()) > 0)
 
-    # def test_8_get_sensorSummary_spatial_overlaps(self):
+    def test_8_get_sensorSummary_invalid_spatial_contains(self):
+        response = self.client.get(
+            "/sensor-summary",
+            params={
+                "start": "27-09-2022",
+                "end": "28-09-2022",
+                "columns": ["sensor_id", "measurement_count", "geom", "timestamp"],
+                "spatial_query_type": "contains",
+                "geom": "POINT(-1.83631 52.425392)",
+            },
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(len(response.json()) == 0)
+
+    # def test_9_get_sensorSummary_spatial_overlaps(self):
     #     response = self.client.get(
     #         "/sensor-summary",
     #         params={
@@ -163,9 +177,8 @@ class Test_Api_6_SensorSummary(TestCase):
     #     self.assertTrue(len(response.json()) > 0)
 
     # TODO - assert geojson is valid
-    def test_9_get_sensorSummary_as_geojson(self):
-        """Test that the sensor summary is returned as geojson"""
-
+    def test_10_get_sensorSummary_as_geojson(self):
+        """Test that the sensor summary is returned as a valid geojson"""
         response = self.client.get(
             "/sensor-summary/as-geojson",
             params={"start": "27-09-2022", "end": "28-09-2022", "columns": ["sensor_id", "measurement_count", "geom", "timestamp"], "averaging_methods": ["mean", "count"], "averaging_frequency": "H"},
@@ -173,6 +186,15 @@ class Test_Api_6_SensorSummary(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertIsNotNone(response.json())
         self.assertTrue(len(response.json()) > 0)
+
+        # assert geojson content is valid
+        geojson = response.json()[0]["geojson"]
+        self.assertTrue(geojson["type"] == "FeatureCollection")
+        self.assertTrue(isinstance(geojson["features"], list))
+        for feature in geojson["features"]:
+            self.assertTrue("geometry" in feature)
+            self.assertTrue("properties" in feature)
+            self.assertTrue("type" in feature)
 
 
 if __name__ == "__main__":

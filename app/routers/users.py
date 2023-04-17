@@ -44,9 +44,6 @@ def get_user_from_column(column: str, searchvalue: str, payload=Depends(auth_han
     \n :param searchvalue : user searchvalue
     \n:return: user"""
 
-    # query all users which match the searchvalue (only used for username searching)
-    queryAll = False
-
     if column not in ["uid", "email", "username", "role"]:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid column name")
 
@@ -59,15 +56,11 @@ def get_user_from_column(column: str, searchvalue: str, payload=Depends(auth_han
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=f"Not authorized")
 
     elif column == "username" or column == "role":
-        queryAll = True
         if auth_handler.checkRoleAdmin(payload) == False:
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authorized")
 
     try:
-        if queryAll:
-            result = db.query(ModelUser).filter(getattr(ModelUser, column) == searchvalue).all()
-        else:
-            result = db.query(ModelUser).filter(getattr(ModelUser, column) == searchvalue).first()
+        result = db.query(ModelUser).filter(getattr(ModelUser, column).like(f"%{searchvalue}%")).all()
     except Exception:
         db.rollback()
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Could retrieve user")
