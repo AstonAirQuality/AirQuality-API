@@ -27,7 +27,7 @@ class SensorFactoryWrapper:
     def fetch_plume_platform_lookupids(self, serial_nums: list[str]) -> dict[str, str]:
         """Fetches a list of plume sensor lookup_ids from a list of serial numbers
         :param serial_nums: A list of plume sensor serial numbers
-        return dict: {str(serial_num):str(lookup_id)}
+        :return dict: {str(serial_num):str(lookup_id)}
         """
         self.pf.login()
         return self.pf.fetch_lookup_ids(serial_nums)

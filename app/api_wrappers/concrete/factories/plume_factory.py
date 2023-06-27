@@ -159,7 +159,7 @@ class PlumeFactory(SensorFactory):
 
         link = self.get_zip_file_link(sensorids, start, end, include_measurements=True)
 
-        for (sensorid, buffer) in self.extract_zip(link, include_measurements=True):
+        for sensorid, buffer in self.extract_zip(link, include_measurements=True):
             plumeSensors.append(PlumeSensor.from_zip(sensorid, buffer))
         return plumeSensors
 
@@ -187,21 +187,21 @@ class PlumeFactory(SensorFactory):
             # apply offset for every 2 days of data
             if (i - 1) % 2 == 0:
                 offset += 2000
-            try:
-                res = self.__session.get(
-                    "https://api-preprod.plumelabs.com/2.0/user/organizations/{org}/sensors/{sensorId}/measures?start_date={start}&end_date={end}&offset={offset}".format(
-                        org=self.org,
-                        sensorId=sensorId,
-                        start=int(start.timestamp()),
-                        end=int(end.timestamp()),
-                        offset=offset,
+                try:
+                    res = self.__session.get(
+                        "https://api-preprod.plumelabs.com/2.0/user/organizations/{org}/sensors/{sensorId}/measures?start_date={start}&end_date={end}&offset={offset}".format(
+                            org=self.org,
+                            sensorId=sensorId,
+                            start=int(start.timestamp()),
+                            end=int(end.timestamp()),
+                            offset=offset,
+                        )
                     )
-                )
-                dataList.append(res.json()["measures"])
+                    dataList.append(res.json()["measures"])
 
-            # if response json is empty, continue to next timeframe. Other errors will be tracked by sentry
-            except json.JSONDecodeError as e:
-                continue
+                # if response json is empty, continue to next timeframe. Other errors will be tracked by sentry
+                except json.JSONDecodeError as e:
+                    continue
 
         return dataList
 
@@ -220,7 +220,7 @@ class PlumeFactory(SensorFactory):
         if link is None:
             link = self.get_zip_file_link(sensors, start, end, include_measurements=False)
 
-        for (sensorid, buffer) in self.extract_zip(link, include_measurements=False):
+        for sensorid, buffer in self.extract_zip(link, include_measurements=False):
             plumeSensors.append(PlumeSensor.from_csv(sensorid, buffer))
         return plumeSensors
 
@@ -279,7 +279,6 @@ class PlumeFactory(SensorFactory):
         :return:sensor id, sensor data in a string buffer
         """
         for name in zip_.namelist():
-
             if include_measurements:
                 # if include_measurements is true, then use the merged csv file
                 if "merged" in pathlib.PurePath(name).parts[3]:

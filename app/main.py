@@ -132,7 +132,9 @@ if env["PRODUCTION_MODE"] == "TRUE":
     )
 
 handler = Mangum(app=app)
-# this is for testing purposes only
+
+
+# uncomment this for debugging purposes only
 # import uvicorn
 
 # if __name__ == "__main__":

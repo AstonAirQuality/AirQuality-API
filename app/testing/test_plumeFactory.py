@@ -82,7 +82,7 @@ class Test_plumeFactory(TestCase):
         mocked_get.return_value.json.return_value = json_
 
         self.pf.login()
-        sensor_data = self.pf.get_sensor_measurement_data(sensor_id, start, end)
+        sensor_data = self.pf.get_sensor_measurement_data(sensor_id, start, end)[0]
 
         mocked_get.assert_called_with(
             "https://api-preprod.plumelabs.com/2.0/user/organizations/{org}/sensors/{sensorId}/measures?start_date={start}&end_date={end}&offset={offset}".format(
@@ -109,7 +109,7 @@ class Test_plumeFactory(TestCase):
 
         mocked_get.assert_called_with("https://example.com", stream=True)
 
-        for (sensor_id, sensor_data) in sensors:
+        for sensor_id, sensor_data in sensors:
             self.assertEqual(sensor_id, "18749")
             self.assertTrue(isinstance(sensor_data, StringIO))
 
@@ -148,7 +148,6 @@ class Test_plumeFactory(TestCase):
                 mocked_append_measurements.return_value = []
 
             with patch.object(PlumeFactory, "get_sensors_measurement_only") as mocked_sensor_measurement_only:
-
                 file = open("testing/test_data/plume_measurements.json", "r")
                 json_ = json.load(file)
                 file.close()
@@ -199,7 +198,6 @@ class Test_plumeFactory(TestCase):
                 mocked_append_measurements.return_value = json_["measures"]
 
                 with patch.object(PlumeFactory, "get_sensors_measurement_only") as mocked_sensor_measurement_only:
-
                     mocked_sensor_measurement_only.return_value = None
 
                     sensors = self.pf.get_sensors(sensor_dict, start, end)
@@ -239,7 +237,6 @@ class Test_plumeFactory(TestCase):
                 mocked_append_measurements.return_value = json_["measures"]
 
                 with patch.object(PlumeFactory, "get_sensors_measurement_only") as mocked_sensor_measurement_only:
-
                     mocked_sensor_measurement_only.return_value = None
 
                     sensors = self.pf.get_sensors(sensor_dict, start, end)
@@ -274,7 +271,6 @@ class Test_plumeFactory(TestCase):
                 mocked_append_measurements.return_value = []
 
                 with patch.object(PlumeFactory, "get_sensors_measurement_only") as mocked_sensor_measurement_only:
-
                     mocked_sensor_measurement_only.return_value = None
 
                     sensors = self.pf.get_sensors(sensor_dict, start, end)
@@ -295,7 +291,6 @@ class Test_plumeFactory(TestCase):
             mocked_sensors_from_zip.return_value = self.pf.extract_zip_content(zipfile.ZipFile("./testing/test_data/plume_sensorData.zip", "r"), include_measurements=True)
 
             with patch.object(PlumeFactory, "get_zip_file_link") as mocked_get_zip_link:
-
                 mocked_get_zip_link.return_value = "https://example.com"
 
                 sensors = self.pf.get_sensors_merged_from_zip([sensor_id], start, end)

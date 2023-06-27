@@ -44,8 +44,8 @@ class PlumeSensor(SensorProduct, SensorWritable):
         try:
             dfList = []
 
-            for measurements in data[0]:
-                temp_df = pd.DataFrame([measurements])
+            for measurements in data:
+                temp_df = pd.DataFrame.from_records(measurements)
                 dfList.append(temp_df)
 
             # concatenate all dataframes and prepare dataframe. Ignore index to keep the original index.
@@ -93,10 +93,10 @@ class PlumeSensor(SensorProduct, SensorWritable):
         """
         dfList = []
 
-        # print(data[0])
+        # TODO nested for loop like add_measurements_json
         try:
-            for measurements in data[0]:
-                temp_df = pd.DataFrame([measurements])
+            for measurements in data:
+                temp_df = pd.DataFrame.from_records(measurements)
                 dfList.append(temp_df)
 
             # concatenate all dataframes and prepare dataframe

@@ -76,13 +76,11 @@ class SensorReadable(SensorDTO):
 
         # loop through each row in the dataframe and convert each row to geojson feature format
         for _, row in self.df.iterrows():
-
             # feature
             feature = {"type": "Feature", "properties": {}, "geometry": {"type": "Polygon", "coordinates": []}}
 
             # check if a stationary bounding box is available from the data, otherwise generate one from the min and max longitudes and latitudes
             if row["boundingBox"]["first"] is None:
-
                 # generate bounding box if coordinates are available else assign empty list
                 if math.isnan(row["latitude"]["min"]):
                     bounding_box = None
@@ -107,13 +105,13 @@ class SensorReadable(SensorDTO):
 
                 feature["geometry"]["coordinates"] = [self.generate_geojson_coords(min_long, min_lat, max_long, max_lat)]
 
+            # add datetime to the feature
+            feature["properties"]["datetime_UTC"] = row.name
+
             # assign properties (measurement values) to the feature
             for col in measurement_columns:
                 for method in averaging_methods:
                     feature["properties"][col + "_" + method] = row[col][method] if not math.isnan(row[col][method]) else None
-
-            # add datetime to the feature
-            feature["properties"]["datetime_UTC"] = row.name
 
             geojson["features"].append(feature)
 

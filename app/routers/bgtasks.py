@@ -68,8 +68,7 @@ def upsert_sensor_summary_by_id_list(
     if sensor_dict:
         upsert_log = []
         # for each sensor type, fetch the data from the sfw and write to the database
-        for (sensorType, dict_lookupid_stationaryBox) in sensor_dict.items():
-
+        for sensorType, dict_lookupid_stationaryBox in sensor_dict.items():
             if sensorType.lower() == "plume":
                 for sensorSummary in sfw.fetch_plume_data(startDate, endDate, dict_lookupid_stationaryBox):
                     upsert_log = upsert_summary_and_log(sensorSummary, upsert_log)
@@ -179,7 +178,7 @@ def update_sensor_last_updated(upsert_log: list[list], log_timestamp: str) -> di
     Logs sensor data that was successfully written to the database and updates the last_updated field of the sensor
     """
     log_dictionary = {}
-    for (id_, timestamp, sensor_serial_number, success_status, error_message) in upsert_log:
+    for id_, timestamp, sensor_serial_number, success_status, error_message in upsert_log:
         if success_status:
             try:
                 set_last_updated(id_, timestamp)

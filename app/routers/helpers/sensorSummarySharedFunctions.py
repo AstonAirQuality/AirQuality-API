@@ -12,6 +12,7 @@ from sqlalchemy.exc import IntegrityError
 
 db = SessionLocal()
 
+
 #################################################################################################################################
 #                                                  Create                                                                       #
 #################################################################################################################################
@@ -61,7 +62,10 @@ def update_sensorSummary(sensorSummary: SchemaSensorSummary):
     :param sensorSummary: sensor summary to update
     :return: updated sensor summary"""
     try:
-        db.query(ModelSensorSummary).filter(ModelSensorSummary.timestamp == sensorSummary.timestamp, ModelSensorSummary.sensor_id == sensorSummary.sensor_id,).update(
+        db.query(ModelSensorSummary).filter(
+            ModelSensorSummary.timestamp == sensorSummary.timestamp,
+            ModelSensorSummary.sensor_id == sensorSummary.sensor_id,
+        ).update(
             {
                 ModelSensorSummary.geom: sensorSummary.geom,
                 ModelSensorSummary.measurement_count: sensorSummary.measurement_count,
@@ -102,6 +106,7 @@ def upsert_sensorSummary(sensorSummary: SchemaSensorSummary):
 #                                              helper functions                                                                 #
 #################################################################################################################################
 
+
 # adding search filters
 def searchQueryFilters(query: any, spatial_query_type: str, geom: str, sensor_ids: list[str]) -> any:
     """applies search filters to the query
@@ -130,20 +135,21 @@ def JsonToSensorReadable(results: list) -> list[tuple[SensorReadable, str]]:
     for sensorSummary in results:
         data_dict = {"sensor_type": None, "json_": sensorSummary["measurement_data"], "boundingBox": sensorSummary["geom"] if sensorSummary["stationary"] == True else None}
 
-        if sensorSummary["sensor_id"] in sensor_dict:
-            # if type_name key exists in sensorSummary, add it to the data_dict, otherwise remove it from the data_dict
-            if "type_name" in sensorSummary:
-                data_dict["sensor_type"] = sensorSummary["type_name"]
-            else:
-                del data_dict["sensor_type"]
+        # if type_name key exists in sensorSummary, add it to the data_dict, otherwise remove it from the data_dict
+        if "type_name" in sensorSummary:
+            data_dict["sensor_type"] = sensorSummary["type_name"]
+        else:
+            del data_dict["sensor_type"]
 
+        # add the data dict to the sensor_dict
+        if sensorSummary["sensor_id"] in sensor_dict:
             sensor_dict[sensorSummary["sensor_id"]].append(data_dict)
         else:
             sensor_dict[sensorSummary["sensor_id"]] = [data_dict]
 
     # convert list of measurement data into a SensorReadable
     sensors = []
-    for (sensor_id, data) in sensor_dict.items():
+    for sensor_id, data in sensor_dict.items():
         sensors.append([SensorReadable.from_json_list(sensor_id, data), data[0]["sensor_type"]])
     return sensors
 
@@ -158,7 +164,7 @@ def sensorSummariesToGeoJson(results: list, averaging_methods: list[str], averag
     sensors = JsonToSensorReadable(results)
 
     geoJsons = []
-    for (sensor, sensorTypeString) in sensors:
+    for sensor, sensorTypeString in sensors:
         geoJsons.append(GeoJsonExport(sensorid=sensor.id, sensorType=sensorTypeString, geojson=sensor.to_geojson(averaging_methods, averaging_frequency)))
 
     return geoJsons

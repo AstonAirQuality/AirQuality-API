@@ -4,14 +4,15 @@
   "python.sortImports.args": [
     "--profile=black",
   ],
-  "python.formatting.provider": "black",
+  "python.formatting.provider": "none",
   "python.formatting.blackArgs": [
     "--line-length=200"
   ],
   "[python]": {
     "editor.codeActionsOnSave": {
       "source.organizeImports": true
-    }
+    },
+    "editor.defaultFormatter": "ms-python.black-formatter"
   },
   "python.testing.unittestArgs": [
     "-v",

@@ -77,7 +77,10 @@ def add_plume_sensors(serialnumbers: SchemaPlumeSerialNumbers, response: Respons
 
     addedSensors = {}
 
-    for (key, value) in sensor_platforms.items():
+    for key, value in sensor_platforms.items():
+        if value is None:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Serial number not found")
+
         sensor = ModelSensor(
             lookup_id=value,
             serial_number=key,
@@ -182,7 +185,6 @@ def get_sensors_joined_paginated(
     join_sensor_types: bool = Query(default=True),
     join_user: bool = Query(default=True),
 ):
-
     """Returns all paginated sensors in the database
     \n :param page: page number
     \n :param limit: number of items per page
