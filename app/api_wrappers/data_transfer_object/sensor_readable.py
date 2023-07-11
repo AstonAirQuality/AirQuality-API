@@ -61,7 +61,11 @@ class SensorReadable(SensorDTO):
         :param max_lat: maximum latitude
         :return: list of coordinates
         """
-        return [[min_long, min_lat], [min_long, max_lat], [max_long, max_lat], [max_long, min_lat], [min_long, min_lat]]
+        # if the min and max for latitude and longitude are the same then return Point
+        if min_long == max_long and min_lat == max_lat:
+            return [[min_long, min_lat]]
+        else:
+            return [[min_long, min_lat], [min_long, max_lat], [max_long, max_lat], [max_long, min_lat], [min_long, min_lat]]
 
     def to_geojson(self, averaging_methods: list[str], averaging_frequency: str = "H") -> dict[str, Any]:
         """Converts a dataframe to a geojson object
@@ -93,8 +97,17 @@ class SensorReadable(SensorDTO):
                         max_lat=row["latitude"]["max"],
                     )
 
-                # add the bounding box to the feature
-                feature["geometry"]["coordinates"] = [bounding_box]
+                # if the bounding box has only one coordinate then change the geometry type to point
+                if len(bounding_box) == 1:
+                    # change the geometry type to point
+                    feature["geometry"]["type"] = "Point"
+                    bounding_box = bounding_box[0]
+                    # assign the bounding box to the feature
+                    feature["geometry"]["coordinates"] = bounding_box
+
+                else:
+                    # assign the bounding box to the feature
+                    feature["geometry"]["coordinates"] = [bounding_box]
             else:
                 # extract the min and max coords from the polygon POLYGON(minx miny, minx Maxy, maxx Maxy, maxx miny, minx miny)
                 coords = row["boundingBox"]["first"].split("(")[2].split(",")
