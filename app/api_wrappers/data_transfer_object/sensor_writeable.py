@@ -1,4 +1,5 @@
 # dependacies
+import datetime as dt
 import json
 import math
 
@@ -32,6 +33,13 @@ class SensorWritable(SensorDTO):
         param stationary_box: geometry string of the stationary box
         :return: iterator of the sensor summaries
         """
+
+        # if the dataframe is empty or None then return an empty sensor summary with an error message
+        if self.df is None or self.df.empty:
+            return SchemaSensorSummary(
+                timestamp=int(dt.datetime.utcnow().timestamp()), sensor_id=self.id, geom=None, measurement_count=0, measurement_data='{"message": "no data found"}', stationary=False
+            )
+
         data_dict = self.dataframe_to_dict(self.df)
         # sensor_summaries = []
 
@@ -40,10 +48,13 @@ class SensorWritable(SensorDTO):
             stationaryBool = False
             if stationary_box is None:
                 geometry_string = self.generate_geomertyString(df)
+                # if there is no location data then return an empty sensor summary with an error message
+                if geometry_string is None:
+                    return SchemaSensorSummary(timestamp=timestampKey, sensor_id=self.id, geom=None, measurement_count=0, measurement_data='{"message": "no location data found"}', stationary=False)
+
             else:
                 # TODO if df has location data, check if it is within the 2.5km from the centre point of the stationary box.
                 # If not then do not use the stationary box
-
                 (df, geometry_string) = self.is_within_stationary_box(df, stationary_box, threshold=2)
 
                 stationaryBool = True if geometry_string == stationary_box else False

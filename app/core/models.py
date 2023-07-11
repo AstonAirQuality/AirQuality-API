@@ -49,10 +49,11 @@ class SensorTypes(Base):
 
 class Sensors(Base):
     """Sensors table extends Base class from database.py
-    :id (Integer), primary key
+    :id (Integer): primary key
     :lookup_id (String), unique
     :serial_number (String), unique
     :active (Boolean)
+    :active_reason (String)
     :time_created (DateTime)
     :time_updated (DateTime)
     :stationary_box (Geometry)
@@ -64,6 +65,7 @@ class Sensors(Base):
     lookup_id = Column(String(50), nullable=True)
     serial_number = Column(String(50), unique=True)
     active = Column(Boolean, nullable=False)
+    active_reason = Column(String(250), nullable=True)
     time_created = Column(DateTime(timezone=True), server_default=func.now())
     time_updated = Column(DateTime, nullable=True)
     stationary_box = Column(Geometry(geometry_type="POLYGON", srid=4326, spatial_index=True), unique=False, nullable=True)
@@ -79,6 +81,7 @@ class Sensors(Base):
             "lookup_id": self.lookup_id,
             "serial_number": self.serial_number,
             "active": self.active,
+            "active_reason": self.active_reason,
             "time_created": self.time_created,
             "time_updated": self.time_updated,
             "stationary_box": to_shape(self.stationary_box).wkt if self.stationary_box else None,

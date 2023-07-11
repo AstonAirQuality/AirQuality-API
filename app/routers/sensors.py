@@ -1,5 +1,6 @@
 # dependancies:
 import datetime as dt
+from enum import Enum
 
 from api_wrappers.SensorFactoryWrapper import SensorFactoryWrapper
 from core.authentication import AuthHandler
@@ -20,6 +21,18 @@ sensorsRouter = APIRouter()
 
 db = SessionLocal()
 auth_handler = AuthHandler()
+
+
+#################################################################################################################################
+#                                                  Enums                                                                        #
+#################################################################################################################################
+class ActiveReason(str, Enum):
+    """Enum for the reason a sensor was activated or deactivated"""
+
+    NO_DATA = "DEACTIVATED_NO_DATA"
+    ACTIVE_BY_USER = "ACTIVATED_BY_USER"
+    DEACTVATE_BY_USER = "DEACTIVATED_BY_USER"
+    REMOVED = "REMOVED_FROM_SENSOR_FLEET"
 
 
 #################################################################################################################################
@@ -136,7 +149,7 @@ def get_sensors():
 
 @sensorsRouter.get("/joined")
 def get_sensors_joined(
-    columns: list[str] = Query(default=["id", "lookup_id", "serial_number", "active", "stationary_box", "time_updated"]),
+    columns: list[str] = Query(default=["id", "lookup_id", "serial_number", "active", "active_reason", "stationary_box", "time_updated"]),
     join_sensor_types: bool = Query(default=True),
     join_user: bool = Query(default=True),
 ):
@@ -181,7 +194,7 @@ def get_sensors_joined(
 def get_sensors_joined_paginated(
     page: int,
     limit: int,
-    columns: list[str] = Query(default=["id", "lookup_id", "serial_number", "active", "stationary_box", "time_updated"]),
+    columns: list[str] = Query(default=["id", "lookup_id", "serial_number", "active", "active_reason", "stationary_box", "time_updated"]),
     join_sensor_types: bool = Query(default=True),
     join_user: bool = Query(default=True),
 ):
@@ -254,6 +267,13 @@ def update_sensor(sensor_id: int, sensor: SchemaSensor, payload=Depends(auth_han
             sensor_updated.serial_number = sensor.serial_number
             sensor_updated.type_id = sensor.type_id
             sensor_updated.active = sensor.active
+            if sensor.active_reason is None:
+                if sensor.active == True:
+                    sensor_updated.active_reason = ActiveReason.ACTIVE_BY_USER.value
+                else:
+                    sensor_updated.active_reason = ActiveReason.DEACTVATE_BY_USER.value
+            else:
+                sensor_updated.active_reason = sensor.active_reason
             sensor_updated.user_id = sensor.user_id
             sensor_updated.stationary_box = sensor.stationary_box
             db.commit()
@@ -279,6 +299,7 @@ def update_sensor(sensor_id: int, sensor: SchemaSensor, payload=Depends(auth_han
 def set_active_sensors(
     sensor_serialnumbers: list[str] = Query(default=[]),
     active_state: bool = True,
+    active_reason: ActiveReason = None,
     payload=Depends(auth_handler.auth_wrapper),
 ):
     """Sets all sensors whose serialnumber matches to active
@@ -289,8 +310,14 @@ def set_active_sensors(
 
     auth_handler.checkRoleAdmin(payload)
 
+    if active_reason is None:
+        if active_state == True:
+            active_reason = ActiveReason.ACTIVE_BY_USER.value
+        else:
+            active_reason = ActiveReason.DEACTVATE_BY_USER.value
+
     try:
-        db.query(ModelSensor).filter(ModelSensor.serial_number.in_(sensor_serialnumbers)).update({ModelSensor.active: active_state})
+        db.query(ModelSensor).filter(ModelSensor.serial_number.in_(sensor_serialnumbers)).update({ModelSensor.active: active_state, ModelSensor.active_reason: active_reason})
         db.commit()
     except Exception as e:
         db.rollback()

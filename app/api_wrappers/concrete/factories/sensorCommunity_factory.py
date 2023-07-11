@@ -39,7 +39,6 @@ class SensorCommunityFactory(SensorFactory):
         measurement_dictionary = {}
 
         for id_ in sensor_platform:
-
             measurements = {}
             sensortype = sensor_platform[id_].lower()
 
@@ -73,28 +72,43 @@ class SensorCommunityFactory(SensorFactory):
 
         return measurement_dictionary
 
-    def get_sensors(self, sensorids: list[str], start: dt.datetime, end: dt.datetime) -> Iterator[SensorCommunitySensor]:
+    def get_sensors(self, sensor_dict: dict[str, str], start: dt.datetime, end: dt.datetime) -> Iterator[SensorCommunitySensor]:
         """Fetch csv from API and return built SensorCommunity sensor objects.
-        :param sensorids: list of sensor ids
+        :param sensor_dict: A dictionary of lookup_ids and stationary_boxes [lookup_id] = {"stationary_box": stationary_box, "time_updated": time_updated}
         :param start: measurement start date
         :param end:  measurement end date
         :return: SensorCommunitySensor objects
         """
 
         sensorPlatforms = {}
+        lookupids = list(sensor_dict.keys())
+        startDate = start
 
-        # split the sensor ids and sensor types into a dictionary for each sensor platform
-        for id_ in sensorids:
-            sensor_id_type_pairs = id_.split(",")
+        for sensor_lookupid in lookupids:
+            # if the sensor has a time_updated field then use that as the start date
+            if "time_updated" in sensor_dict[sensor_lookupid] and sensor_dict[sensor_lookupid]["time_updated"] is not None:
+                startDate = sensor_dict[sensor_lookupid]["time_updated"]
+            else:
+                startDate = start
+
+            # split the sensor ids and sensor types into a dictionary for each sensor platform
+            sensor_id_type_pairs = sensor_lookupid.split(",")
             sensorPlatform = {}
             for i in range(0, len(sensor_id_type_pairs), 2):
                 sensorPlatform[sensor_id_type_pairs[i]] = sensor_id_type_pairs[i + 1]
-            sensorPlatforms[id_] = sensorPlatform
+            sensorPlatforms[sensor_lookupid] = sensorPlatform
+            sensorPlatforms[sensor_lookupid]["startDate"] = startDate
 
         # for each sensor platform combine all the dataframes into one
         for key in sensorPlatforms:
-            sensorPlatforms[key] = self.ExtractDataFromCsv(start, end, sensorPlatforms[key])
-            yield SensorCommunitySensor.from_csv(key, sensorPlatforms[key])
+            try:
+                # pop the start date from the dictionary
+                startDate = sensorPlatforms[key].pop("startDate")
+                sensorPlatforms[key] = self.ExtractDataFromCsv(startDate, end, sensorPlatforms[key])
+                yield SensorCommunitySensor.from_csv(key, sensorPlatforms[key])
+            # if the sensor has no data for the given time period then return an empty sensor
+            except Exception as e:
+                yield SensorCommunitySensor(key, None)
 
 
 # if __name__ == "__main__":

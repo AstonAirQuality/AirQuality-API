@@ -37,13 +37,13 @@ class SensorFactoryWrapper:
         Should not be used for bulk (multiple days) ingest if you want to ignore empty location data for sensors
         :param start: The start date of the data to fetch
         :param end: The end date of the data to fetch
-        :param sensor_dict: A dictionary of lookup_ids and stationary_boxes [lookup_id:stationary_box]
+        :param sensor_dict: A dictionary of lookup_ids, stationary_boxes and time updated [lookup_id] = {"stationary_box": stationary_box, "time_updated": time_updated}
         :return: A list of sensor summaries
         """
         self.pf.login()
         for sensor in self.pf.get_sensors(sensor_dict, start, end):
             if sensor is not None:
-                yield from sensor.create_sensor_summaries(sensor_dict[sensor.id])
+                yield from sensor.create_sensor_summaries(sensor_dict[sensor.id]["stationary_box"])
 
     # TODO add fetch measurement only then add stationary box to sensor
     # def fetch_plume_data_measurenments_only(self, start: dt.datetime, end: dt.datetime, sensor_dict: dict[str, str]):
@@ -59,14 +59,26 @@ class SensorFactoryWrapper:
         return self.zf.fetch_lookup_ids()
 
     def fetch_zephyr_data(self, start: dt.datetime, end: dt.datetime, sensor_dict: dict[str, str]) -> Iterator[SchemaSensorSummary]:
-        for sensor in self.zf.get_sensors(list(sensor_dict.keys()), start, end, "B"):
+        """fetches the zephyr data from the api and returns a list of sensor summaries.
+        :param start: The start date of the data to fetch
+        :param end: The end date of the data to fetch
+        :param sensor_dict: A dictionary of lookup_ids, stationary_boxes and time updated [lookup_id] = {"stationary_box": stationary_box, "time_updated": time_updated}
+        :return: A list of sensor summaries
+        """
+        for sensor in self.zf.get_sensors(sensor_dict, start, end, "B"):
             if sensor is not None:
-                yield from sensor.create_sensor_summaries(sensor_dict[sensor.id])
+                yield from sensor.create_sensor_summaries(sensor_dict[sensor.id]["stationary_box"])
 
     def fetch_sensorCommunity_data(self, start: dt.datetime, end: dt.datetime, sensor_dict: dict[str, str]) -> Iterator[SchemaSensorSummary]:
-        for sensor in self.scf.get_sensors(list(sensor_dict.keys()), start, end):
+        """fetches the sensor community data from the api and returns a list of sensor summaries.
+        :param start: The start date of the data to fetch
+        :param end: The end date of the data to fetch
+        :param sensor_dict: A dictionary of lookup_ids, stationary_boxes and time updated [lookup_id] = {"stationary_box": stationary_box, "time_updated": time_updated}
+        :return: A list of sensor summaries
+        """
+        for sensor in self.scf.get_sensors(sensor_dict, start, end):
             if sensor is not None:
-                yield from sensor.create_sensor_summaries(sensor_dict[sensor.id])
+                yield from sensor.create_sensor_summaries(sensor_dict[sensor.id]["stationary_box"])
 
 
 # if __name__ == "__main__":

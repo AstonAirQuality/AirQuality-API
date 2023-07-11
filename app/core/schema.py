@@ -70,6 +70,7 @@ class Sensor(BaseModel):
     :serial_number (str)
     :type_id (int)
     :active (bool)
+    :active_reason (Optional[str])
     :stationary_box (str), WKTElement format
     :user_id (str)
     """
@@ -78,6 +79,7 @@ class Sensor(BaseModel):
     serial_number: str
     type_id: int
     active: bool
+    active_reason: Optional[str] = None
     user_id: Optional[str] = None
     stationary_box: Optional[str] = None
 
@@ -145,6 +147,25 @@ class Log(BaseModel):
             except Exception as e:
                 raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"measurement_data must be a valid json: {e}")
             return v
+
+
+class DataIngestionLog(BaseModel):
+    """DataIngestionLog Schema extends BaseModel used to validate form data from the API
+    :sensor_id (int)
+    :timestamp (int)
+    :sensor_serial_number (str)
+    :success_status (bool)
+    :error_message (str)
+    """
+
+    sensor_id: int
+    sensor_serial_number: str
+    timestamp: int
+    success_status: bool
+    message: Optional[str] = None
+
+    class Config:
+        orm_mode = True
 
 
 class PlumeSerialNumbers(BaseModel):

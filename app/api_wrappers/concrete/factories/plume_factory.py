@@ -108,64 +108,83 @@ class PlumeFactory(SensorFactory):
         return sensor_dict
 
     ###################################################################################################################
-
     def get_sensors(self, sensor_dict: dict[str, str], start: dt.datetime, end: dt.datetime) -> list[PlumeSensor]:
         """Fetches data from the Plume API for a given list of sensor lookup ids in the specified timeframe.
-        :param sensor_dict: A dictionary of lookup_ids and stationary_boxes [lookup_id:stationary_box]
+        :param sensor_dict: A dictionary of lookup_ids and stationary_boxes [lookup_id] = {"stationary_box": stationary_box, "time_updated": time_updated}
         :param start: start time of the data
         :param end: end time of the data
         :return: list of PlumeSensor objects"""
-
         plumeSensors = []
-        sensorids = list(sensor_dict.keys())
-        sensorids_without_location_data = []
-        sensorids_with_location_data = []
+        lookupids = list(sensor_dict.keys())
+        lookupids_without_location_data = []
+        lookupids_with_location_data = []
+        sensors_with_location_data = []
 
-        sensors_location_data = self.get_sensor_location_data(sensorids, start, end, link=None)
+        # STEP 1: get location and measurement data for all sensors using the start and end time of last synced
+        for sensor_lookupid in lookupids:
+            # if the sensor has a time_updated value and it is not None then get the location data using the time_updated value
+            if "time_updated" in sensor_dict[sensor_lookupid] and sensor_dict[sensor_lookupid]["time_updated"] is not None:
+                try:
+                    sensors = self.get_sensor_location_data(sensor_lookupid, sensor_dict[sensor_lookupid]["time_updated"], end, link=None)
+                    if len(sensors) > 0:
+                        sensor = sensors[0]
+                        sensor.add_measurements_json(self.get_sensor_measurement_data(sensor_lookupid, sensor_dict[sensor_lookupid]["time_updated"], end))
+                        lookupids_with_location_data.append(sensor.id)
+                        plumeSensors.append(sensor)
+                # create a null sensor to be logged as a failed fetch if any errors occur
+                except Exception:
+                    plumeSensors.append(PlumeSensor(sensor_lookupid, None))
 
-        # if sensors_location_data is emprty we can skip adding measurements to null sensors
-        if sensors_location_data != []:
-            for sensor in sensors_location_data:
-                sensor.add_measurements_json(self.get_sensor_measurement_data(sensor.id, start, end))
-                plumeSensors.append(sensor)
-                sensorids_with_location_data.append(sensor.id)
+            # STEP 2: for sensors without a time_updated value, get the location data using the start and end time parameters
+            else:
+                try:
+                    sensors_with_location_data += self.get_sensor_location_data(sensor_lookupid, start, end, link=None)
+                # create a null sensor to be logged as a failed fetch
+                except Exception:
+                    plumeSensors.append(PlumeSensor(sensor_lookupid, None))
 
-        # NOTE: when doing a bulk data fetch if there is location data then the code below will be skipped
+        # STEP 3: for sensors whose location data is not empty, get the measurements using the start and end time parameters
+        if sensors_with_location_data != []:
+            # add measurements to the sensors with location data
+            for sensor in sensors_with_location_data:
+                try:
+                    sensor.add_measurements_json(self.get_sensor_measurement_data(sensor.id, start, end))
+                    plumeSensors.append(sensor)
+                    lookupids_with_location_data.append(sensor.id)
+                except Exception:
+                    plumeSensors.append(PlumeSensor(sensor.id, None))
+
         # create a list of sensor ids that do not have location data
-        sensorids_without_location_data = list(set(sensorids) - set(sensorids_with_location_data))
+        lookupids_without_location_data = list(set(lookupids) - set(lookupids_with_location_data))
 
-        # remove any sensorids that do not have stationary box value
-        for sensorid in sensorids_without_location_data:
-            if sensor_dict[sensorid] is None:
-                sensorids_without_location_data.remove(sensorid)
-
-        if sensorids_without_location_data != []:
-            # for sensors with a stationary box we get the measurements only
-            for sensor in self.get_sensors_measurement_only(sensorids_without_location_data, start, end):
-                plumeSensors.append(sensor)
-
-            # # and then combine the two lists
-            # plumeSensors += self.get_sensors_measurement_only(sensorids_without_location_data, start, end)
+        # STEP 4: for sensors without location data check if they have a stationary box value, if they do then get the measurements using the start and end time parameters
+        for sensorid in lookupids_without_location_data:
+            if sensor_dict[sensorid]["stationary_box"] is not None:
+                try:
+                    sensor = PlumeSensor.from_json(sensorid, self.get_sensor_measurement_data(sensorid, start, end))
+                    plumeSensors.append(sensor)
+                except Exception:
+                    plumeSensors.append(PlumeSensor(sensorid, None))
 
         return plumeSensors
 
-    def get_sensors_merged_from_zip(self, sensorids: list[str], start: dt.datetime, end: dt.datetime) -> list[PlumeSensor]:
+    def get_sensors_merged_from_zip(self, lookupids: list[str], start: dt.datetime, end: dt.datetime) -> list[PlumeSensor]:
         """Fetches data from the Plume API for a given sensor lookup id in the specified timeframe.
-        :param sensorids: list of sensor lookup ids
+        :param lookupids: list of sensor lookup ids
         :param start: start time of the data
         :param end: end time of the data
         :return: list of PlumeSensor objects"""
         plumeSensors = []
 
-        link = self.get_zip_file_link(sensorids, start, end, include_measurements=True)
+        link = self.get_zip_file_link(lookupids, start, end, include_measurements=True)
 
         for sensorid, buffer in self.extract_zip(link, include_measurements=True):
             plumeSensors.append(PlumeSensor.from_zip(sensorid, buffer))
         return plumeSensors
 
-    def get_sensors_measurement_only(self, sensorids: list[str], start: dt.datetime, end: dt.datetime) -> list[PlumeSensor]:
+    def get_sensors_measurement_only(self, lookupids: list[str], start: dt.datetime, end: dt.datetime) -> list[PlumeSensor]:
         sensors = []
-        for sensor_id in sensorids:
+        for sensor_id in lookupids:
             sensors.append(PlumeSensor.from_json(str(sensor_id), self.get_sensor_measurement_data(str(sensor_id), start, end)))
 
         return sensors
@@ -174,11 +193,11 @@ class PlumeFactory(SensorFactory):
 
     ##measurement data - json export
     def get_sensor_measurement_data(self, sensorId: str, start: dt.datetime, end: dt.datetime) -> List:
-        """Downloads the sensor data from the Plume API and loads to PlumeSensor objects.
+        """Downloads the sensor data from the Plume API and converts to List of JSON measurements.
         :param sensorId: sensor lookup id
         :param start: start time of the data
         :param end: end time of the data
-        :return: list of PlumeSensor objects"""
+        :return: list of JSON measurement objects"""
 
         difference = end - start
         dataList = []
@@ -186,22 +205,22 @@ class PlumeFactory(SensorFactory):
         for i in range(difference.days + 1):
             # apply offset for every 2 days of data
             if (i - 1) % 2 == 0:
-                offset += 2000
-                try:
-                    res = self.__session.get(
-                        "https://api-preprod.plumelabs.com/2.0/user/organizations/{org}/sensors/{sensorId}/measures?start_date={start}&end_date={end}&offset={offset}".format(
-                            org=self.org,
-                            sensorId=sensorId,
-                            start=int(start.timestamp()),
-                            end=int(end.timestamp()),
-                            offset=offset,
-                        )
+                # don't apply offset for first iteration
+                if i > 1:
+                    offset += 2000
+                res = self.__session.get(
+                    "https://api-preprod.plumelabs.com/2.0/user/organizations/{org}/sensors/{sensorId}/measures?start_date={start}&end_date={end}&offset={offset}".format(
+                        org=self.org,
+                        sensorId=sensorId,
+                        start=int(start.timestamp()),
+                        end=int(end.timestamp()),
+                        offset=offset,
                     )
-                    dataList.append(res.json()["measures"])
+                )
+                dataList.append(res.json()["measures"])
 
-                # if response json is empty, continue to next timeframe. Other errors will be tracked by sentry
-                except json.JSONDecodeError as e:
-                    continue
+        if len(dataList) <= 0:
+            raise Exception("No data found for sensor: " + sensorId)
 
         return dataList
 
@@ -268,7 +287,6 @@ class PlumeFactory(SensorFactory):
         if not res.ok:
             raise IOError(f"Failed to download zip file from link: {link}")
         zip_ = zipfile.ZipFile(io.BytesIO(res.content))
-
         return PlumeFactory.extract_zip_content(zip_, include_measurements)
 
     @staticmethod

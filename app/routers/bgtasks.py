@@ -8,6 +8,7 @@ from typing import Tuple
 from api_wrappers.SensorFactoryWrapper import SensorFactoryWrapper
 from core.authentication import AuthHandler
 from core.models import SensorSummaries
+from core.schema import DataIngestionLog as SchemaDataIngestionLog
 from core.schema import Log as SchemaLog
 from core.schema import SensorSummary as SchemaSensorSummary
 
@@ -24,6 +25,7 @@ from fastapi import (
 )
 from routers.helpers.helperfunctions import convertDateRangeStringToDate
 from routers.helpers.sensorsSharedFunctions import (
+    deactivate_unsynced_sensor,
     get_sensor_dict,
     get_sensor_id_and_serialnum_from_lookup_id,
     set_last_updated,
@@ -60,51 +62,90 @@ def upsert_sensor_summary_by_id_list(
 
     sfw = SensorFactoryWrapper()
 
+    data_ingestion_logs = []
+
     if type_of_id == "sensor_id":
-        sensor_dict = get_lookupids_of_sensors(id_list, "sensor_id")
+        sensor_dict, flagged_sensors = get_lookupids_of_sensors(id_list, "sensor_id")
     elif type_of_id == "sensor_type_id":
-        sensor_dict = get_lookupids_of_sensors(id_list, "sensor_type_id")
+        sensor_dict, flagged_sensors = get_lookupids_of_sensors(id_list, "sensor_type_id")
+
+    if flagged_sensors:
+        for flaggedSensor in flagged_sensors:
+            deactivate_unsynced_sensor(flaggedSensor["id"])
+            data_ingestion_logs.append(
+                SchemaDataIngestionLog(
+                    sensor_id=flaggedSensor["id"],
+                    sensor_serial_number=flaggedSensor["serial_number"],
+                    timestamp=int(dt.datetime.utcnow().timestamp()),
+                    success_status=False,
+                    message="Sensor has not been updated in over 90 days",
+                )
+            )
 
     if sensor_dict:
-        upsert_log = []
         # for each sensor type, fetch the data from the sfw and write to the database
-        for sensorType, dict_lookupid_stationaryBox in sensor_dict.items():
+        for sensorType, dict_lookupid_stationaryBox_and_timeUpdated in sensor_dict.items():
             if sensorType.lower() == "plume":
-                for sensorSummary in sfw.fetch_plume_data(startDate, endDate, dict_lookupid_stationaryBox):
-                    upsert_log = upsert_summary_and_log(sensorSummary, upsert_log)
+                for sensorSummary in sfw.fetch_plume_data(startDate, endDate, dict_lookupid_stationaryBox_and_timeUpdated):
+                    data_ingestion_logs = append_data_ingestion_logs(sensorSummary, data_ingestion_logs)
 
             elif sensorType.lower() == "zephyr":
-                for sensorSummary in sfw.fetch_zephyr_data(startDate, endDate, dict_lookupid_stationaryBox):
-                    upsert_log = upsert_summary_and_log(sensorSummary, upsert_log)
+                for sensorSummary in sfw.fetch_zephyr_data(startDate, endDate, dict_lookupid_stationaryBox_and_timeUpdated):
+                    data_ingestion_logs = append_data_ingestion_logs(sensorSummary, data_ingestion_logs)
 
             elif sensorType.lower() == "sensorcommunity":
-                # if the cron job was used then we can use the same start and end date
+                # if the cron job was used then we can use the same start and end date because the latest historical data is yesterday instead of today
                 if type_of_id == "sensor_type_id":
                     endDate = startDate
-                for sensorSummary in sfw.fetch_sensorCommunity_data(startDate, endDate, dict_lookupid_stationaryBox):
-                    upsert_log = upsert_summary_and_log(sensorSummary, upsert_log)
+                for sensorSummary in sfw.fetch_sensorCommunity_data(startDate, endDate, dict_lookupid_stationaryBox_and_timeUpdated):
+                    data_ingestion_logs = append_data_ingestion_logs(sensorSummary, data_ingestion_logs)
                 continue
-
-        # return timestamp and sensor id of the summaries that were successfully written to the database
-        return update_sensor_last_updated(upsert_log, log_timestamp)
     else:
         return "No active sensors found"
 
+    # TODO send notification that task is complete to frontend
+    print("✅ data ingestion task completed")
+    # return timestamp and sensor id of the summaries that were successfully written to the database
+    return update_sensor_last_updated(data_ingestion_logs, log_timestamp)
 
-def upsert_summary_and_log(sensorSummary: SchemaSensorSummary, upsert_log: list):
-    """upsert a sensor summary into the database
+
+def append_data_ingestion_logs(sensorSummary: SchemaSensorSummary, data_ingestion_logs: list[SchemaDataIngestionLog]) -> list[SchemaDataIngestionLog]:
+    """append a data ingestion log to the data ingestion logs
+    :param data_ingestion_logs: list of data ingestion logs
     :param sensorSummary: sensor summary object
-    :param upsert_log: list of logs
     """
-    lookupid = sensorSummary.sensor_id
-    (sensorSummary.sensor_id, sensor_serial_number) = get_sensor_id_and_serialnum_from_lookup_id(str(lookupid))
-    try:
-        upsert_sensorSummary(sensorSummary)
-        upsert_log.append([sensorSummary.sensor_id, sensorSummary.timestamp, sensor_serial_number, True, "success"])
-    except Exception as e:
-        upsert_log.append([sensorSummary.sensor_id, sensorSummary.timestamp, sensor_serial_number, False, str(e)])
+    (sensorSummary.sensor_id, sensor_serial_number) = get_sensor_id_and_serialnum_from_lookup_id(str(sensorSummary.sensor_id))
 
-    return upsert_log
+    # if the sensor has data we try to upsert a sensor summary into the database
+    if sensorSummary.measurement_count > 0:
+        try:
+            upsert_sensorSummary(sensorSummary)
+            data_ingestion_logs.append(SchemaDataIngestionLog(sensor_id=sensorSummary.sensor_id, sensor_serial_number=sensor_serial_number, timestamp=sensorSummary.timestamp, success_status=True))
+        # if the upsert fails we log the failure
+        except Exception as e:
+            data_ingestion_logs.append(
+                SchemaDataIngestionLog(sensor_id=sensorSummary.sensor_id, sensor_serial_number=sensor_serial_number, timestamp=sensorSummary.timestamp, success_status=False, message=str(e))
+            )
+
+    # else the sensor has no data. So we log the failure
+    else:
+        message = "No data was found for this sensor in the given date range"
+        try:
+            message = json.loads(sensorSummary.measurement_data)["message"]
+        except Exception as e:
+            pass
+
+        data_ingestion_logs.append(
+            SchemaDataIngestionLog(
+                sensor_id=sensorSummary.sensor_id,
+                sensor_serial_number=sensor_serial_number,
+                timestamp=sensorSummary.timestamp,
+                success_status=False,
+                message=message,
+            )
+        )
+
+    return data_ingestion_logs
 
 
 @backgroundTasksRouter.post("/schedule/ingest-bysensorid/{start}/{end}")
@@ -148,22 +189,24 @@ async def schedule_data_ingest_task_of_active_sensors_by_sensorTypeId(background
 #################################################################################################################################
 #                                              helper functions                                                                 #
 #################################################################################################################################
-def get_lookupids_of_sensors(ids: list[int], idtype: str) -> dict[int, dict[str, str]]:
+def get_lookupids_of_sensors(ids: list[int], idtype: str) -> tuple[dict[int, dict[str, str]], list[int]]:
     """
-    Returns dict: where dict[sensor_type_name][lookup_id] = stationary_box
-
+    Get all active sensors data scraping information from the database and the flagged sensors that have not been updated in over 90 days
+    :param ids: list of sensor ids or sensor type ids
+    :param idtype: type of id. Can be sensor_id or sensor_type_id
+    :return dict: where nested dict is [sensor_type_name][lookup_id] = {"stationary_box": stationary_box, "time_updated": time_updated}
     """
-    sensors = get_sensor_dict(idtype, ids)
+    sensors, flagged_sensors = get_sensor_dict(idtype, ids)
 
-    # group sensors by type into a dictionary dict[sensor_type][lookup_id] = stationary_box
+    # group sensors by type into a new nested dictionary dict[sensor_type][lookup_id] = {"stationary_box": stationary_box, "time_updated": time_updated}
     sensor_dict = {}
     for data in sensors:
         if data["type_name"] in sensor_dict:
-            sensor_dict[data["type_name"]][str(data["lookup_id"])] = data["stationary_box"]
+            sensor_dict[data["type_name"]][str(data["lookup_id"])] = {"stationary_box": data["stationary_box"], "time_updated": data["time_updated"]}
         else:
-            sensor_dict[data["type_name"]] = {str(data["lookup_id"]): data["stationary_box"]}
+            sensor_dict[data["type_name"]] = {str(data["lookup_id"]): {"stationary_box": data["stationary_box"], "time_updated": data["time_updated"]}}
 
-    return sensor_dict
+    return sensor_dict, flagged_sensors
 
 
 def get_dates(days: int) -> Tuple[str, str]:
@@ -173,26 +216,37 @@ def get_dates(days: int) -> Tuple[str, str]:
     return (dt.datetime.today() + dt.timedelta(days)).strftime("%d-%m-%Y"), dt.datetime.today().strftime("%d-%m-%Y")
 
 
-def update_sensor_last_updated(upsert_log: list[list], log_timestamp: str) -> dict:
+def update_sensor_last_updated(data_ingestion_logs: list[SchemaDataIngestionLog], log_timestamp: str) -> dict:
     """
     Logs sensor data that was successfully written to the database and updates the last_updated field of the sensor
     """
-    log_dictionary = {}
-    for id_, timestamp, sensor_serial_number, success_status, error_message in upsert_log:
+    log_data_dict = {}
+    for data_ingestion_log in data_ingestion_logs:
+        id_ = data_ingestion_log.sensor_id
+        timestamp = data_ingestion_log.timestamp
+        sensor_serial_number = data_ingestion_log.sensor_serial_number
+        success_status = data_ingestion_log.success_status
+        message = data_ingestion_log.message
+
         if success_status:
             try:
                 set_last_updated(id_, timestamp)
             except Exception as e:
-                error_message = "sensor last updated failed: " + str(e)
+                message = "sensor last updated failed: " + str(e)
 
-        if timestamp in log_dictionary:
-            log_dictionary[timestamp][id_] = {"serial_number": sensor_serial_number, "status": success_status, "message": error_message}
+        # if message is None then don't include it in the log
+
+        if timestamp in log_data_dict:
+            log_data_dict[timestamp][id_] = {"serial_number": sensor_serial_number, "status": success_status, "message": message}
         else:
-            log_dictionary[timestamp] = {id_: {"serial_number": sensor_serial_number, "status": success_status, "message": error_message}}
+            log_data_dict[timestamp] = {id_: {"serial_number": sensor_serial_number, "status": success_status, "message": message}}
+
+        if message is None:
+            del log_data_dict[timestamp][id_]["message"]
 
     add_log(
         log_timestamp,
-        SchemaLog(log_data=json.dumps(log_dictionary)),
+        SchemaLog(log_data=json.dumps(log_data_dict)),
     )
 
-    return log_dictionary
+    return log_data_dict
