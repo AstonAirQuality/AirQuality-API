@@ -12,7 +12,12 @@ config = {
     "measurementId": "G-KSXV6VRCEG",
     # "serviceAccount": ".\\app\\config\\aston-air-quality-firebase-adminsdk-4jn4i-dc3d87e1bd.json",  #NOTE: testing as script
     "serviceAccount": "./config/aston-air-quality-firebase-adminsdk-4jn4i-dc3d87e1bd.json",
-    "databaseURL": "",  # "https://aston-air-quality-default-rtdb.europe-west1.firebasedatabase.app/"
+    "databaseURL": "https://aston-air-quality-default-rtdb.europe-west1.firebasedatabase.app/",
 }
 
 PyreBaseAuth = Firebase(config).auth()
+PyreBaseDB = Firebase(config).database()
+
+# if __name__ == "__main__":
+#     users = PyreBaseDB.child("users").get()
+#     print(users.val())

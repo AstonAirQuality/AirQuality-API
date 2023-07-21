@@ -55,13 +55,14 @@ class Test_Api_4_Users(TestCase):
         """Test the get user from column route of the API"""
         response = self.client.get("/user/read-from/uid", params={"searchvalue": self.user.uid})
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.json()["uid"], self.user.uid)
+        self.assertEqual(response.json()[0]["uid"], self.user.uid)
 
     def test_4_get_user_from_column_email(self):
         """Test the get user from column route of the API"""
         response = self.client.get("/user/read-from/email", params={"searchvalue": self.user.email})
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.json()["email"], self.user.email)
+        print(response.json())
+        self.assertEqual(response.json()[0]["email"], self.user.email)
 
     def test_5_get_user_from_column_role(self):
         """Test the get user from column route of the API"""

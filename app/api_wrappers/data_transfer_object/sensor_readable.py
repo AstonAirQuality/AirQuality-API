@@ -87,7 +87,8 @@ class SensorReadable(SensorDTO):
             if row["boundingBox"]["first"] is None:
                 # generate bounding box if coordinates are available else assign empty list
                 if math.isnan(row["latitude"]["min"]):
-                    bounding_box = None
+                    bounding_box = []
+                    # TODO: after consulting with team, decide what to do with the empty bounding box (e.g. remove the feature, assign a default bounding box, etc.)
 
                 else:
                     bounding_box = self.generate_geojson_coords(

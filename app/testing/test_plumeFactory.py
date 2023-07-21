@@ -86,7 +86,7 @@ class Test_plumeFactory(TestCase):
 
         mocked_get.assert_called_with(
             "https://api-preprod.plumelabs.com/2.0/user/organizations/{org}/sensors/{sensorId}/measures?start_date={start}&end_date={end}&offset={offset}".format(
-                org=self.pf.org, sensorId=18749, start=int(start.timestamp()), end=int(end.timestamp()), offset=2000
+                org=self.pf.org, sensorId=18749, start=int(start.timestamp()), end=int(end.timestamp()), offset=0
             )
         )
 
@@ -137,7 +137,7 @@ class Test_plumeFactory(TestCase):
         """Test fetch the sensor data"""
         sensor_id = "18749"
         stationary_box = "POLYGON ((30 10, 40 40, 20 40, 10 20, 30 10))"
-        sensor_dict = {sensor_id: stationary_box}
+        sensor_dict = {sensor_id: {"stationary_box": stationary_box, "time_updated": None}}
         start = dt.datetime(2022, 9, 10)
         end = dt.datetime(2022, 9, 12)
 
@@ -156,7 +156,7 @@ class Test_plumeFactory(TestCase):
 
                 sensors = self.pf.get_sensors(sensor_dict, start, end)
 
-                mocked_sensor_location_only.assert_called_with([sensor_id], start, end, link=None)
+                mocked_sensor_location_only.assert_called_with(sensor_id, start, end, link=None)
                 mocked_append_measurements.assert_not_called()
                 # because this is a stationary sensor we expect the sensor to be returned with the measurement data only
                 mocked_sensor_measurement_only.assert_called_with([sensor_id], start, end)
@@ -182,7 +182,7 @@ class Test_plumeFactory(TestCase):
         """Test fetch the sensor data"""
         sensor_id = "18749"
         stationary_box = "POLYGON ((30 10, 40 40, 20 40, 10 20, 30 10))"
-        sensor_dict = {sensor_id: stationary_box}
+        sensor_dict = {sensor_id: {"stationary_box": stationary_box, "time_updated": None}}
         start = dt.datetime(2022, 9, 10)
         end = dt.datetime(2022, 9, 12)
 
@@ -202,7 +202,7 @@ class Test_plumeFactory(TestCase):
 
                     sensors = self.pf.get_sensors(sensor_dict, start, end)
 
-                    mocked_sensor_location_only.assert_called_with([sensor_id], start, end, link=None)
+                    mocked_sensor_location_only.assert_called_with(sensor_id, start, end, link=None)
                     mocked_append_measurements.assert_called_with(str(sensor_id), start, end)
                     mocked_sensor_measurement_only.assert_not_called()
 
@@ -221,7 +221,7 @@ class Test_plumeFactory(TestCase):
         """Same as above but with a non-stationary sensor"""
         sensor_id = "18749"
         stationary_box = None
-        sensor_dict = {sensor_id: stationary_box}
+        sensor_dict = {sensor_id: {"stationary_box": stationary_box, "time_updated": None}}
         start = dt.datetime(2022, 9, 10)
         end = dt.datetime(2022, 9, 12)
 
@@ -241,7 +241,7 @@ class Test_plumeFactory(TestCase):
 
                     sensors = self.pf.get_sensors(sensor_dict, start, end)
 
-                    mocked_sensor_location_only.assert_called_with([sensor_id], start, end, link=None)
+                    mocked_sensor_location_only.assert_called_with(sensor_id, start, end, link=None)
                     mocked_append_measurements.assert_called_with(str(sensor_id), start, end)
                     mocked_sensor_measurement_only.assert_not_called()
 
@@ -260,7 +260,7 @@ class Test_plumeFactory(TestCase):
         """Same as above but with a non-stationary sensor"""
         sensor_id = "18749"
         stationary_box = None
-        sensor_dict = {sensor_id: stationary_box}
+        sensor_dict = {sensor_id: {"stationary_box": stationary_box, "time_updated": None}}
         start = dt.datetime(2022, 9, 10)
         end = dt.datetime(2022, 9, 12)
 
@@ -275,7 +275,7 @@ class Test_plumeFactory(TestCase):
 
                     sensors = self.pf.get_sensors(sensor_dict, start, end)
 
-                    mocked_sensor_location_only.assert_called_with([sensor_id], start, end, link=None)
+                    mocked_sensor_location_only.assert_called_with(sensor_id, start, end, link=None)
                     mocked_append_measurements.assert_not_called()
                     mocked_sensor_measurement_only.assert_not_called()
 

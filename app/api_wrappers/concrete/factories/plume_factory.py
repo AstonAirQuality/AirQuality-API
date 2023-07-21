@@ -161,7 +161,8 @@ class PlumeFactory(SensorFactory):
         for sensorid in lookupids_without_location_data:
             if sensor_dict[sensorid]["stationary_box"] is not None:
                 try:
-                    sensor = PlumeSensor.from_json(sensorid, self.get_sensor_measurement_data(sensorid, start, end))
+                    sensor = self.get_sensors_measurement_only([sensorid], start, end)[0]
+                    # sensor = PlumeSensor.from_json(sensorid, self.get_sensor_measurement_data(sensorid, start, end))
                     plumeSensors.append(sensor)
                 except Exception:
                     plumeSensors.append(PlumeSensor(sensorid, None))

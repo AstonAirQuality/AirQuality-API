@@ -2,6 +2,7 @@
     {
         "sensor_id": 6,
         "stationary": false,
+        "type_name": "plume",
         "measurement_count": 1440,
         "geom": "POLYGON ((-1.836323 52.425392, -1.836323 52.425726, -1.836288 52.425726, -1.836288 52.425392, -1.836323 52.425392))",
         "timestamp": 1664323200,

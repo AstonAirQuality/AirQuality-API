@@ -23,7 +23,12 @@ from fastapi import (
     Query,
     status,
 )
-from routers.helpers.helperfunctions import convertDateRangeStringToDate
+from routers.helpers.helperfunctions import (
+    addFirebaseNotifcationDataIngestionTask,
+    clearFirebaseNotifcationDataIngestionTask,
+    convertDateRangeStringToDate,
+    updateFirebaseNotifcationDataIngestionTask,
+)
 from routers.helpers.sensorsSharedFunctions import (
     deactivate_unsynced_sensor,
     get_sensor_dict,
@@ -101,12 +106,30 @@ def upsert_sensor_summary_by_id_list(
                     data_ingestion_logs = append_data_ingestion_logs(sensorSummary, data_ingestion_logs)
                 continue
     else:
-        return "No active sensors found"
+        if type_of_id == "sensor_id":
+            try:
+                updateFirebaseNotifcationDataIngestionTask(log_timestamp, -1, "❌ No active sensors found")
+            except Exception as e:
+                return "No active sensors found"
 
-    # TODO send notification that task is complete to frontend
-    print("✅ data ingestion task completed")
-    # return timestamp and sensor id of the summaries that were successfully written to the database
-    return update_sensor_last_updated(data_ingestion_logs, log_timestamp)
+    if len(data_ingestion_logs) == 0:
+        if type_of_id == "sensor_id":
+            try:
+                updateFirebaseNotifcationDataIngestionTask(log_timestamp, -1, "❌ No data was found for the requested sensors in the given date range")
+            except Exception as e:
+                return "No data was found for this sensor in the given date range"
+
+    else:
+        # return timestamp and sensor id of the summaries that were successfully written to the database
+        log_dict = update_sensor_last_updated(data_ingestion_logs, log_timestamp)
+        if type_of_id == "sensor_id":
+            try:
+                updateFirebaseNotifcationDataIngestionTask(log_timestamp, 1, "✅ data ingestion task completed")
+            except Exception as e:
+                print("✅ data ingestion task completed")
+            return log_dict
+
+    return
 
 
 def append_data_ingestion_logs(sensorSummary: SchemaSensorSummary, data_ingestion_logs: list[SchemaDataIngestionLog]) -> list[SchemaDataIngestionLog]:
@@ -169,6 +192,11 @@ async def schedule_data_ingest_task_by_sensorid(
     log_timestamp = dt.datetime.today().strftime("%Y-%m-%d %H:%M:%S")
     background_tasks.add_task(upsert_sensor_summary_by_id_list, start, end, sensor_ids, "sensor_id", log_timestamp)
 
+    # get the user id from the payload
+    uid = payload["sub"]
+    # add a firebase notification task to the realtime db
+    addFirebaseNotifcationDataIngestionTask(uid, log_timestamp, 0, "🔎 searching for sensors")
+
     return {"task_id": log_timestamp, "task_message": "task sent to backend"}
 
 
@@ -176,6 +204,7 @@ async def schedule_data_ingest_task_by_sensorid(
 async def schedule_data_ingest_task_of_active_sensors_by_sensorTypeId(background_tasks: BackgroundTasks, id_type: int, cron_job_token=Header(...)):
     """
     This function is called by AWS Lambda to run the scheduled ingest task for plume sensors
+    :param cron_job_token: cron job token
     """
     if cron_job_token != env["CRON_JOB_TOKEN"]:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authorized")
@@ -184,6 +213,19 @@ async def schedule_data_ingest_task_of_active_sensors_by_sensorTypeId(background
     log_timestamp = dt.datetime.today().strftime("%Y-%m-%d %H:%M:%S")
     background_tasks.add_task(upsert_sensor_summary_by_id_list, start, end, [id_type], "sensor_type_id", log_timestamp)
     return {"task_id": log_timestamp, "task_message": "task sent to backend"}
+
+
+@backgroundTasksRouter.get("/cron/clear-data-ingestion-queue")
+async def clear_data_ingestion_queue(cron_job_token=Header(...)):
+    """
+    This function is called by AWS Lambda to clear the data ingestion queue
+    :param cron_job_token: cron job token
+    """
+    if cron_job_token != env["CRON_JOB_TOKEN"]:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authorized")
+    else:
+        clearFirebaseNotifcationDataIngestionTask()
+        return {"message": "data ingestion queue cleared"}
 
 
 #################################################################################################################################
@@ -205,6 +247,10 @@ def get_lookupids_of_sensors(ids: list[int], idtype: str) -> tuple[dict[int, dic
             sensor_dict[data["type_name"]][str(data["lookup_id"])] = {"stationary_box": data["stationary_box"], "time_updated": data["time_updated"]}
         else:
             sensor_dict[data["type_name"]] = {str(data["lookup_id"]): {"stationary_box": data["stationary_box"], "time_updated": data["time_updated"]}}
+
+        # if this is a user data ingestion task then we need to remove the time_updated field
+        if idtype == "sensor_id":
+            del sensor_dict[data["type_name"]][str(data["lookup_id"])]["time_updated"]
 
     return sensor_dict, flagged_sensors
 

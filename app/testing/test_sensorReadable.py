@@ -44,17 +44,18 @@ class Test_sensorReadable(TestCase):
         file.close()
         sensors = JsonToSensorReadable(results)
 
-        for (sensor, sensorType) in sensors:
-            self.assertTrue(isinstance(sensor, SensorReadable))
+        for sensor in sensors:
+            self.assertTrue(isinstance(sensor[0], SensorReadable))
+            self.assertEqual(sensor[1], "plume")
 
     def test_AveragesConversion_from_db(self):
-
         file = open("./testing/test_data/plume_fromdb.json", "r")
         results = json.load(file)
         file.close()
         sensors = JsonToSensorReadable(results)
 
-        for (sensor, sensorType) in sensors:
+        for sensor, sensorType in sensors:
+            self.assertEqual(sensorType, "plume")
             self.assertTrue(isinstance(sensor, SensorReadable))
             measurements_columns = sensor.ConvertDFToAverages(["mean", "count"], "H")
             for column in measurements_columns:
@@ -62,13 +63,13 @@ class Test_sensorReadable(TestCase):
                 self.assertTrue((column, "count") in sensor.df.columns)
 
     def test_SensorReadable_to_geojson(self):
-
         file = open("./testing/test_data/plume_fromdb.json", "r")
         results = json.load(file)
         file.close()
         sensors = JsonToSensorReadable(results)
 
-        for (sensor, sensorType) in sensors:
+        for sensor, sensorType in sensors:
+            self.assertEqual(sensorType, "plume")
             self.assertTrue(isinstance(sensor, SensorReadable))
             geojson = sensor.to_geojson(["mean", "count"], "H")
             self.assertTrue(isinstance(geojson, dict))

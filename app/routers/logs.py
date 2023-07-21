@@ -12,6 +12,7 @@ logsRouter = APIRouter()
 db = SessionLocal()
 auth_handler = AuthHandler()
 
+
 #################################################################################################################################
 #                                                  Create                                                                       #
 #################################################################################################################################
@@ -57,9 +58,12 @@ def get_log(log_date: str, payload=Depends(auth_handler.auth_wrapper)):
     if auth_handler.checkRoleAdmin(payload) == False:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authorized")
 
-    log_date = dt.datetime.strptime(log_date, "%Y-%m-%d")
-    end_date = (log_date + dt.timedelta(days=1)).strftime("%Y-%m-%d")
-    log_date = log_date.strftime("%Y-%m-%d")
+    try:
+        log_date = dt.datetime.strptime(log_date, "%Y-%m-%d")
+        end_date = (log_date + dt.timedelta(days=1)).strftime("%Y-%m-%d")
+        log_date = log_date.strftime("%Y-%m-%d")
+    except Exception:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid date format")
 
     try:
         result = db.query(ModelLogs).filter(ModelLogs.date >= log_date, ModelLogs.date < end_date).all()

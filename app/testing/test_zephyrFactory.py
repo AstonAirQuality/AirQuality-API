@@ -71,13 +71,14 @@ class Test_zephyrFactory(TestCase):
         start = dt.datetime(2023, 3, 31)
         end = dt.datetime(2023, 4, 1)
         slot = "B"
+        sensor_dict = {id_: {"stationary_box": None, "time_updated": None}}
         mocked_get.return_value.ok = True
 
         file = open("testing/test_data/zephyr_814_sensor_data.json", "r")
         mocked_get.return_value.json.return_value = json.load(file)
         file.close()
 
-        sensors = list(self.zf.get_sensors([id_], start, end, slot))
+        sensors = list(self.zf.get_sensors(sensor_dict, start, end, slot))
 
         mocked_get.assert_called_with(
             f"https://data.earthsense.co.uk/measurementdata/v1/{id_}/{start.strftime('%Y%m%d%H%M')}/{end.strftime('%Y%m%d%H%M')}/B/0",

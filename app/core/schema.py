@@ -64,6 +64,9 @@ class SensorSummary(BaseModel):
         return v
 
 
+import datetime
+
+
 class Sensor(BaseModel):
     """Sensor Schema extends BaseModel used to validate form data from the API
     :lookup_id (str)

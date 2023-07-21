@@ -4,8 +4,8 @@ from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException, status
 from fastapi.middleware.cors import CORSMiddleware
 from mangum import Mangum
+from routers.auth import authRouter
 from routers.bgtasks import backgroundTasksRouter
-from routers.firebaseAuth import authRouter
 from routers.logs import logsRouter
 from routers.sensors import sensorsRouter
 from routers.sensorSummaries import sensorSummariesRouter

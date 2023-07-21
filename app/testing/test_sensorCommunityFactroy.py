@@ -86,9 +86,10 @@ class Test_sensorCommunityFactory(TestCase):
             start = dt.datetime(2023, 4, 1)
             end = dt.datetime(2023, 4, 1)
             sensor_id = "60641,SDS011,60642,BME280"
+            sensor_dict = {sensor_id: {"stationary_box": "POLYGON ((-1.5 53.5, -1.5 54.5, -0.5 54.5, -0.5 53.5, -1.5 53.5))", "time_updated": None}}
             # filename = "2023-04-01_bme280_sensor_60642.csv"
 
-            sensors = list(self.scf.get_sensors([sensor_id], start, end))
+            sensors = list(self.scf.get_sensors(sensor_dict, start, end))
 
             self.assertEqual(len(sensors), 1)
 

@@ -34,43 +34,51 @@ class SensorWritable(SensorDTO):
         :return: iterator of the sensor summaries
         """
 
-        # if the dataframe is empty or None then return an empty sensor summary with an error message
+        # if the dataframe is empty or None then yield an empty sensor summary with an error message
         if self.df is None or self.df.empty:
-            return SchemaSensorSummary(
+            yield SchemaSensorSummary(
                 timestamp=int(dt.datetime.utcnow().timestamp()), sensor_id=self.id, geom=None, measurement_count=0, measurement_data='{"message": "no data found"}', stationary=False
             )
+        else:
+            data_dict = self.dataframe_to_dict(self.df)
+            # sensor_summaries = []
 
-        data_dict = self.dataframe_to_dict(self.df)
-        # sensor_summaries = []
+            for timestampKey in data_dict:
+                df = data_dict[timestampKey]
+                stationaryBool = False
+                if stationary_box is None:
+                    geometry_string = self.generate_geomertyString(df)
+                    # if there is no location data then yield an empty sensor summary with an error message
+                    if geometry_string is None:
+                        yield SchemaSensorSummary(
+                            timestamp=timestampKey,
+                            sensor_id=self.id,
+                            geom=None,
+                            measurement_count=0,
+                            measurement_data='{"message": "no location data found or an error occured while generating the geometry string"}',
+                            stationary=False,
+                        )
+                        continue
 
-        for timestampKey in data_dict:
-            df = data_dict[timestampKey]
-            stationaryBool = False
-            if stationary_box is None:
-                geometry_string = self.generate_geomertyString(df)
-                # if there is no location data then return an empty sensor summary with an error message
-                if geometry_string is None:
-                    return SchemaSensorSummary(timestamp=timestampKey, sensor_id=self.id, geom=None, measurement_count=0, measurement_data='{"message": "no location data found"}', stationary=False)
+                else:
+                    # TODO if df has location data, check if it is within the 2.5km from the centre point of the stationary box.
+                    # If not then do not use the stationary box
+                    (df, geometry_string) = self.is_within_stationary_box(df, stationary_box, threshold=2)
 
-            else:
-                # TODO if df has location data, check if it is within the 2.5km from the centre point of the stationary box.
-                # If not then do not use the stationary box
-                (df, geometry_string) = self.is_within_stationary_box(df, stationary_box, threshold=2)
+                    stationaryBool = True if geometry_string == stationary_box else False
 
-                stationaryBool = True if geometry_string == stationary_box else False
+                # summaryArray = [timestamp_start,bounding_box,measurement_count,data_json]
+                sensorSummary = SchemaSensorSummary(
+                    timestamp=timestampKey,
+                    sensor_id=self.id,
+                    geom=geometry_string,
+                    measurement_count=len(df.index.values),
+                    measurement_data=self.to_json(df),
+                    stationary=stationaryBool,
+                )  # inserting row into temp array
+                yield sensorSummary  # assign new dataframe to coressponding key
 
-            # summaryArray = [timestamp_start,bounding_box,measurement_count,data_json]
-            sensorSummary = SchemaSensorSummary(
-                timestamp=timestampKey,
-                sensor_id=self.id,
-                geom=geometry_string,
-                measurement_count=len(df.index.values),
-                measurement_data=self.to_json(df),
-                stationary=stationaryBool,
-            )  # inserting row into temp array
-            yield sensorSummary  # assign new dataframe to coressponding key
-
-        # return sensor_summaries
+            # return sensor_summaries
 
     def generate_geomertyString(self, df: pd.DataFrame) -> str:
         """generates a geometry string from a dataframe of sensor data
@@ -136,10 +144,11 @@ class SensorWritable(SensorDTO):
             df["latitude"] = centerPoint_lat
             df["longitude"] = centerPoint_long
         else:
-            # if locations are within the threshold then replace the dataframe with the given coordinates
-            if self.haversine(centerPoint_long, centerPoint_lat, df["longitude"].min(), df["latitude"].max()) < threshold:
+            # check if the center point is within the threshold of the min coordinates, if so then replace the coordinates with the stationary box coordinates
+            if self.haversine(centerPoint_long, centerPoint_lat, df["longitude"].min(), df["latitude"].min()) < threshold:
                 df["latitude"] = centerPoint_lat
                 df["longitude"] = centerPoint_long
+            # check if the center point is within the threshold of the max coordinates, if so then replace the coordinates with the stationary box coordinates
             elif self.haversine(centerPoint_long, centerPoint_lat, df["longitude"].max(), df["latitude"].max()) < threshold:
                 df["latitude"] = centerPoint_lat
                 df["longitude"] = centerPoint_long
