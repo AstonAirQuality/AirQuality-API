@@ -129,8 +129,8 @@ class PlumeFactory(SensorFactory):
                     if len(sensors) > 0:
                         sensor = sensors[0]
                         sensor.add_measurements_json(self.get_sensor_measurement_data(sensor_lookupid, sensor_dict[sensor_lookupid]["time_updated"], end))
-                        lookupids_with_location_data.append(sensor.id)
                         plumeSensors.append(sensor)
+                        lookupids_with_location_data.append(sensor.id)
                 # create a null sensor to be logged as a failed fetch if any errors occur
                 except Exception:
                     plumeSensors.append(PlumeSensor(sensor_lookupid, None))
@@ -153,6 +153,8 @@ class PlumeFactory(SensorFactory):
                     lookupids_with_location_data.append(sensor.id)
                 except Exception:
                     plumeSensors.append(PlumeSensor(sensor.id, None))
+                    # remove sensor id from lookupids list (prevents a sensor that has location and stationay box data from being fetched twice)
+                    lookupids.remove(sensor.id)
 
         # create a list of sensor ids that do not have location data
         lookupids_without_location_data = list(set(lookupids) - set(lookupids_with_location_data))
