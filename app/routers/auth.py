@@ -6,7 +6,7 @@ from core.authentication import AuthHandler
 from core.schema import User as SchemaUser
 from fastapi import APIRouter, Depends, Header, HTTPException, Query, status
 from fastapi.responses import JSONResponse
-from routers.helpers.usersSharedFunctions import add_user
+from routers.services.usersSharedFunctions import add_user
 from routers.users import delete_user
 
 authRouter = APIRouter()

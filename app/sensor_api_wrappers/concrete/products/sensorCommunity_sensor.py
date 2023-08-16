@@ -2,8 +2,8 @@ import io
 
 import numpy as np
 import pandas as pd
-from api_wrappers.data_transfer_object.sensor_writeable import SensorWritable
-from api_wrappers.interfaces.sensor_product import SensorProduct
+from sensor_api_wrappers.data_transfer_object.sensor_writeable import SensorWritable
+from sensor_api_wrappers.interfaces.sensor_product import SensorProduct
 
 
 class SensorCommunitySensor(SensorProduct, SensorWritable):

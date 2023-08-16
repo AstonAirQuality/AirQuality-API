@@ -1,13 +1,14 @@
 import json
 
-from api_wrappers.data_transfer_object.sensor_readable import SensorReadable
 from core.models import SensorSummaries as ModelSensorSummary
 from core.schema import GeoJsonExport
 from core.schema import SensorSummary as SchemaSensorSummary
 from db.database import SessionLocal
 from fastapi import HTTPException, status
 from psycopg2.errors import UniqueViolation
-from routers.helpers.spatialSharedFunctions import convertWKBtoWKT, spatialQueryBuilder
+from routers.services.formatting import convertWKBtoWKT
+from routers.services.query_building import spatialQueryBuilder
+from sensor_api_wrappers.data_transfer_object.sensor_readable import SensorReadable
 from sqlalchemy.exc import IntegrityError
 
 db = SessionLocal()
@@ -105,26 +106,6 @@ def upsert_sensorSummary(sensorSummary: SchemaSensorSummary):
 #################################################################################################################################
 #                                              helper functions                                                                 #
 #################################################################################################################################
-
-
-# adding search filters
-def searchQueryFilters(query: any, spatial_query_type: str, geom: str, sensor_ids: list[str]) -> any:
-    """applies search filters to the query
-    :param query: query to apply filters to
-    :param spatial_query_type: type of geometry filter query to use (intersects, contains, within)
-    :param geom: geometry to filter by
-    :param sensor_ids: list of sensor ids to filter by
-    :return: query with filters applied"""
-
-    if sensor_ids:
-        query = query.filter(ModelSensorSummary.sensor_id.in_(sensor_ids))
-
-    if spatial_query_type and geom is not None:
-        query = spatialQueryBuilder(query, ModelSensorSummary, "geom", spatial_query_type, geom)
-
-    return query
-
-
 def JsonToSensorReadable(results: list) -> list[tuple[SensorReadable, str]]:
     """converts a list of sensor summaries into a list of SensorReadables.
     :param results: list of sensor summaries

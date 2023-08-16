@@ -7,8 +7,8 @@ from typing import Any, Iterator, Tuple
 
 import numpy as np
 import pandas as pd
-from api_wrappers.data_transfer_object.sensorDTO import SensorDTO
 from core.schema import SensorSummary as SchemaSensorSummary
+from sensor_api_wrappers.data_transfer_object.sensorDTO import SensorDTO
 
 
 class SensorReadable(SensorDTO):

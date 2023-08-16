@@ -6,8 +6,14 @@
             "name": "Python: Module - app", // top-level package called "app"
             "type": "python",
             "request": "launch",
-            "module": "${fileBasenameNoExtension}",
-            "cwd": "${workspaceFolder}/app"
+            "module": "uvicorn",
+            "cwd": "${workspaceFolder}\\app",
+            "args": [
+                "main:app",
+                "--port",
+                "8000",
+                "--reload"
+            ],
         },
         {
             "name": "Python: Module - api_wrappers",
@@ -68,20 +74,20 @@
             "console": "integratedTerminal",
             "justMyCode": true
         },
-        {
-            "name": "Docker: Python - Fastapi",
-            "type": "docker",
-            "request": "launch",
-            "preLaunchTask": "docker-run: debug",
-            "python": {
-                "pathMappings": [
-                    {
-                        "localRoot": "${workspaceFolder}",
-                        "remoteRoot": "/app"
-                    }
-                ],
-                "projectType": "fastapi"
-            }
-        }
+        // {
+        //     "name": "Docker: Python - Fastapi",
+        //     "type": "docker",
+        //     "request": "launch",
+        //     "preLaunchTask": "docker-run: debug",
+        //     "python": {
+        //         "pathMappings": [
+        //             {
+        //                 "localRoot": "${workspaceFolder}",
+        //                 "remoteRoot": "/app"
+        //             }
+        //         ],
+        //         "projectType": "fastapi"
+        //     }
+        // }
     ]
 }

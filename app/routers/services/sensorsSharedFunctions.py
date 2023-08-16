@@ -4,8 +4,8 @@ from core.models import Sensors as ModelSensor
 from core.models import SensorTypes as ModelSensorTypes
 from db.database import SessionLocal
 from fastapi import HTTPException, Query, status
-from routers.helpers.spatialSharedFunctions import convertWKBtoWKT
 from routers.sensors import ActiveReason
+from routers.services.formatting import convertWKBtoWKT
 
 db = SessionLocal()
 

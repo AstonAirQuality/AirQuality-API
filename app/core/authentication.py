@@ -4,13 +4,12 @@ from typing import Tuple
 
 import jwt
 import requests
+from core.authorisation import Authorisation
 from cryptography import x509
 from cryptography.hazmat.backends import default_backend
 from fastapi import HTTPException, Security
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
-from routers.helpers.usersSharedFunctions import get_user_token_info
-
-from core.authorisation import Authorisation
+from routers.services.usersSharedFunctions import get_user_token_info
 
 
 class AuthHandler(Authorisation):

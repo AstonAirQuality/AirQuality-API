@@ -1,5 +1,6 @@
 from os import environ as env
 
+from docsMarkdown import description, tags_metadata
 from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException, status
 from fastapi.middleware.cors import CORSMiddleware
@@ -13,77 +14,6 @@ from routers.sensorTypes import sensorsTypesRouter
 from routers.users import usersRouter
 
 load_dotenv()
-
-description = """
-Aston Air Quality API helps you do awesome stuff. 🚀
-
-## Sensors
-You can:
-* **Create sensors**.
-* **Read sensors**.
-* **Update sensors**.
-* **Delete sensors**.
-
-## Sensor Summaries
-You can:
-* **read sensor summaries**.
-
-## Sensor Types
-You can:
-* **Create sensor types**.
-* **Read sensor types**.
-* **Update sensor types**.
-* **Delete sensor types**.
-
-## Users.
-You can:
-* **read users**.
-* **create users**.
-
-## Logs.
-You can:
-* **read logs**.
-* **delete logs**.
-
-## Auth
-You can:
-* **signin**.
-* **signup**.
-* **firebase login**.
-* **firebase register**.
-* **delete account**.
-"""
-
-tags_metadata = [
-    {
-        "name": "auth",
-        "description": "Firebase authentication.",
-    },
-    {
-        "name": "sensor",
-        "description": "Operations with sensors.",
-    },
-    {
-        "name": "sensor-type",
-        "description": "Operations with sensor types.",
-    },
-    {
-        "name": "sensor-summary",
-        "description": "Operations with sensor summaries.",
-    },
-    {
-        "name": "api-task",
-        "description": "Operations with background tasks.",
-    },
-    {
-        "name": "user",
-        "description": "Operations with users.",
-    },
-    {
-        "name": "data-ingestion-logs",
-        "description": "Operations with logs.",
-    },
-]
 
 stage = env.get("AWS_STAGE_NAME", None)
 openapi_prefix = f"/{stage}" if stage else "/"
@@ -110,7 +40,7 @@ app.add_middleware(
 
 @app.get("/")
 async def root():
-    return {"message": "Hello World"}
+    return {"message": "Greetings from the Aston Air Quality API. 🚀"}
 
 
 # setting up sentry
@@ -132,10 +62,3 @@ if env["PRODUCTION_MODE"] == "TRUE":
     )
 
 handler = Mangum(app=app)
-
-
-# uncomment this for debugging purposes only
-import uvicorn
-
-if __name__ == "__main__":
-    uvicorn.run(app, host="0.0.0.0", port=8000)

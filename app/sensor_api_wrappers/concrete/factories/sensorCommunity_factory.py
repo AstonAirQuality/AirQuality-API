@@ -4,8 +4,10 @@ import json
 from typing import Iterator
 
 import requests
-from api_wrappers.concrete.products.sensorCommunity_sensor import SensorCommunitySensor
-from api_wrappers.interfaces.sensor_factory import SensorFactory
+from sensor_api_wrappers.concrete.products.sensorCommunity_sensor import (
+    SensorCommunitySensor,
+)
+from sensor_api_wrappers.interfaces.sensor_factory import SensorFactory
 
 
 class SensorCommunityFactory(SensorFactory):

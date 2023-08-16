@@ -2,7 +2,6 @@
 import datetime as dt
 from enum import Enum
 
-from api_wrappers.SensorFactoryWrapper import SensorFactoryWrapper
 from core.authentication import AuthHandler
 from core.models import Sensors as ModelSensor
 from core.models import SensorTypes as ModelSensorTypes  # TODO
@@ -12,7 +11,10 @@ from core.schema import Sensor as SchemaSensor
 from db.database import SessionLocal
 from fastapi import APIRouter, Depends, HTTPException, Query, Response, status
 from psycopg2.errors import ForeignKeyViolation, UniqueViolation
-from routers.helpers.spatialSharedFunctions import convertWKBtoWKT
+from routers.services.crud.crud import CRUD, ActiveReason
+from routers.services.formatting import convertWKBtoWKT, format_sensor_joined_data
+from routers.services.query_building import joinQueryBuilder
+from sensor_api_wrappers.SensorFactoryWrapper import SensorFactoryWrapper
 
 # error handling
 from sqlalchemy.exc import IntegrityError
@@ -26,13 +28,13 @@ auth_handler = AuthHandler()
 #################################################################################################################################
 #                                                  Enums                                                                        #
 #################################################################################################################################
-class ActiveReason(str, Enum):
-    """Enum for the reason a sensor was activated or deactivated"""
+# class ActiveReason(str, Enum):
+#     """Enum for the reason a sensor was activated or deactivated"""
 
-    NO_DATA = "DEACTIVATED_NO_DATA"
-    ACTIVE_BY_USER = "ACTIVATED_BY_USER"
-    DEACTVATE_BY_USER = "DEACTIVATED_BY_USER"
-    REMOVED = "REMOVED_FROM_SENSOR_FLEET"
+#     NO_DATA = "DEACTIVATED_NO_DATA"
+#     ACTIVE_BY_USER = "ACTIVATED_BY_USER"
+#     DEACTVATE_BY_USER = "DEACTIVATED_BY_USER"
+#     REMOVED = "REMOVED_FROM_SENSOR_FLEET"
 
 
 #################################################################################################################################
@@ -48,29 +50,7 @@ def add_sensor(sensor: SchemaSensor, payload=Depends(auth_handler.auth_wrapper))
     if auth_handler.checkRoleAdmin(payload) == False:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authorized")
 
-    sensor = ModelSensor(
-        lookup_id=sensor.lookup_id,
-        serial_number=sensor.serial_number,
-        type_id=sensor.type_id,
-        active=sensor.active,
-        user_id=sensor.user_id,
-        stationary_box=sensor.stationary_box,
-    )
-
-    try:
-        db.add(sensor)
-        db.commit()
-        return sensor.to_json()
-
-    except IntegrityError as e:
-        if isinstance(e.orig, UniqueViolation):
-            db.rollback()
-            raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(e.orig).split("DETAIL:")[1])
-        else:
-            raise Exception(e)
-    except Exception as e:
-        db.rollback()
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
+    return CRUD().db_add(ModelSensor, sensor.dict())
 
 
 @sensorsRouter.post("/plume-sensors")
@@ -94,34 +74,24 @@ def add_plume_sensors(serialnumbers: SchemaPlumeSerialNumbers, response: Respons
         if value is None:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Serial number not found")
 
-        sensor = ModelSensor(
-            lookup_id=value,
-            serial_number=key,
-            type_id=1,
-            active=False,
-            user_id=None,
-            stationary_box=None,
-        )
+        else:
+            sensor = ModelSensor(
+                lookup_id=value,
+                serial_number=key,
+                type_id=1,
+                active=False,
+                user_id=None,
+                stationary_box=None,
+            )
 
-        try:
-            add_sensor(sensor, payload)
+            try:
+                CRUD().db_add(ModelSensor, sensor.dict())
+            except Exception as e:
+                addedSensors[key] = "failed to add sensor: " + str(value)
+                raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=addedSensors)
 
-        except HTTPException as e:
-            # if the sensor already exists continue adding other sensors but change status code to 409
-            if e.status_code == 409:
-                addedSensors[key] = "Sensor already exists"
-                response.status_code = status.HTTP_409_CONFLICT
-                continue
-            else:
-                raise e
-        except Exception as e:
-            db.rollback()
-            addedSensors[key] = "failed to add sensor: " + str(value)
-            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=addedSensors)
-
-        # write successfully added sensors to the return dict
-        addedSensors[key] = value
-
+            # write successfully added sensors to the return dict
+            addedSensors[key] = value
     return addedSensors
 
 
@@ -132,19 +102,8 @@ def add_plume_sensors(serialnumbers: SchemaPlumeSerialNumbers, response: Respons
 def get_sensors():
     """Returns all sensors in the database
     \n :return: list of sensors"""
-    try:
-        result = db.query(ModelSensor).all()
 
-        # here we use the model to convert the result (geometry) into json since the query returned the model
-        results = []
-        for res in result:
-            results.append(res.to_json())
-
-    except Exception as e:
-        db.rollback()
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
-
-    return results
+    return CRUD().db_get_all(ModelSensor)
 
 
 @sensorsRouter.get("/joined")
@@ -159,34 +118,16 @@ def get_sensors_joined(
     \n :param join_user: boolean to join user
     \n :return: list of sensors"""
 
-    try:
-        fields = []
-        for col in columns:
-            fields.append(getattr(ModelSensor, col))
+    join_dict = {}
+    if join_user:
+        join_dict[getattr(ModelUser, "username")] = "username"
+        join_dict[getattr(ModelUser, "uid")] = "uid"
+    if join_sensor_types:
+        join_dict[getattr(ModelSensorTypes, "name")] = "type_name"
 
-        if join_sensor_types:
-            fields.append(getattr(ModelSensorTypes, "name").label("type_name"))
-        if join_user:
-            fields.append(getattr(ModelUser, "username").label("username"))
-            fields.append(getattr(ModelUser, "uid").label("uid"))
+    fields = joinQueryBuilder(columns, ModelSensor, columns, join_dict)
 
-        result = db.query(*fields).select_from(ModelSensor).join(ModelSensorTypes, ModelUser, isouter=True).all()
-
-        # must convert wkb to wkt string to be be api friendly
-        results = []
-        for row in result:
-            row_as_dict = dict(row._mapping)
-            row_as_dict["stationary_box"] = convertWKBtoWKT(row_as_dict["stationary_box"])
-            if "username" in row_as_dict and "uid" in row_as_dict:
-                row_as_dict["username"] = str(row_as_dict["username"]) + " " + str(row_as_dict["uid"])
-                del row_as_dict["uid"]
-            results.append(row_as_dict)
-
-    except Exception as e:
-        db.rollback()
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
-
-    return results
+    return format_sensor_joined_data(CRUD().db_get_all_joined(ModelSensor, [ModelSensorTypes, ModelUser], fields))
 
 
 # get sensors joined paginated
@@ -206,35 +147,16 @@ def get_sensors_joined_paginated(
     \n :param join_user: boolean to join user
     \n :return: list of sensors"""
 
-    try:
-        fields = []
-        for col in columns:
-            fields.append(getattr(ModelSensor, col))
+    join_dict = {}
+    if join_user:
+        join_dict[getattr(ModelUser, "username")] = "username"
+        join_dict[getattr(ModelUser, "uid")] = "uid"
+    if join_sensor_types:
+        join_dict[getattr(ModelSensorTypes, "name")] = "type_name"
 
-        if join_sensor_types:
-            fields.append(getattr(ModelSensorTypes, "name").label("type_name"))
-        if join_user:
-            fields.append(getattr(ModelUser, "username").label("username"))
-            fields.append(getattr(ModelUser, "uid").label("uid"))
+    fields = joinQueryBuilder(columns, ModelSensor, columns, join_dict)
 
-        # result = db.query(*fields).select_from(ModelSensor).join(ModelSensorTypes, ModelUser, isouter=True).all()
-        result = db.query(*fields).select_from(ModelSensor).join(ModelSensorTypes, ModelUser, isouter=True).offset((page - 1) * limit).limit(limit).all()
-
-        # must convert wkb to wkt string to be be api friendly
-        results = []
-        for row in result:
-            row_as_dict = dict(row._mapping)
-            row_as_dict["stationary_box"] = convertWKBtoWKT(row_as_dict["stationary_box"])
-            if "username" in row_as_dict and "uid" in row_as_dict:
-                row_as_dict["username"] = str(row_as_dict["username"]) + " " + str(row_as_dict["uid"])
-                del row_as_dict["uid"]
-            results.append(row_as_dict)
-
-    except Exception as e:
-        db.rollback()
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
-
-    return results
+    return format_sensor_joined_data(CRUD().db_get_all_joined_paginated(ModelSensor, [ModelSensorTypes, ModelUser], fields, page, limit))
 
 
 #################################################################################################################################
@@ -262,21 +184,17 @@ def update_sensor(sensor_id: int, sensor: SchemaSensor, payload=Depends(auth_han
                 if sensor_updated.user_id is not None & sensor_updated.user_id != payload["sub"]:
                     raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authorized")
 
-            # else update sensor
-            sensor_updated.lookup_id = sensor.lookup_id
-            sensor_updated.serial_number = sensor.serial_number
-            sensor_updated.type_id = sensor.type_id
-            sensor_updated.active = sensor.active
-            if sensor.active_reason is None:
-                if sensor.active == True:
-                    sensor_updated.active_reason = ActiveReason.ACTIVE_BY_USER.value
-                else:
-                    sensor_updated.active_reason = ActiveReason.DEACTVATE_BY_USER.value
             else:
-                sensor_updated.active_reason = sensor.active_reason
-            sensor_updated.user_id = sensor.user_id
-            sensor_updated.stationary_box = sensor.stationary_box
-            db.commit()
+                # unpack sensor object into sensor_updated
+                sensor_updated = ModelSensor(**sensor.dict())
+                if sensor.active_reason is None:
+                    if sensor.active == True:
+                        sensor_updated.active_reason = ActiveReason.ACTIVE_BY_USER.value
+                    else:
+                        sensor_updated.active_reason = ActiveReason.DEACTVATE_BY_USER.value
+                else:
+                    sensor_updated.active_reason = sensor.active_reason
+                db.commit()
 
     except IntegrityError as e:
         if isinstance(e.orig, UniqueViolation):
@@ -315,14 +233,7 @@ def set_active_sensors(
             active_reason = ActiveReason.ACTIVE_BY_USER.value
         else:
             active_reason = ActiveReason.DEACTVATE_BY_USER.value
-
-    try:
-        db.query(ModelSensor).filter(ModelSensor.serial_number.in_(sensor_serialnumbers)).update({ModelSensor.active: active_state, ModelSensor.active_reason: active_reason})
-        db.commit()
-    except Exception as e:
-        db.rollback()
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
-
+    CRUD().db_update(ModelSensor, ModelSensor.serial_number.in_(sensor_serialnumbers), {ModelSensor.active: active_state, ModelSensor.active_reason: active_reason})
     return dict.fromkeys(sensor_serialnumbers, active_state)
 
 
@@ -339,13 +250,4 @@ def delete_sensor(sensor_id: int, payload=Depends(auth_handler.auth_wrapper)):
     if auth_handler.checkRoleAdmin(payload) == False:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authorized")
 
-    try:
-        sensor_deleted = db.query(ModelSensor).filter(ModelSensor.id == sensor_id).first()
-        db.delete(sensor_deleted)
-        db.commit()
-
-    except Exception as e:
-        db.rollback()
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
-
-    return sensor_deleted.to_json()
+    return CRUD().db_delete(ModelSensor, ModelSensor.id == sensor_id)

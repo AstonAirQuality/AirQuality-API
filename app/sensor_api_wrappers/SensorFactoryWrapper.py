@@ -2,16 +2,15 @@ import datetime as dt
 from os import environ as env
 from typing import Iterator
 
-from api_wrappers.concrete.factories.plume_factory import PlumeFactory
-from api_wrappers.concrete.factories.sensorCommunity_factory import (
-    SensorCommunityFactory,
-)
-from api_wrappers.concrete.factories.zephyr_factory import ZephyrFactory
-
 # sensor summary
 from core.schema import Sensor as SchemaSensor
 from core.schema import SensorSummary as SchemaSensorSummary
 from dotenv import load_dotenv
+from sensor_api_wrappers.concrete.factories.plume_factory import PlumeFactory
+from sensor_api_wrappers.concrete.factories.sensorCommunity_factory import (
+    SensorCommunityFactory,
+)
+from sensor_api_wrappers.concrete.factories.zephyr_factory import ZephyrFactory
 
 
 class SensorFactoryWrapper:

@@ -8,17 +8,17 @@ from db.database import SessionLocal
 from fastapi import APIRouter, HTTPException, Query, status
 from fastapi.encoders import jsonable_encoder
 from fastapi.responses import JSONResponse
-from routers.helpers.helperfunctions import convertDateRangeStringToDate
-from routers.helpers.sensorSummarySharedFunctions import (
+from routers.services.formatting import convertDateRangeStringToDate, convertWKBtoWKT
+from routers.services.query_building import searchQueryFilters
+from routers.services.sensorSummarySharedFunctions import (
     deserializeMeasurementData,
-    searchQueryFilters,
     sensorSummariesToGeoJson,
 )
-from routers.helpers.spatialSharedFunctions import convertWKBtoWKT
 
 sensorSummariesRouter = APIRouter()
 
 db = SessionLocal()
+
 
 #################################################################################################################################
 #                                                  Enums                                                                        #
