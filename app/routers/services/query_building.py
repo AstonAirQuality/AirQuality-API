@@ -61,8 +61,13 @@ def joinQueryBuilder(fields: any, model: any, columns: list, join_columns: dict 
     """
     fields = []
     try:
-        for col in columns:
-            fields.append(getattr(model, col))
+        if columns is not None:
+            for col in columns:
+                fields.append(getattr(model, col))
+        else:
+            # append all columns from the model to the fields list (model.__table__.columns)
+            fields.extend(model.__table__.columns)
+
         for key, val in join_columns.items():
             # append key and value to fields list
             fields.append(key.label(val))

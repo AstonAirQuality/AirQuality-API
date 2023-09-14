@@ -64,9 +64,6 @@ class SensorSummary(BaseModel):
         return v
 
 
-import datetime
-
-
 class Sensor(BaseModel):
     """Sensor Schema extends BaseModel used to validate form data from the API
     :lookup_id (str)
@@ -150,6 +147,13 @@ class Log(BaseModel):
             except Exception as e:
                 raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"measurement_data must be a valid json: {e}")
             return v
+
+
+class UserCredentials(BaseModel):
+    """UserCredentials Schema extends BaseModel used to validate form data from the API"""
+
+    username: str
+    password: str
 
 
 class DataIngestionLog(BaseModel):

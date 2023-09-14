@@ -173,42 +173,24 @@ def update_sensor(sensor_id: int, sensor: SchemaSensor, payload=Depends(auth_han
     if auth_handler.checkRoleAboveUser(payload) == False:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authorized")
 
-    try:
-        sensor_updated = db.query(ModelSensor).filter(ModelSensor.id == sensor_id).first()
-        if sensor_updated is None:
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Sensor not found")
-        else:
-            # only allow update if user is admin or sensor belongs to user (the auth token matches the user_id of the sensor)
-            # if no user is asignned to the sensor, then anyone above user can update it
-            if auth_handler.checkRoleAdmin(payload) == False:
-                if sensor_updated.user_id is not None & sensor_updated.user_id != payload["sub"]:
-                    raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authorized")
+    # sensor_updated = db.query(ModelSensor).filter(ModelSensor.id == sensor_id).first()
+    sensor_updated = CRUD().db_get_by_id(ModelSensor, sensor_id)
+    if sensor_updated is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Sensor not found")
+    else:
+        # only allow update if user is admin or sensor belongs to user (the auth token matches the user_id of the sensor)
+        # if no user is asignned to the sensor, then anyone above user can update it
+        if auth_handler.checkRoleAdmin(payload) == False:
+            if sensor_updated.user_id is not None & sensor_updated.user_id != payload["sub"]:
+                raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authorized")
 
-            else:
-                # unpack sensor object into sensor_updated
-                sensor_updated = ModelSensor(**sensor.dict())
-                if sensor.active_reason is None:
-                    if sensor.active == True:
-                        sensor_updated.active_reason = ActiveReason.ACTIVE_BY_USER.value
-                    else:
-                        sensor_updated.active_reason = ActiveReason.DEACTVATE_BY_USER.value
+        else:
+            if sensor.active_reason is None:
+                if sensor.active == True:
+                    sensor.active_reason = ActiveReason.ACTIVE_BY_USER.value
                 else:
-                    sensor_updated.active_reason = sensor.active_reason
-                db.commit()
-
-    except IntegrityError as e:
-        if isinstance(e.orig, UniqueViolation):
-            db.rollback()
-            raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(e.orig).split("DETAIL:")[1])
-        elif isinstance(e.orig, ForeignKeyViolation):
-            db.rollback()
-            raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(e.orig).split("DETAIL:")[1])
-
-        else:
-            raise Exception(e)
-    except Exception as e:
-        db.rollback()
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
+                    sensor.active_reason = ActiveReason.DEACTVATE_BY_USER.value
+            CRUD().db_update(ModelSensor, ModelSensor.id == sensor_id, sensor.dict())
 
     return sensor
 

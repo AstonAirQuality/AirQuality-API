@@ -42,7 +42,8 @@ class Read(abstractbaseCRUD):
         :return: row"""
         try:
             result = self.order_columns(model, self.db.query(model).filter(model.id == id).first())
-        except Exception:
+        except Exception as e:
+            print(e)
             self.db.rollback()
             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Could not retrieve row")
         return result
