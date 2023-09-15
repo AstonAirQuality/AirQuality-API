@@ -19,6 +19,9 @@ class Delete(abstractbaseCRUD):
         try:
             self.db.query(model).filter(filter_expression).delete()
             self.db.commit()
+        except IntegrityError as e:
+            self.db.rollback()
+            raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Could not delete row. Integrity error")
         except Exception as e:
             self.db.rollback()
             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))

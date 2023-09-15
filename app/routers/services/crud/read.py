@@ -23,6 +23,18 @@ class Read(abstractbaseCRUD):
 
             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e.orig).split("DETAIL:")[0])
         return result
+    
+    def db_get_from_column(self, model: any, column: str, searchvalue: str):
+        """Get all rows from the database
+        :param model: model to query
+        :return: all rows"""
+        try:
+            result = self.order_columns(model, self.db.query(model).filter(getattr(model, column).like(f"%{searchvalue}%")).all())
+        except Exception as e:
+            self.db.rollback()
+
+            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e.orig).split("DETAIL:")[0])
+        return result
 
     def db_get_paginated(self, model: any, page: int, limit: int):
         """Get all rows from the database

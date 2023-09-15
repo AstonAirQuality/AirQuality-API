@@ -11,7 +11,8 @@ from core.schema import Sensor as SchemaSensor
 from db.database import SessionLocal
 from fastapi import APIRouter, Depends, HTTPException, Query, Response, status
 from psycopg2.errors import ForeignKeyViolation, UniqueViolation
-from routers.services.crud.crud import CRUD, ActiveReason
+from routers.services.crud.crud import CRUD
+from routers.services.enums import ActiveReason
 from routers.services.formatting import convertWKBtoWKT, format_sensor_joined_data
 from routers.services.query_building import joinQueryBuilder
 from sensor_api_wrappers.SensorFactoryWrapper import SensorFactoryWrapper
@@ -23,19 +24,6 @@ sensorsRouter = APIRouter()
 
 db = SessionLocal()
 auth_handler = AuthHandler()
-
-
-#################################################################################################################################
-#                                                  Enums                                                                        #
-#################################################################################################################################
-# class ActiveReason(str, Enum):
-#     """Enum for the reason a sensor was activated or deactivated"""
-
-#     NO_DATA = "DEACTIVATED_NO_DATA"
-#     ACTIVE_BY_USER = "ACTIVATED_BY_USER"
-#     DEACTVATE_BY_USER = "DEACTIVATED_BY_USER"
-#     REMOVED = "REMOVED_FROM_SENSOR_FLEET"
-
 
 #################################################################################################################################
 #                                                  Create                                                                       #

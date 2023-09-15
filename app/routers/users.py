@@ -7,7 +7,9 @@ from core.models import Users as ModelUser
 from core.schema import User as SchemaUser
 from db.database import SessionLocal
 from dotenv import load_dotenv
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status
+from routers.services.crud.crud import CRUD
+from routers.services.enums import userColumns
 
 # error handling
 from sqlalchemy.exc import IntegrityError
@@ -29,43 +31,24 @@ def get_users(payload=Depends(auth_handler.auth_wrapper)):
     if auth_handler.checkRoleAdmin(payload) == False:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authorized")
 
-    try:
-        result = db.query(ModelUser).all()
-    except Exception:
-        db.rollback()
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Could retrieve user")
-    return result
+    return CRUD().db_get_all(ModelUser)
 
 
 @usersRouter.get("/read-from/{column}")
-def get_user_from_column(column: str, searchvalue: str, payload=Depends(auth_handler.auth_wrapper)):
+def get_user_from_column(column: userColumns,searchvalue: str, payload=Depends(auth_handler.auth_wrapper)):
     """query/read a user from searchvalue  and column name and return a json of the first user
     \n :param column: column to apply the filter on (uid, email, username)
     \n :param searchvalue : user searchvalue
     \n:return: user"""
 
-    if column not in ["uid", "email", "username", "role"]:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid column name")
-
-    elif column == "email" and auth_handler.checkRoleAdmin(payload) == False:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authorized")
-
     # only allow read if user is admin or the user is reading their own data
-    elif column == "uid" and searchvalue != payload["sub"]:
-        if auth_handler.checkRoleAdmin(payload) == False:
+    if auth_handler.checkRoleAdmin(payload) == False:
+        if column == "uid" and searchvalue != payload["sub"]:
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=f"Not authorized")
+        else:
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=f"Not authorized")
 
-    elif column == "username" or column == "role":
-        if auth_handler.checkRoleAdmin(payload) == False:
-            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authorized")
-
-    try:
-        result = db.query(ModelUser).filter(getattr(ModelUser, column).like(f"%{searchvalue}%")).all()
-    except Exception:
-        db.rollback()
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Could retrieve user")
-
-    return result
+    return CRUD().db_get_from_column(ModelUser, column, searchvalue)
 
 
 #################################################################################################################################
@@ -90,13 +73,7 @@ def update_user(uid: str, user: SchemaUser, payload=Depends(auth_handler.auth_wr
             # if user is not admin, then remove the role from the user object. This will prevent the user from updating their own role
             updated_user.pop("role", None)
 
-    try:
-        db.query(ModelUser).filter(ModelUser.uid == uid).update(updated_user)
-        db.commit()
-    except Exception as e:
-        db.rollback()
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
-    return updated_user
+    return CRUD().db_update(ModelUser, ModelUser.uid == uid, updated_user)
 
 
 @usersRouter.patch("/{uid}/{role}")
@@ -110,14 +87,7 @@ def update_user_role(uid: str, role: str, payload=Depends(auth_handler.auth_wrap
     if auth_handler.checkRoleAdmin(payload) == False:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authorized")
 
-    try:
-        db.query(ModelUser).filter(ModelUser.uid == uid).update({"role": role})
-        db.commit()
-    except Exception as e:
-        db.rollback()
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
-    return {"uid": uid, "role": role}
-
+    return CRUD().db_update(ModelUser, ModelUser.uid == uid, {"role": role})
 
 #################################################################################################################################
 #                                                  Delete                                                                       #
@@ -133,15 +103,4 @@ def delete_user(uid: str, payload=Depends(auth_handler.auth_wrapper)):
         if uid != payload["sub"]:
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authorized")
 
-    try:
-        user_deleted = db.query(ModelUser).filter(ModelUser.uid == uid).first()
-        db.delete(user_deleted)
-        db.commit()
-    except IntegrityError as e:
-        db.rollback()
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="User could not be deleted")
-    except Exception as e:
-        db.rollback()
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Could not delete user")
-
-    return user_deleted
+    return CRUD().db_delete(ModelUser, ModelUser.uid == uid)
