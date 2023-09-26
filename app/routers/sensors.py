@@ -110,7 +110,7 @@ def get_sensors_joined(
 
     fields = joinQueryBuilder(columns, ModelSensor, columns, join_dict)
 
-    return format_sensor_joined_data(CRUD().db_get_all_joined(ModelSensor, [ModelSensorTypes, ModelUser], fields))
+    return format_sensor_joined_data(CRUD().db_get_fields_using_filter_expression(None, fields, ModelSensor, [ModelSensorTypes, ModelUser], first=False))
 
 
 # get sensors joined paginated
