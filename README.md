@@ -1,111 +1,206 @@
-# AirQuality-API
-Severless AWS lambda & Fast API project to fetch/scrape data from Aston's air quality sensors into a postgres database.
-Manage sensors and query sensor data
+<a name="readme-top"></a>
 
-API available on: https://rn3rb93aq5.execute-api.eu-west-2.amazonaws.com/prod/ (open)  
+<!-- PROJECT SHIELDS -->
+[![Deployment][passing-deployment-badge]][api-url]
+![Tests][passing-tests-badge]
+<!-- ![GitHub last commit](https://img.shields.io/github/last-commit/AstonAirQuality/AirQuality-API)
+![GitHub repo size](https://img.shields.io/github/repo-size/AstonAirQuality/AirQuality-API)
+![GitHub issues](https://img.shields.io/github/issues/AstonAirQuality/AirQuality-API)
+![GitHub pull requests](https://img.shields.io/github/issues-pr/AstonAirQuality/AirQuality-API)
+![GitHub](https://img.shields.io/github/license/AstonAirQuality/AirQuality-API) -->
 
-# Setting up Docker
+<!-- ![GitHub tag (latest by date)](https://img.shields.io/github/v/tag/AstonAirQuality/AirQuality-API) -->
 
-## Installation (for windows)
-install Docker desktop - https://docs.docker.com/desktop/install/windows-install/
+<!-- PROJECT LOGO -->
+<br />
+<div align="center">
+  <a href="https://github.com/AstonAirQuality/AirQuality-API">
+    <img src=".github/resources/crest.png" alt="Logo" width="70" height="100">
+  </a>
 
-## Building containers from docker compose 
-**Ensure you are in the root project directory and the env file is in the project root directory**
-### Building development container stack
-run the command ```docker-compose up```
-### Building test container stack
-run the command  ```docker-compose -f docker-compose-testenv.yml -p test up -d```
-delete test container ```docker-compose -f docker-compose-testenv.yml -p test down --volumes```
-## Exiting Docker
-if using docker desktop you can simply click stop running containers for "app"
-if using docker was initialised using a CMD then press **Ctrl + C** or press twice to force close  **Ctrl + C , Ctrl + C**
+<h3 align="center">AstonAirQuality API</h3>
 
-# Setting up the python enviornment (Windows setup)
-install python 3.9.6 or the latest version https://www.python.org/downloads/
-cd into the root project directory
+  <img src="https://img.shields.io/badge/python-3.9.6+-green">
+  <img src="https://img.shields.io/badge/Made%20With-VSCode-1f425f.svg">
 
-Run the following commands to create a virtual python enviornment for this project, and upgrade pip
-- ```python -m venv env```
-- ```python.exe -m pip install --upgrade pip```
+  <p align="center">
+    A Fast API project to manage Aston University's fleet of air quality sensors and handle batch data ingestion tasks.
+    <br />
+    <a href="https://github.com/AstonAirQuality/AirQuality-API"><strong>Explore the docs »</strong></a>
+    <br />
+    <br />
+    <a href="https://github.com/AstonAirQuality/AirQuality-API">View Demo</a>
+    ·
+    <a href="https://github.com/AstonAirQuality/AirQuality-API/issues">Report Bug</a>
+    ·
+    <a href="https://github.com/AstonAirQuality/AirQuality-API/issues">Request Feature</a>
+  </p>
+</div>
 
-## Activating the virtual python enviornment
-```cd env/scripts && activate && cd..\..```
+<!-- TABLE OF CONTENTS -->
+<details>
+  <summary>Table of Contents</summary>
+  <ol>
+    <li>
+      <a href="#about-the-project">About The Project</a>
+      <ul>
+        <li><a href="#built-with">Built With</a></li>
+      </ul>
+    </li>
+    <li>
+      <a href="#getting-started">Getting Started</a>
+      <ul>
+        <li><a href="#prerequisites">Prerequisites</a></li>
+        <li><a href="#installation">Installation</a></li>
+            <ul>
+                <li><a href="#docker-setup">Docker Setup</a></li>
+                <li><a href="#local-setup">Local Setup</a></li>
+            </ul>
+        <li><a href="#running-tests">Running Tests</a></li>
+            <ul>
+                <li><a href="#docker-setup-1">Docker Setup</a></li>
+                <li><a href="#local-setup-1">Local Setup</a></li>
+            </ul>
+      </ul>
+    </li>
+    <li><a href="#contact">Contact</a></li>
+  </ol>
+</details>
 
-### If the above command fails then try it separately 
-- ```cd env/scripts```
-- ```activate```
-- ```cd..\..```
+<!-- ABOUT THE PROJECT -->
+## About The Project
 
-## Installing project dependancies
-```pip install -r requirements.txt```
+<a href="https://github.com/AstonAirQuality/AirQuality-API">
+    <img src=".github/resources/AAQAPI.webp" alt="Project Screenshot">
+</a>
 
-## Uninstalling project dependancies (forced)
-```pip uninstall -y -r requirements.txt```
+<p>
+This project is a Fast API application that provides a RESTful API to manage Aston University's fleet of air quality sensors and handle batch data ingestion tasks. The API is hosted on AWS Lambda and is connected to a PostGreSQL database hosted on AWS RDS. The API is secured using JWT authentication and is documented using Swagger UI. The API is also connected to a cron job that runs every 24 hours to ingest data from the Plume Labs API, the Zephyr API and the SensorCommunity API. 
+</p>
 
-## Save project dependancies
-```pip freeze > requirements.txt```
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
 
-# Testing
-from the project root directory run the commands ```cd app```
+### Built With
+* [![Fast-API][fast-api-badge]][fast-api-url]
+* [![AWS-Lambda][aws-lambda-badge]][aws-lambda-url]
+* [![PostGreSQL][postgresql-badge]][postgres-url]
+* [![Docker][docker-badge]][docker-url]
 
-Run tests without coverage ```python -m unittest discover -s testing -p test_*.py```
+<!-- GETTING STARTED -->
+## Getting Started
 
-Run tests with coverage ```python -m coverage run -m unittest discover -s testing -p test_*.py```
+To get a local copy up and running follow these simple steps.
 
-View coverage report ```python -m coverage report --omit="*/testing*" ```
+### Prerequisites
 
-export coverage in html ```python -m coverage html --omit="*/testing*```  
+You may choose to run the project locally or using docker by following the relevant setup instructions below.
 
-for more information see
-- https://www.pythontutorial.net/python-unit-testing/python-unittest-coverage/
+#### Docker Setup
+* Docker Desktop - install from [here](https://www.docker.com/products/docker-desktop)
 
-## Using test suites and generating HTML reports
-amend the code in the HTMLTestRunner package, to do this see the link: https://stackoverflow.com/questions/71858651/attributeerror-htmltestresult-object-has-no-attribute-count-relevant-tb-lev 
-
-Then you can just run the TestRunner scripts which are lcoated in the testing/suites directory as python modules
-
-# Database migrations
-Running migrations is a little buggy because of the geoalchemy package. A few extra steps need to be taken to successfully run a migration
-
-## Running a migration
-To begin run the docker containers.
-
-To create a new migration use the below command. ```docker-compose exec app alembic revision --autogenerate -m "New Migration"```.
-<br>You may use a custom migration name instead of "New Migration"
-
-
-To run the migration you can use this command. ```docker-compose exec app alembic upgrade head``` 
-<br> **You should always check your migration file before running it** 
-
-
-## Checking a migration file
-
-### Finding the migration file
-from the project root directroy go into the alembic/versions
-your new migration will be located here. 
-
-### Checking the migration file
-Errors can occur when inserting or changing columns with spatial fields. 
-
-for more information see: 
-- https://gist.github.com/utek/6163250
-- https://geoalchemy-2.readthedocs.io/en/latest/alembic.html
-
-You must follow the below steps if spatial fields exist in the migration file: 
-
-- remove the create_index statement for spatial fields in the upgrade() function.
-- remove the drop_index statement for spatial fields  in the downgrade() function.
+#### Local Setup
+* Python 3.9.6+ - install from [here](https://www.python.org/downloads/)
 
 
-# Deployment
+### Installation
 
-## Creating a zip file of the api
-- install dependancies with the command ```python deployment/scripts/installDependancies.py```
-- zip the project with the command ```python deployment/scripts/zipProject.py```
+The following steps are requried for both local and docker setups.
 
-## Uploading the file to aws
-- check the unzipped file size does not exceed 250mb. (zip file should not be larger than 75mb). If it is then consider setting up a lambda image deployment 
-- login to aws and navigate to s3 bucket
-- upload the new app.zip file and copy the url path
-- navigate to lambda and click the code tab, select upload from Amazon s3 location and poste the url path
-- once the uplaod is complete navigate the api's base url and check if it works correctly.
+1. Clone the repo
+   ```sh
+   git clone AstonAirQuality/AirQuality-API
+    ```
+2. Enter your enviornment variables in `.env-template`
+   ```env
+    PLUME_EMAIL= YOUR_PLUME_EMAIL
+    PLUME_PASSWORD= YOUR_PLUME_PASSWORD
+    JWT_SECRET= YOUR_JWT_SECRET
+    ZEPHYR_USERNAME = YOUR_ZEPHYR_USERNAME
+    ZEPHYR_PASSWORD = YOUR_ZEPHYR_PASSWORD
+    SC_USERNAME = YOUR_SC_USERNAME
+    SC_PASSWORD = YOUR_SC_PASSWORD
+    CRON_JOB_TOKEN= YOUR_CRON_JOB_TOKEN
+   ```
+
+3. Copy `.env-template` to `.env` and enter your enviornment variables
+   ```sh
+   cp .env-template .env
+   ```
+
+4. Now follow the setup instructions for your chosen setup method.
+
+#### Docker Setup
+5. From the project root directory, run the command 
+    ```sh
+    docker-compose up
+    ```
+6.  After the containers have been built visit http://localhost:8000/docs to view the API documentation
+
+
+#### Local Setup
+5. From the project root directory, run the command below to install the project dependencies
+   ```sh
+   pip install -r requirements.txt
+    ```
+6. From the project root directory, run the command below to start the API
+    ```sh
+    uvicorn app.main:app --reload
+    ```
+7. After the API has started visit http://localhost:8000/docs to view the API documentation
+
+
+### Running Tests
+
+#### Docker Setup
+1. From the project root directory, run the command below to start the test container
+    ```sh
+    docker-compose -f docker-compose-testenv.yml -p test up -d
+    ```
+2. Choose one of the following methods to run the tests
+    1. Using VSCode, open the project root directory and run the tests using the test explorer
+    2. From the project root directory, run the command below to run the tests using Docker
+        ```sh
+        docker exec -it test_app_ python -m unittest discover -s testing -p test_*.py
+        ```
+    3. From the project root directory, run the command below to run the tests with coverage in a local terminal (Python installation required)
+        ```sh
+        python -m coverage run -m unittest discover -s testing -p test_*.py
+        ```
+        Then run the command below to view the coverage report
+        ```sh
+        python -m coverage report --omit="*/testing*
+        ```
+        Or run the command below to export the coverage report in html
+        ```sh
+        python -m coverage html --omit="*/testing*"
+        ```
+3. To delete the container, run the command 
+    ```sh
+    docker-compose -f docker-compose-testenv.yml -p test down --volumes
+    ```
+    
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
+
+
+<!-- CONTACT -->
+## Contact
+
+Your Name - [@dev_riyad](https://twitter.com/dev_riyad) - riyad2308@gmail.com
+
+Project Link: [https://github.com/AstonAirQuality/AirQuality-API](https://github.com/AstonAirQuality/AirQuality-API)
+
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
+
+
+<!-- MARKDOWN LINKS & IMAGES -->
+[api-url]: https://rn3rb93aq5.execute-api.eu-west-2.amazonaws.com/prod/docs
+[passing-deployment-badge]: https://img.shields.io/badge/deployment-success-green
+[passing-tests-badge]: https://img.shields.io/badge/tests-success-green
+[fast-api-badge]: https://img.shields.io/badge/FastAPI-grey?logo=fastapi
+[fast-api-url]: https://fastapi.tiangolo.com/
+[aws-lambda-badge]: https://img.shields.io/badge/Lambda-b45309?logo=awslambda
+[aws-lambda-url]: https://aws.amazon.com/lambda/
+[postgresql-badge]: https://img.shields.io/badge/PostGreSQL-93c5fd?logo=postgresql
+[postgres-url]: https://www.postgresql.org/
+[docker-badge]: https://img.shields.io/badge/Docker-7dd3fc?logo=docker
+[docker-url]: https://www.docker.com/
