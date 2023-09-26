@@ -5,7 +5,6 @@ import json
 from os import environ as env
 from typing import Tuple
 
-from api_wrappers.SensorFactoryWrapper import SensorFactoryWrapper
 from core.authentication import AuthHandler
 from core.models import SensorSummaries
 from core.schema import DataIngestionLog as SchemaDataIngestionLog
@@ -23,20 +22,23 @@ from fastapi import (
     Query,
     status,
 )
-from routers.helpers.helperfunctions import (
+from routers.logs import add_log
+from routers.sensorSummaries import upsert_sensorSummary
+from routers.services.crud.crud import CRUD
+from routers.services.firebase_notifications import (
     addFirebaseNotifcationDataIngestionTask,
     clearFirebaseNotifcationDataIngestionTask,
-    convertDateRangeStringToDate,
     updateFirebaseNotifcationDataIngestionTask,
 )
-from routers.helpers.sensorsSharedFunctions import (
+from routers.services.formatting import convertDateRangeStringToDate
+from routers.services.sensorsSharedFunctions import (
     deactivate_unsynced_sensor,
+    get_lookupids_of_sensors,
     get_sensor_dict,
     get_sensor_id_and_serialnum_from_lookup_id,
     set_last_updated,
 )
-from routers.helpers.sensorSummarySharedFunctions import upsert_sensorSummary
-from routers.logs import add_log
+from sensor_api_wrappers.SensorFactoryWrapper import SensorFactoryWrapper
 
 load_dotenv()
 
@@ -231,30 +233,6 @@ async def clear_data_ingestion_queue(cron_job_token=Header(...)):
 #################################################################################################################################
 #                                              helper functions                                                                 #
 #################################################################################################################################
-def get_lookupids_of_sensors(ids: list[int], idtype: str) -> tuple[dict[int, dict[str, str]], list[int]]:
-    """
-    Get all active sensors data scraping information from the database and the flagged sensors that have not been updated in over 90 days
-    :param ids: list of sensor ids or sensor type ids
-    :param idtype: type of id. Can be sensor_id or sensor_type_id
-    :return dict: where nested dict is [sensor_type_name][lookup_id] = {"stationary_box": stationary_box, "time_updated": time_updated}
-    """
-    sensors, flagged_sensors = get_sensor_dict(idtype, ids)
-
-    # group sensors by type into a new nested dictionary dict[sensor_type][lookup_id] = {"stationary_box": stationary_box, "time_updated": time_updated}
-    sensor_dict = {}
-    for data in sensors:
-        if data["type_name"] in sensor_dict:
-            sensor_dict[data["type_name"]][str(data["lookup_id"])] = {"stationary_box": data["stationary_box"], "time_updated": data["time_updated"]}
-        else:
-            sensor_dict[data["type_name"]] = {str(data["lookup_id"]): {"stationary_box": data["stationary_box"], "time_updated": data["time_updated"]}}
-
-        # if this is a user data ingestion task then we need to remove the time_updated field
-        if idtype == "sensor_id":
-            del sensor_dict[data["type_name"]][str(data["lookup_id"])]["time_updated"]
-
-    return sensor_dict, flagged_sensors
-
-
 def get_dates(days: int) -> Tuple[str, str]:
     """
     :return: Tuple[start, end] -> now +/- days, now in format dd-mm-yyyy

@@ -4,8 +4,8 @@ import warnings
 from unittest import TestCase
 from unittest.mock import Mock, patch
 
-from api_wrappers.SensorFactoryWrapper import SensorFactoryWrapper
 from requests import Session
+from sensor_api_wrappers.SensorFactoryWrapper import SensorFactoryWrapper
 
 
 class Test_SensorFactoryWrapper(TestCase):

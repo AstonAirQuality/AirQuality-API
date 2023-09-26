@@ -46,6 +46,10 @@ class SensorTypes(Base):
     description = Column(String(250), nullable=False)
     properties = Column(JSON, nullable=False)
 
+    def columns_iter():
+        for c in SensorTypes.__getattribute__("__table__").columns:
+            yield c.name
+
 
 class Sensors(Base):
     """Sensors table extends Base class from database.py

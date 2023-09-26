@@ -6,11 +6,13 @@ from unittest import TestCase
 from unittest.mock import MagicMock, patch
 
 import pandas as pd
-from api_wrappers.concrete.factories.sensorCommunity_factory import (
+from dotenv import load_dotenv
+from sensor_api_wrappers.concrete.factories.sensorCommunity_factory import (
     SensorCommunityFactory,
 )
-from api_wrappers.concrete.products.sensorCommunity_sensor import SensorCommunitySensor
-from dotenv import load_dotenv
+from sensor_api_wrappers.concrete.products.sensorCommunity_sensor import (
+    SensorCommunitySensor,
+)
 
 
 class MockResponse:

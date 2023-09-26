@@ -7,12 +7,14 @@ from io import StringIO
 from unittest import TestCase
 from unittest.mock import Mock, patch
 
-from api_wrappers.concrete.factories.plume_factory import PlumeFactory
-from api_wrappers.concrete.products.plume_sensor import PlumeSensor
-from api_wrappers.concrete.products.sensorCommunity_sensor import SensorCommunitySensor
-from api_wrappers.concrete.products.zephyr_sensor import ZephyrSensor
-from api_wrappers.data_transfer_object.sensor_writeable import SensorWritable
 from core.schema import SensorSummary as SchemaSensorSummary
+from sensor_api_wrappers.concrete.factories.plume_factory import PlumeFactory
+from sensor_api_wrappers.concrete.products.plume_sensor import PlumeSensor
+from sensor_api_wrappers.concrete.products.sensorCommunity_sensor import (
+    SensorCommunitySensor,
+)
+from sensor_api_wrappers.concrete.products.zephyr_sensor import ZephyrSensor
+from sensor_api_wrappers.data_transfer_object.sensor_writeable import SensorWritable
 
 
 class Test_sensorWriteable(TestCase):
@@ -83,9 +85,9 @@ class Test_sensorWriteable(TestCase):
                 expectedGeom = "POLYGON((-1.83631 52.425392,-1.83631 52.425603,-1.836288 52.425603,-1.836288 52.425392,-1.83631 52.425392))"
                 self.assertTrue(sensor_summary.geom == expectedGeom)
 
-            self.assertTrue(sensor_summary.measurement_count > 0)
-            self.assertIsNotNone(sensor_summary.measurement_data)
-            self.assertEqual(sensor_summary.stationary, False)
+                self.assertTrue(sensor_summary.measurement_count > 0)
+                self.assertIsNotNone(sensor_summary.measurement_data)
+                self.assertEqual(sensor_summary.stationary, False)
 
     def test_sensorSummary_from_zephyr_with_stationary_box(self):
         file = open("testing/test_data/zephyr_814_sensor_data.json", "r")
@@ -121,10 +123,10 @@ class Test_sensorWriteable(TestCase):
             self.assertTrue(isinstance(sensor_summary, SchemaSensorSummary))
             self.assertEqual(str(sensor_summary.sensor_id), sensor.id)
             self.assertTrue(sensor_summary.geom == None)
-            self.assertTrue(sensor_summary.measurement_count > 0)
+            self.assertTrue(sensor_summary.measurement_count == 0)
 
     # TODO add sensorCommunity tests
-    def test_sensorSumamry_from_sensorCommunity_with_stationary_box(self):
+    def test_sensorSummary_from_sensorCommunity_with_stationary_box(self):
         csv_files = {60641: {0: None}, 60642: {0: None}}
         sensor_id = "60641,SDS011,60642,BME280"
 

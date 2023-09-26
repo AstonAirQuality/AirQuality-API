@@ -4,8 +4,8 @@ import warnings
 import zipfile
 from unittest import TestCase
 
-from api_wrappers.concrete.factories.plume_factory import PlumeFactory
-from api_wrappers.concrete.products.plume_sensor import PlumeSensor
+from sensor_api_wrappers.concrete.factories.plume_factory import PlumeFactory
+from sensor_api_wrappers.concrete.products.plume_sensor import PlumeSensor
 
 
 class Test_plumeSensor(TestCase):

@@ -8,9 +8,9 @@ from unittest.mock import patch
 
 import pandas as pd
 import requests
-from api_wrappers.concrete.factories.zephyr_factory import ZephyrFactory
-from api_wrappers.concrete.products.zephyr_sensor import ZephyrSensor
 from dotenv import load_dotenv
+from sensor_api_wrappers.concrete.factories.zephyr_factory import ZephyrFactory
+from sensor_api_wrappers.concrete.products.zephyr_sensor import ZephyrSensor
 
 
 class Test_zephyrFactory(TestCase):

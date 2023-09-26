@@ -4,7 +4,7 @@ import warnings
 from unittest import TestCase
 
 import pandas as pd
-from api_wrappers.concrete.products.zephyr_sensor import ZephyrSensor
+from sensor_api_wrappers.concrete.products.zephyr_sensor import ZephyrSensor
 
 
 class Test_zephyrSensor(TestCase):

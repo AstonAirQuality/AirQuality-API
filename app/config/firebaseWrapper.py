@@ -72,7 +72,7 @@ class Auth:
         headers = {"content-type": "application/json; charset=UTF-8"}
         data = json.dumps({"email": email, "password": password, "returnSecureToken": True})
         request_object = requests.post(request_ref, headers=headers, data=data)
-        self.raise_detailed_error(request_object)
+        raise_detailed_error(request_object)
         self.current_user = request_object.json()
         return request_object.json()
 
@@ -81,7 +81,7 @@ class Auth:
     #     headers = {"content-type": "application/json; charset=UTF-8"}
     #     data = json.dumps({"returnSecureToken": True, "token": token})
     #     request_object = requests.post(request_ref, headers=headers, data=data)
-    #     self.raise_detailed_error(request_object)
+    #     raise_detailed_error(request_object)
     #     return request_object.json()
 
     # def refresh(self, refresh_token):
@@ -89,7 +89,7 @@ class Auth:
     #     headers = {"content-type": "application/json; charset=UTF-8"}
     #     data = json.dumps({"grantType": "refresh_token", "refreshToken": refresh_token})
     #     request_object = requests.post(request_ref, headers=headers, data=data)
-    #     self.raise_detailed_error(request_object)
+    #     raise_detailed_error(request_object)
     #     request_object_json = request_object.json()
     #     # handle weirdly formatted response
     #     user = {
@@ -104,7 +104,7 @@ class Auth:
     #     headers = {"content-type": "application/json; charset=UTF-8"}
     #     data = json.dumps({"idToken": id_token})
     #     request_object = requests.post(request_ref, headers=headers, data=data)
-    #     self.raise_detailed_error(request_object)
+    #     raise_detailed_error(request_object)
     #     return request_object.json()
 
     # def send_email_verification(self, id_token):
@@ -112,7 +112,7 @@ class Auth:
     #     headers = {"content-type": "application/json; charset=UTF-8"}
     #     data = json.dumps({"requestType": "VERIFY_EMAIL", "idToken": id_token})
     #     request_object = requests.post(request_ref, headers=headers, data=data)
-    #     self.raise_detailed_error(request_object)
+    #     raise_detailed_error(request_object)
     #     return request_object.json()
 
     # def send_password_reset_email(self, email):
@@ -120,7 +120,7 @@ class Auth:
     #     headers = {"content-type": "application/json; charset=UTF-8"}
     #     data = json.dumps({"requestType": "PASSWORD_RESET", "email": email})
     #     request_object = requests.post(request_ref, headers=headers, data=data)
-    #     self.raise_detailed_error(request_object)
+    #     raise_detailed_error(request_object)
     #     return request_object.json()
 
     # def verify_password_reset_code(self, reset_code, new_password):
@@ -128,7 +128,7 @@ class Auth:
     #     headers = {"content-type": "application/json; charset=UTF-8"}
     #     data = json.dumps({"oobCode": reset_code, "newPassword": new_password})
     #     request_object = requests.post(request_ref, headers=headers, data=data)
-    #     self.raise_detailed_error(request_object)
+    #     raise_detailed_error(request_object)
     #     return request_object.json()
 
     def create_user_with_email_and_password(self, email, password):
@@ -136,7 +136,7 @@ class Auth:
         headers = {"content-type": "application/json; charset=UTF-8"}
         data = json.dumps({"email": email, "password": password, "returnSecureToken": True})
         request_object = requests.post(request_ref, headers=headers, data=data)
-        self.raise_detailed_error(request_object)
+        raise_detailed_error(request_object)
         return request_object.json()
 
     def delete_user(self, id_token: str):
@@ -144,7 +144,7 @@ class Auth:
         headers = {"content-type": "application/json; charset=UTF-8"}
         data = json.dumps({"idToken": id_token})
         request_object = requests.post(request_ref, headers=headers, data=data)
-        self.raise_detailed_error(request_object)
+        raise_detailed_error(request_object)
         return request_object.json()
 
 

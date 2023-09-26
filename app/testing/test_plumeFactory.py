@@ -11,9 +11,9 @@ from unittest.mock import Mock, patch
 # from requests import Session
 import pandas as pd
 import requests
-from api_wrappers.concrete.factories.plume_factory import PlumeFactory
-from api_wrappers.concrete.products.plume_sensor import PlumeSensor
 from dotenv import load_dotenv
+from sensor_api_wrappers.concrete.factories.plume_factory import PlumeFactory
+from sensor_api_wrappers.concrete.products.plume_sensor import PlumeSensor
 
 
 class Test_plumeFactory(TestCase):

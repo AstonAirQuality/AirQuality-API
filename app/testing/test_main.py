@@ -43,7 +43,7 @@ class Test_Api_Main(TestCase):
         """Test the main route of the API."""
         response = self.client.get("/")
         assert response.status_code == 200
-        assert response.json() == {"message": "Hello World"}
+        assert response.json() == {"message": "Greetings from the Aston Air Quality API. 🚀"}
 
 
 if __name__ == "__main__":

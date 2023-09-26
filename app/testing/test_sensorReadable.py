@@ -6,11 +6,11 @@ from io import StringIO
 from unittest import TestCase
 from unittest.mock import Mock, patch
 
-from api_wrappers.concrete.factories.plume_factory import PlumeFactory
-from api_wrappers.concrete.products.plume_sensor import PlumeSensor
-from api_wrappers.data_transfer_object.sensor_readable import SensorReadable
 from core.schema import SensorSummary as SchemaSensorSummary
-from routers.helpers.sensorSummarySharedFunctions import JsonToSensorReadable
+from routers.services.formatting import JsonToSensorReadable
+from sensor_api_wrappers.concrete.factories.plume_factory import PlumeFactory
+from sensor_api_wrappers.concrete.products.plume_sensor import PlumeSensor
+from sensor_api_wrappers.data_transfer_object.sensor_readable import SensorReadable
 
 
 class Test_sensorReadable(TestCase):
