@@ -10,15 +10,15 @@ class Update(abstractbaseCRUD):
     def __init__(self) -> None:
         super().__init__()
 
-    def db_update(self, model: any, filter_expression: any, data: dict):
+    def db_update(self, model: any, filter_expressions: any, data: dict):
         """Update a row in the database
         :param model: model to update
-        :param filter_expression: filter expression
+        :param filter_expressions: filter expressions
         :param data: data to update
         :return: updated row"""
 
         try:
-            self.db.query(model).filter(filter_expression).update(data)
+            self.db.query(model).filter(*filter_expressions).update(data)
             self.db.commit()
         except IntegrityError as e:
             if isinstance(e.orig, UniqueViolation):
@@ -30,5 +30,3 @@ class Update(abstractbaseCRUD):
             self.db.rollback()
             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
         return data
-
-    # def db_get_then_update

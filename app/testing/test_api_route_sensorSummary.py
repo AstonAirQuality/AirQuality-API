@@ -3,14 +3,14 @@ import warnings
 import zipfile
 from unittest import TestCase
 
-from api_wrappers.concrete.factories.plume_factory import PlumeFactory
-from api_wrappers.concrete.products.plume_sensor import PlumeSensor
 from core.models import Sensors as ModelSensor
 from core.models import SensorSummaries as ModelSensorSummary
 from core.models import SensorTypes as ModelSensorType
 from fastapi.testclient import TestClient
 from main import app
-from routers.helpers.sensorSummarySharedFunctions import upsert_sensorSummary
+from routers.sensorSummaries import upsert_sensorSummary
+from sensor_api_wrappers.concrete.factories.plume_factory import PlumeFactory
+from sensor_api_wrappers.concrete.products.plume_sensor import PlumeSensor
 from testing.application_config import (
     authenticate_client,
     database_config,
@@ -50,7 +50,8 @@ class Test_Api_6_SensorSummary(TestCase):
             # add a sensor summary to the database
             for summary in summaries:
                 summary.sensor_id = cls.sensor_id
-                upsert_sensorSummary(summary)
+                if summary.measurement_count > 0:
+                    upsert_sensorSummary(summary)
         except Exception as e:
             cls.db.rollback()
 
@@ -102,7 +103,6 @@ class Test_Api_6_SensorSummary(TestCase):
         self.assertTrue(len(response.json()) > 0)
 
     def test_5_get_sensorSummary_spatial_intersect(self):
-
         response = self.client.get(
             "/sensor-summary",
             params={
@@ -189,6 +189,7 @@ class Test_Api_6_SensorSummary(TestCase):
 
         # assert geojson content is valid
         geojson = response.json()[0]["geojson"]
+
         self.assertTrue(geojson["type"] == "FeatureCollection")
         self.assertTrue(isinstance(geojson["features"], list))
         for feature in geojson["features"]:

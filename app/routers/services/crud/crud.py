@@ -5,5 +5,15 @@ from routers.services.crud.update import Update
 
 
 class CRUD(Create, Read, Update, Delete):
-    def __init__(self) -> None:
-        super().__init__()
+    _instance = None
+
+    # Singleton pattern
+    def __new__(cls):
+        if cls._instance is None:
+            print("Creating the object")
+            cls._instance = super(CRUD, cls).__new__(cls)
+            # Put any initialization here.
+        return cls._instance
+
+    def clear_db_session(self):
+        self.db.close()

@@ -9,7 +9,7 @@ from cryptography import x509
 from cryptography.hazmat.backends import default_backend
 from fastapi import HTTPException, Security
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
-from routers.services.usersSharedFunctions import get_user_token_info
+from routers.services.crud.crud import CRUD
 
 
 class AuthHandler(Authorisation):
@@ -54,7 +54,7 @@ class AuthHandler(Authorisation):
         """
         decoded_jwt = self.verify_firebase_token(token)
 
-        user_info = get_user_token_info(decoded_jwt["sub"])
+        user_info = CRUD().get_user_token_info(decoded_jwt["sub"])
 
         if user_info == None:
             raise HTTPException(status_code=401, detail="User does not exist. Please register an account")

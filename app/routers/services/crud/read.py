@@ -1,29 +1,40 @@
 from core.models import Users as ModelUser
 from fastapi import HTTPException, status
-from psycopg2.errors import UniqueViolation
 from routers.services.crud.abstractCRUD import abstractbaseCRUD
 from routers.services.formatting import convertWKBtoWKT
-
-# error handling
-from sqlalchemy.exc import IntegrityError
 
 
 class Read(abstractbaseCRUD):
     def __init__(self) -> None:
         super().__init__()
 
-    def db_get_all(self, model: any):
+    def db_get_with_model(self, model: any, order_columns: bool = True, filter_expressions: list = None, first: bool = False, page: int = None, limit: int = None):
         """Get all rows from the database
         :param model: model to query
+        :filter_expressions: filter expressions
+        :param first: return only the first row or all rows
+        :param page: page number (optional)
+        :param limit: number of rows per page (optional)
         :return: all rows"""
+
         try:
-            result = self.order_columns(model, self.db.query(model).all())
+            query = self.db.query(model)
+            if filter_expressions is not None:
+                query = query.filter(*filter_expressions)
+            if first:
+                result = query.first()
+            elif page is not None and limit is not None:
+                result = query.offset((page - 1) * limit).limit(limit).all()
+            else:
+                result = query.all()
+
+            if order_columns:
+                result = self.order_columns(model, result)
         except Exception as e:
             self.db.rollback()
-
-            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e.orig).split("DETAIL:")[0])
+            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
         return result
-    
+
     def db_get_from_column(self, model: any, column: str, searchvalue: str):
         """Get all rows from the database
         :param model: model to query
@@ -32,20 +43,7 @@ class Read(abstractbaseCRUD):
             result = self.order_columns(model, self.db.query(model).filter(getattr(model, column).like(f"%{searchvalue}%")).all())
         except Exception as e:
             self.db.rollback()
-
-            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e.orig).split("DETAIL:")[0])
-        return result
-
-    def db_get_paginated(self, model: any, page: int, limit: int):
-        """Get all rows from the database
-        :param page: page number
-        :param limit: number of rows per page
-        :return: all rows"""
-        try:
-            result = self.order_columns(model, self.db.query(model).offset((page - 1) * limit).limit(limit).all())
-        except Exception:
-            self.db.rollback()
-            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Could not retrieve all rows")
+            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
         return result
 
     def db_get_by_id(self, model: any, id: int):
@@ -53,37 +51,40 @@ class Read(abstractbaseCRUD):
         :param id: id of the row
         :return: row"""
         try:
-            result = self.order_columns(model, self.db.query(model).filter(model.id == id).first())
+            result = self.db.query(model).filter(model.id == id).first()
         except Exception as e:
             print(e)
             self.db.rollback()
             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Could not retrieve row")
         return result
 
-    def db_get_all_joined(self, model: any, join_models: list, fields: list = None):
-        """Get all rows from the database with joins and custom fields
+    def db_get_fields_using_filter_expression(
+        self, filter_expressions: list = None, fields: list = None, model: any = None, join_models: list = None, first: bool = False, page: int = None, limit: int = None
+    ):
+        """Get rows from the database with joins and custom fields
+        :param filter_expressions: filter expressions
+        :param fields: fields to return
         :param model: model to query
         :param join_models: models to join
-        :param fields: fields to return
-        :return: all rows"""
+        :param first: return only the first row or all rows
+        :param page: page number (optional)
+        :param limit: number of rows per page (optional)
+        :return: rows"""
         try:
-            result = self.db.query(*fields).select_from(model).join(*join_models, isouter=True).all()
+            query = self.db.query(*fields)
+            if model is not None and join_models is not None:
+                query = query.select_from(model).join(*join_models, isouter=True)
+            if filter_expressions is not None:
+                query = query.filter(*filter_expressions)
+            if first:
+                result = query.first()
+            elif page is not None and limit is not None:
+                result = query.offset((page - 1) * limit).limit(limit).all()
+            else:
+                result = query.all()
         except Exception as e:
             self.db.rollback()
             print(e)
-            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Could not retrieve all rows")
-        return result
-
-    def db_get_all_joined_paginated(self, model: any, join_models: list, fields: list = None, page: int = 1, limit: int = 10):
-        """Get all rows from the database with joins and custom fields
-        :param model: model to query
-        :param join_models: models to join
-        :param fields: fields to return
-        :return: all rows"""
-        try:
-            result = self.db.query(*fields).select_from(model).join(*join_models, isouter=True).offset((page - 1) * limit).limit(limit).all()
-        except Exception:
-            self.db.rollback()
             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Could not retrieve all rows")
         return result
 
@@ -106,10 +107,4 @@ class Read(abstractbaseCRUD):
         """Get user token info from the database
         :param uid: user id
         :return: tuple of user role and username"""
-        try:
-            result = self.db.query(ModelUser.role, ModelUser.username).filter(ModelUser.uid == uid).first()
-        except Exception:
-            self.db.rollback()
-            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Could not retrieve user")
-
-        return result
+        return self.db_get_fields_using_filter_expression(filter_expressions=[ModelUser.uid == uid], fields=[ModelUser.role, ModelUser.username], first=True)

@@ -3,7 +3,9 @@ import warnings
 from unittest import TestCase
 
 import pandas as pd
-from api_wrappers.concrete.products.sensorCommunity_sensor import SensorCommunitySensor
+from sensor_api_wrappers.concrete.products.sensorCommunity_sensor import (
+    SensorCommunitySensor,
+)
 
 
 class Test_sensorCommunitySensor(TestCase):

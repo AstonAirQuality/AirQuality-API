@@ -1,50 +1,25 @@
-import datetime as dt
-from enum import Enum
-
+# dependencies for hidden routes
 from core.models import Sensors as ModelSensor
 from core.models import SensorSummaries as ModelSensorSummary
 from core.models import SensorTypes as ModelSensorType
-from db.database import SessionLocal
+from core.schema import SensorSummary as SchemaSensorSummary
+
+# dependencies for exposed routes
 from fastapi import APIRouter, HTTPException, Query, status
-from fastapi.encoders import jsonable_encoder
-from fastapi.responses import JSONResponse
-from routers.services.formatting import convertDateRangeStringToDate, convertWKBtoWKT
-from routers.services.query_building import searchQueryFilters
-from routers.services.sensorSummarySharedFunctions import (
-    deserializeMeasurementData,
+from routers.services.crud.crud import CRUD
+from routers.services.enums import (
+    averagingMethod,
+    sensorSummaryColumns,
+    spatialQueryType,
+)
+from routers.services.formatting import (
+    convertDateRangeStringToTimestamp,
+    format_sensor_summary_data,
     sensorSummariesToGeoJson,
 )
+from routers.services.query_building import searchQueryFilters
 
 sensorSummariesRouter = APIRouter()
-
-db = SessionLocal()
-
-
-#################################################################################################################################
-#                                                  Enums                                                                        #
-#################################################################################################################################
-class sensorSummaryColumns(str, Enum):
-    sensor_id = "sensor_id"
-    measurement_count = "measurement_count"
-    measurement_data = "measurement_data"
-    stationary = "stationary"
-    geom = "geom"
-    timestamp = "timestamp"
-
-
-class spatialQueryType(str, Enum):
-    intersects = "intersects"
-    contains = "contains"
-    within = "within"
-    overlaps = "overlaps"
-
-
-class averagingMethod(str, Enum):
-    mean = "mean"
-    count = "count"
-    median = "median"
-    min = "min"
-    max = "max"
 
 
 #################################################################################################################################
@@ -70,47 +45,25 @@ def get_sensorSummaries(
     \n :param sensor_ids: list of sensor ids to filter by if none then all sensors that match the above filters will be returned
     \n :return: sensor summaries"""
 
-    (startDate, endDate) = convertDateRangeStringToDate(start, end)
-
-    timestampStart = int(dt.datetime.timestamp(startDate.replace(tzinfo=dt.timezone.utc)))
-    timestampEnd = int(dt.datetime.timestamp(endDate.replace(tzinfo=dt.timezone.utc)))
+    (timestampStart, timestampEnd) = convertDateRangeStringToTimestamp(start, end)
 
     try:
         fields = []
         for col in columns:
             fields.append(getattr(ModelSensorSummary, col))
 
-        query = db.query(*fields).filter(ModelSensorSummary.timestamp >= timestampStart, ModelSensorSummary.timestamp <= timestampEnd)
-        query = searchQueryFilters(query, spatial_query_type, geom, sensor_ids)
-        query_result = query.all()
-
-        # # must convert wkb to wkt string to be be api friendly
-        results = []
-        for row in query_result:
-            row_as_dict = dict(row._mapping)
-            if "geom" in row_as_dict:
-                row_as_dict["geom"] = convertWKBtoWKT(row_as_dict["geom"])
-
-            if "timestamp" in row_as_dict:
-                row_as_dict["timestamp_UTC"] = row_as_dict.pop("timestamp")
-
-            if "measurement_data" in row_as_dict and deserialize:
-                # convert the json string to a python dict
-                row_as_dict["measurement_data"] = jsonable_encoder(deserializeMeasurementData(row_as_dict["measurement_data"]))
-
-            results.append(row_as_dict)
+        filter_expressions = searchQueryFilters([ModelSensorSummary.timestamp >= timestampStart, ModelSensorSummary.timestamp <= timestampEnd], spatial_query_type, geom, sensor_ids)
+        query_result = CRUD().db_get_fields_using_filter_expression(filter_expressions, fields)
+        return format_sensor_summary_data(query_result, deserialize)
 
     except Exception as e:
-        db.rollback()
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
-
-    return results
 
 
 # TODO include stationary bool and geom in the query. for stationary sensors use its geom for the bounding boxes in the geojson.
 # for non stationary sensors calculate the bounding box from the sensor readings
 @sensorSummariesRouter.get("/as-geojson")
-def get_geojson_Export_of_sensorSummaries(
+def get_sensorSummaries_geojson_export(
     start: str = Query(..., description=" format: dd-mm-yyyy"),
     end: str = Query(..., description="format: dd-mm-yyyy"),
     averaging_frequency: str = Query(..., description="examples: 'H', '8H' , 'D', 'M', 'Y'"),
@@ -130,10 +83,7 @@ def get_geojson_Export_of_sensorSummaries(
     \n :return: geojson of sensor summaries
     """
 
-    (startDate, endDate) = convertDateRangeStringToDate(start, end)
-
-    timestampStart = int(dt.datetime.timestamp(startDate.replace(tzinfo=dt.timezone.utc)))
-    timestampEnd = int(dt.datetime.timestamp(endDate.replace(tzinfo=dt.timezone.utc)))
+    (timestampStart, timestampEnd) = convertDateRangeStringToTimestamp(start, end)
 
     # append all the columns we want to return from the sensor summary table and the sensor type name from the sensor type table
     fields = []
@@ -145,33 +95,90 @@ def get_geojson_Export_of_sensorSummaries(
     fields.append(getattr(ModelSensor, "id").label("model_sensor_id"))
 
     try:
-        query = db.query(*fields).select_from(ModelSensorSummary).filter(ModelSensorSummary.timestamp >= timestampStart, ModelSensorSummary.timestamp <= timestampEnd)
-
-        # join the sensor type table to get the sensor type name
-        query = query.join(ModelSensor, ModelSensorSummary.sensor_id == ModelSensor.id, isouter=True)
-        query = query.join(ModelSensorType, ModelSensor.type_id == ModelSensorType.id, isouter=True)
-
-        query = searchQueryFilters(query, spatial_query_type, geom, sensor_ids)
-        query_result = query.all()
-
-        # # must convert wkb to wkt string to be be api friendly
-        results = []
-        for row in query_result:
-            row_as_dict = dict(row._mapping)
-            if "geom" in row_as_dict:
-                row_as_dict["geom"] = convertWKBtoWKT(row_as_dict["geom"])
-
-            if "timestamp" in row_as_dict:
-                row_as_dict["timestamp_UTC"] = row_as_dict.pop("timestamp")
-
-            # # add the sensor type name to the sensor id to make it easier to identify the sensor type in the geojson
-            # if "type_name" in row_as_dict:
-            #     row_as_dict["sensor_id"] = str(row_as_dict["sensor_id"]) + "_" + row_as_dict.pop("type_name")
-
-            results.append(row_as_dict)
+        filter_expressions = searchQueryFilters([ModelSensorSummary.timestamp >= timestampStart, ModelSensorSummary.timestamp <= timestampEnd], spatial_query_type, geom, sensor_ids)
+        join_models = [ModelSensor, ModelSensorType]
+        query_result = CRUD().db_get_fields_using_filter_expression(filter_expressions, fields, ModelSensorSummary, join_models)
+        results = format_sensor_summary_data(query_result, False)
 
     except Exception as e:
-        db.rollback()
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
 
     return sensorSummariesToGeoJson(results, averaging_methods, averaging_frequency)
+
+
+#################################################################################################################################
+#                                                  Hiden Routes                                                                 #
+#################################################################################################################################
+
+
+#################################################################################################################################
+#                                                  Create                                                                       #
+#################################################################################################################################
+# used for background tasks
+# @sensorSummariesRouter.post("/", response_model=SchemaSensorSummary)
+def add_sensorSummary(sensorSummary: SchemaSensorSummary):
+    """adds a sensor summary
+    :param sensorSummary: sensor summary to add
+    :return: sensor summary added"""
+
+    sensorSummary = ModelSensorSummary(
+        timestamp=sensorSummary.timestamp,
+        sensor_id=sensorSummary.sensor_id,
+        geom=sensorSummary.geom,
+        measurement_count=sensorSummary.measurement_count,
+        measurement_data=sensorSummary.measurement_data,
+        stationary=sensorSummary.stationary,
+    )
+
+    CRUD().db_add(ModelSensorSummary, sensorSummary)
+
+    # converting wkb element to wkt string
+    # sensorSummary.geom = convertWKBtoWKT(sensorSummary.geom)
+
+    # return sensorSummary
+
+
+#################################################################################################################################
+#                                                  Update                                                                       #
+#################################################################################################################################
+# used for background tasks
+# @sensorSummariesRouter.put("/", response_model=SchemaSensorSummary)
+def update_sensorSummary(sensorSummary: SchemaSensorSummary):
+    """updates a sensor summary
+    :param sensorSummary: sensor summary to update
+    :return: updated sensor summary"""
+
+    filters = [ModelSensorSummary.timestamp == sensorSummary.timestamp, ModelSensorSummary.sensor_id == sensorSummary.sensor_id]
+    data = {
+        "geom": sensorSummary.geom,
+        "measurement_count": sensorSummary.measurement_count,
+        "measurement_data": sensorSummary.measurement_data,
+        "stationary": sensorSummary.stationary,
+    }
+
+    CRUD().db_update(ModelSensorSummary, filters, data)
+
+    # converting wkb element to wkt string
+    # sensorSummary.geom = convertWKBtoWKT(sensorSummary.geom)
+
+    # return sensorSummary
+
+
+# used for background tasks
+# @sensorSummariesRouter.put("/upsert", response_model=SchemaSensorSummary)
+def upsert_sensorSummary(sensorSummary: SchemaSensorSummary):
+    """upserts a sensor summary
+    :param sensorSummary: sensor summary to upsert
+    :return: upserted sensor summary"""
+
+    try:
+        CRUD().db_add(ModelSensorSummary, sensorSummary.dict())
+    except HTTPException as e:
+        if e.status_code == status.HTTP_409_CONFLICT:
+            # update existing sensorSummary
+            update_sensorSummary(sensorSummary)
+
+    # converting wkb element to wkt string
+    # sensorSummary.geom = convertWKBtoWKT(sensorSummary.geom)
+
+    # return sensorSummary

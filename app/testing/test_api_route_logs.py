@@ -67,7 +67,7 @@ class Test_Api_5_Logs(TestCase):
         """Test the delete logs route of the API"""
         response = self.client.delete(f"/data-ingestion-logs/{self.dateTime_key}")
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.json(), {"message": "Log deleted successfully"})
+        self.assertEqual(response.json(), True)
 
         # check that the logs were deleted from the database
         db_logs = self.db.query(ModelLogs).filter(ModelLogs.date == self.dateTime_key).all()

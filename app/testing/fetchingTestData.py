@@ -7,8 +7,8 @@ from os import environ as env
 
 import pandas as pd
 import requests  # TODO remove
-from api_wrappers.concrete.factories.plume_factory import PlumeFactory
 from dotenv import load_dotenv
+from sensor_api_wrappers.concrete.factories.plume_factory import PlumeFactory
 
 
 class FetchTestData:
@@ -39,7 +39,6 @@ class FetchTestData:
             f.close()
         zip_ = zipfile.ZipFile(io.BytesIO(sensor_zip))
         for name in zip_.namelist():
-
             # skip measurement data
             if "position" not in pathlib.PurePath(name).parts[3]:
                 continue

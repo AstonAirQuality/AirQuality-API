@@ -1,15 +1,14 @@
 # dependancies:
 import datetime as dt
+from datetime import date
 
 from core.authentication import AuthHandler
 from core.models import Logs as ModelLogs
 from core.schema import Log as SchemaLog
-from db.database import SessionLocal
 from fastapi import APIRouter, Depends, HTTPException, status
+from routers.services.crud.crud import CRUD
 
 logsRouter = APIRouter()
-
-db = SessionLocal()
 auth_handler = AuthHandler()
 
 
@@ -20,14 +19,9 @@ def add_log(log_timestamp: str, log: SchemaLog):
     """add a log to the database
     \n :param log: log schema
     \n :return: log object"""
-    try:
-        log = ModelLogs(date=dt.datetime.strptime(log_timestamp, "%Y-%m-%d %H:%M:%S"), data=log.log_data)
-        db.add(log)
-        db.commit()
-    except Exception as e:
-        db.rollback()
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
-    return log
+
+    log = {"date": dt.datetime.strptime(log_timestamp, "%Y-%m-%d %H:%M:%S"), "data": log.log_data}
+    return CRUD().db_add(ModelLogs, log)
 
 
 #################################################################################################################################
@@ -41,37 +35,21 @@ def get_log(payload=Depends(auth_handler.auth_wrapper)):
 
     if auth_handler.checkRoleAdmin(payload) == False:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authorized")
-    try:
-        result = db.query(ModelLogs).all()
-    except Exception:
-        db.rollback()
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Could retrieve log")
-    return result
+    else:
+        return CRUD().db_get_with_model(ModelLogs)
 
 
 @logsRouter.get("/findByDate/{log_date}")
-def get_log(log_date: str, payload=Depends(auth_handler.auth_wrapper)):
+def get_log(log_date: date, payload=Depends(auth_handler.auth_wrapper)):
     """get a log from the database by date
     \n :param log_date: date of the log. Format: YYYY-MM-DD
     \n :param payload: auth payload
     \n :return: log object"""
     if auth_handler.checkRoleAdmin(payload) == False:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authorized")
-
-    try:
-        log_date = dt.datetime.strptime(log_date, "%Y-%m-%d")
+    else:
         end_date = (log_date + dt.timedelta(days=1)).strftime("%Y-%m-%d")
-        log_date = log_date.strftime("%Y-%m-%d")
-    except Exception:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid date format")
-
-    try:
-        result = db.query(ModelLogs).filter(ModelLogs.date >= log_date, ModelLogs.date < end_date).all()
-    except Exception:
-        db.rollback()
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Could retrieve log")
-
-    return result
+        return CRUD().db_get_with_model(ModelLogs, filter_expressions=[ModelLogs.date >= log_date, ModelLogs.date < end_date])
 
 
 #################################################################################################################################
@@ -88,11 +66,5 @@ def delete_log(log_date: str, payload=Depends(auth_handler.auth_wrapper)):
     \n :return: log object"""
     if auth_handler.checkRoleAdmin(payload) == False:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authorized")
-
-    try:
-        db.query(ModelLogs).filter(ModelLogs.date == log_date).delete()
-        db.commit()
-    except Exception:
-        db.rollback()
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Could not delete log")
-    return {"message": "Log deleted successfully"}
+    else:
+        return CRUD().db_delete(ModelLogs, [ModelLogs.date == log_date])

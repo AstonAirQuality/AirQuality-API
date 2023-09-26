@@ -1,11 +1,13 @@
 import unittest
 import warnings
 from unittest import TestCase
+from unittest.mock import patch
 
 from core.models import Sensors as ModelSensor
 from core.models import SensorTypes as ModelSensorType
 from fastapi.testclient import TestClient
 from main import app
+from sensor_api_wrappers.SensorFactoryWrapper import SensorFactoryWrapper
 from testing.application_config import (
     authenticate_client,
     database_config,
@@ -60,22 +62,32 @@ class Test_Api_2_Sensor(TestCase):
         """Test the post sensor route of the API."""
 
         geom = "POLYGON ((-122.419 37.774, -122.419 37.775, -122.418 37.775, -122.418 37.774, -122.419 37.774))"
-        sensor = {"lookup_id": "test_post_sensor", "serial_number": "test_post_sensor", "type_id": self.sensor_type_id, "active": True, "user_id": None, "stationary_box": geom}
+        sensor = {
+            "lookup_id": "test_post_sensor",
+            "serial_number": "test_post_sensor",
+            "type_id": self.sensor_type_id,
+            "active": True,
+            "user_id": None,
+            "stationary_box": geom,
+        }
 
         response = self.client.post("/sensor", json=sensor)
         self.assertEqual(response.status_code, 200)
+        sensor["active_reason"] = "ACTIVATED_BY_USER"
         self.assertEqual(response.json(), sensor)
 
         # check that the sensor was added to the database
         db_sensor = self.db.query(ModelSensor).filter(ModelSensor.lookup_id == "test_post_sensor").first()
         self.assertEqual(db_sensor.lookup_id, "test_post_sensor")
 
-    def test_3_post_plume_sensor(self):
+    @patch.object(SensorFactoryWrapper, "fetch_plume_platform_lookupids", return_value={"02:00:00:00:48:13": 18699})
+    def test_3_post_plume_sensor(self, mocked_sensor):
         """Test the post sensor route of the API."""
 
         plume_serial_numbers = {"serial_numbers": ["02:00:00:00:48:13"]}
 
         response = self.client.post("/sensor/plume-sensors", json=plume_serial_numbers)
+        mocked_sensor.assert_called()
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json(), {"02:00:00:00:48:13": 18699})
 
@@ -83,7 +95,8 @@ class Test_Api_2_Sensor(TestCase):
         db_sensor = self.db.query(ModelSensor).filter(ModelSensor.lookup_id == "18699").first()
         self.assertEqual(db_sensor.lookup_id, "18699")
 
-    def test_4_post_duplicate_plume_sensor(self):
+    @patch.object(SensorFactoryWrapper, "fetch_plume_platform_lookupids", return_value={"02:00:00:00:48:13": 18699})
+    def test_4_post_duplicate_plume_sensor(self, mocked_sensor):
         """Test the post sensor route of the API."""
 
         # check that the sensor already exists in the database
@@ -121,6 +134,7 @@ class Test_Api_2_Sensor(TestCase):
 
         response = self.client.put(f"/sensor/{self.sensor_id}", json=sensor)
         self.assertEqual(response.status_code, 200)
+        sensor["active_reason"] = "ACTIVATED_BY_USER"
         self.assertEqual(response.json(), sensor)
 
         # check that the sensor was updated in the database

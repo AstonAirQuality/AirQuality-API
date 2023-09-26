@@ -20,7 +20,7 @@ class Test_Api_3_Auth(TestCase):
         cls.client = TestClient(app)
         cls.client.headers.update({"Content-Type": "application/json"})
         cls.db = database_config()
-        cls.user_credentials = {"email": "test@test.com", "password": "testpassword"}
+        cls.user_credentials = {"email": "api_test@test.com", "password": "testpassword"}
 
     @classmethod
     def tearDownClass(cls):
@@ -57,7 +57,7 @@ class Test_Api_3_Auth(TestCase):
         self.client.headers.update({"Authorization": f"Bearer {access_token}"})
 
         # test that the user is in the database
-        db_user = self.db.query(ModelUser).filter(ModelUser.email == "test@test.com").first()
+        db_user = self.db.query(ModelUser).filter(ModelUser.email == self.user_credentials["email"]).first()
         self.assertIsNotNone(db_user)
 
     def test_3_login(self):

@@ -5,21 +5,27 @@ from os import environ as env
 from core.authentication import AuthHandler
 from core.models import Users as ModelUser
 from core.schema import User as SchemaUser
-from db.database import SessionLocal
 from dotenv import load_dotenv
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from routers.services.crud.crud import CRUD
 from routers.services.enums import userColumns
 
-# error handling
-from sqlalchemy.exc import IntegrityError
-
 usersRouter = APIRouter()
-
-db = SessionLocal()
 auth_handler = AuthHandler()
 
 load_dotenv()
+
+
+#################################################################################################################################
+#                                                  Create                                                                       #
+#################################################################################################################################
+# @usersRouter.post("")
+def add_user(user: SchemaUser):
+    """Add a new user to the database
+    :param user: User to add
+    :return: newly added User"""
+    return CRUD().db_add(ModelUser, user.dict())
+
 
 #################################################################################################################################
 #                                                  Read                                                                         #
@@ -31,11 +37,11 @@ def get_users(payload=Depends(auth_handler.auth_wrapper)):
     if auth_handler.checkRoleAdmin(payload) == False:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authorized")
 
-    return CRUD().db_get_all(ModelUser)
+    return CRUD().db_get_with_model(ModelUser)
 
 
 @usersRouter.get("/read-from/{column}")
-def get_user_from_column(column: userColumns,searchvalue: str, payload=Depends(auth_handler.auth_wrapper)):
+def get_user_from_column(column: userColumns, searchvalue: str, payload=Depends(auth_handler.auth_wrapper)):
     """query/read a user from searchvalue  and column name and return a json of the first user
     \n :param column: column to apply the filter on (uid, email, username)
     \n :param searchvalue : user searchvalue
@@ -48,7 +54,7 @@ def get_user_from_column(column: userColumns,searchvalue: str, payload=Depends(a
         else:
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=f"Not authorized")
 
-    return CRUD().db_get_from_column(ModelUser, column, searchvalue)
+    return CRUD().db_get_with_model(ModelUser, filter_expressions=[getattr(ModelUser, column).like(f"%{searchvalue}%")])
 
 
 #################################################################################################################################
@@ -73,7 +79,7 @@ def update_user(uid: str, user: SchemaUser, payload=Depends(auth_handler.auth_wr
             # if user is not admin, then remove the role from the user object. This will prevent the user from updating their own role
             updated_user.pop("role", None)
 
-    return CRUD().db_update(ModelUser, ModelUser.uid == uid, updated_user)
+    return CRUD().db_update(ModelUser, [ModelUser.uid == uid], updated_user)
 
 
 @usersRouter.patch("/{uid}/{role}")
@@ -87,7 +93,8 @@ def update_user_role(uid: str, role: str, payload=Depends(auth_handler.auth_wrap
     if auth_handler.checkRoleAdmin(payload) == False:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authorized")
 
-    return CRUD().db_update(ModelUser, ModelUser.uid == uid, {"role": role})
+    return CRUD().db_update(ModelUser, [ModelUser.uid == uid], {"role": role})
+
 
 #################################################################################################################################
 #                                                  Delete                                                                       #
@@ -103,4 +110,4 @@ def delete_user(uid: str, payload=Depends(auth_handler.auth_wrapper)):
         if uid != payload["sub"]:
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authorized")
 
-    return CRUD().db_delete(ModelUser, ModelUser.uid == uid)
+    return CRUD().db_delete(ModelUser, [ModelUser.uid == uid])

@@ -10,14 +10,14 @@ class Delete(abstractbaseCRUD):
     def __init__(self) -> None:
         super().__init__()
 
-    def db_delete(self, model: any, filter_expression: any):
+    def db_delete(self, model: any, filter_expressions: list):
         """Delete a row in the database
         :param model: model to delete
-        :param filter_expression: filter expression
+        :param filter_expressions: filter expressions
         :return: deleted row"""
 
         try:
-            self.db.query(model).filter(filter_expression).delete()
+            self.db.query(model).filter(*filter_expressions).delete()
             self.db.commit()
         except IntegrityError as e:
             self.db.rollback()

@@ -7,48 +7,48 @@ from routers.services.formatting import convertWKTtoWKB
 #                                   Spatial helper functions                                               #
 ############################################################################################################
 # adding search filters
-def searchQueryFilters(query: any, spatial_query_type: str, geom: str, sensor_ids: list[str]) -> any:
-    """applies search filters to the query
-    :param query: query to apply filters to
+def searchQueryFilters(filter_expressions: list[any], spatial_query_type: str, geom: str, sensor_ids: list[str]) -> list[any]:
+    """applies search filter_expressions to the query
+    :param filter_expressions: list of filter_expressions to apply
     :param spatial_query_type: type of geometry filter query to use (intersects, contains, within)
     :param geom: geometry to filter by
     :param sensor_ids: list of sensor ids to filter by
-    :return: query with filters applied"""
+    :return: list of filter_expressions to apply to the query"""
 
     if sensor_ids:
-        query = query.filter(ModelSensorSummary.sensor_id.in_(sensor_ids))
+        filter_expressions.append(ModelSensorSummary.sensor_id.in_(sensor_ids))
 
     if spatial_query_type and geom is not None:
-        query = spatialQueryBuilder(query, ModelSensorSummary, "geom", spatial_query_type, geom)
+        spatialQueryBuilder(filter_expressions, ModelSensorSummary, "geom", spatial_query_type, geom)
 
-    return query
+    return filter_expressions
 
 
-def spatialQueryBuilder(query: any, model: any, column_name: str, spatial_query_type: str, geom: str) -> any:
-    """adds spatial filters to a query
-    :param query: query to add filters to
+def spatialQueryBuilder(filter_expressions: list[any], model: any, column_name: str, spatial_query_type: str, geom: str) -> list[any]:
+    """adds spatial filter_expressions to a query
+    :param filter_expressions: list of filter_expressions to apply
     :param model: model to filter by
     :param column_name: geometry column to filter by
     :param spatial_query_type: type of spatial query to perform
     :param geom: geometry to filter by
-    :return: query with filters applied
+    :return: list of filter_expressions to apply to the query
     """
 
     geom = convertWKTtoWKB(geom)
     geom_column = getattr(model, column_name)
 
     if spatial_query_type == "intersects":
-        query = query.filter(geom_column.ST_Intersects(geom))
+        filter_expressions.append(geom_column.ST_Intersects(geom))
     elif spatial_query_type == "within":
-        query = query.filter(geom_column.ST_Within(geom))
+        filter_expressions.append(geom_column.ST_Within(geom))
     elif spatial_query_type == "contains":
-        query = query.filter(geom_column.ST_Contains(geom))
+        filter_expressions.append(geom_column.ST_Contains(geom))
     elif spatial_query_type == "overlaps":
-        query = query.filter(geom_column.ST_Overlaps(geom))
+        filter_expressions.append(geom_column.ST_Overlaps(geom))
     else:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid geom_type")
 
-    return query
+    return filter_expressions
 
 
 def joinQueryBuilder(fields: any, model: any, columns: list, join_columns: dict = None):

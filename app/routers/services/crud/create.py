@@ -12,14 +12,16 @@ class Create(abstractbaseCRUD):
 
     def db_add(self, model: any, data: dict):
         """Add a new row to the database
-        :param user: User to add
-        :return: newly added User"""
+        :param model: database model
+        :param data: data to add to the database
+        :return: newly added row"""
         try:
             self.db.add(model(**data))
             self.db.commit()
         except IntegrityError as e:
             if isinstance(e.orig, UniqueViolation):
                 self.db.rollback()
+                print(str(e.orig).split("DETAIL:")[1])
                 raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(e.orig).split("DETAIL:")[1])
             else:
                 raise Exception(e)
