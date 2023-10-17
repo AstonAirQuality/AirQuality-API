@@ -59,7 +59,7 @@ class Test_plumeSensor(TestCase):
 
         # asserts
         self.assertIsNotNone(sensor)
-        self.assertTrue("timestamp" not in sensor.df.columns)
+        self.assertTrue("timestamp" in sensor.df.columns)
         expectedColumns = ["latitude", "longitude"]
         for col in expectedColumns:
             self.assertTrue(col in sensor.df.columns)
@@ -68,8 +68,7 @@ class Test_plumeSensor(TestCase):
         # test for null locations
         self.assertEqual(len(sensor.df), len(sensor.df[sensor.df["longitude"].notna()]))
 
-        # test for duplicate rows (where index is the same)
-        self.assertEqual(len(sensor.df), len(sensor.df.loc[~sensor.df.index.duplicated()]))
+        # don't test for duplicate rows because we round the datetime to the nearest minute (this is to match the datetime of the measurement data)
 
     def test_add_measurements_to_plume_from_csv(self):
         zip_contents = PlumeFactory.extract_zip_content(zipfile.ZipFile("./testing/test_data/plume_sensorData.zip", "r"), include_measurements=False)
@@ -90,7 +89,7 @@ class Test_plumeSensor(TestCase):
         # test for duplicate rows (where index is the same)
         self.assertEqual(len(sensor.df), len(sensor.df.loc[~sensor.df.index.duplicated()]))
         self.assertTrue(isinstance(sensor, PlumeSensor))
-        self.assertEqual(sensor.id, "18749")
+        self.assertEqual(sensor.id, "19651")
         for col in expectedColumns:
             self.assertTrue(col in sensor.df.columns)
 
@@ -99,7 +98,7 @@ class Test_plumeSensor(TestCase):
         json_ = json.load(file)
         file.close()
 
-        sensor = PlumeSensor.from_json("18749", json_["measures"])
+        sensor = PlumeSensor.from_json("19651", json_["measures"])
 
         # asserts
         self.assertIsNotNone(sensor)

@@ -4,6 +4,7 @@ import csv
 import io
 from typing import Any, List
 
+import numpy as np
 import pandas as pd
 from sensor_api_wrappers.data_transfer_object.sensor_writeable import SensorWritable
 from sensor_api_wrappers.interfaces.sensor_product import SensorProduct
@@ -26,12 +27,27 @@ class PlumeSensor(SensorProduct, SensorWritable):
     def join_dataframes(self, mdf: pd.DataFrame):
         """Combines the measurement dataframe with the existing dataframe.
         :param mdf: The measurement dataframe."""
-        self.df = pd.concat([self.df, mdf], axis=1)
 
-        # drop rows where there is no measurement data
-        self.df = self.df[self.df["timestamp"].notna()]
+        # drop timestamps for measurement dataframe
+        mdf.drop(columns="timestamp", inplace=True)
+        self.df = self.df.join(mdf, how="outer")
 
-        # covert datatypes to correct types
+        # fill in null timestamps by converting the index to timestamp
+        self.df["filled_timestamps"] = self.df.index.astype(np.int64) // 10**9
+        # merge timestamp and timestamps columns on null timestamps
+        self.df["timestamp"] = self.df["timestamp"].fillna(self.df["filled_timestamps"])
+        # drop filled_timestamps column
+        self.df.drop(columns="filled_timestamps", inplace=True)
+
+        # create a new datetime column using the timestamps in format YYYY-MM-DD HH:MM:SS
+        self.df["datetime"] = pd.to_datetime(self.df["timestamp"], unit="s")
+        # set the datetime column as the index
+        self.df.set_index("datetime", inplace=True)
+
+        # rename datetime column to date
+        self.df.rename(columns={"datetime": "date"}, inplace=True)
+
+        # convert timestamp column to int
         self.df["timestamp"] = self.df["timestamp"].astype(int)
 
         # sort indexes
@@ -48,7 +64,8 @@ class PlumeSensor(SensorProduct, SensorWritable):
                 temp_df = pd.DataFrame.from_records(measurements)
                 dfList.append(temp_df)
 
-            # concatenate all dataframes and prepare dataframe. Ignore index to keep the original index.
+            # concatenate all measurement dataframes and prepare dataframe.
+            # ignore_index=True to prevent duplicate index errors
             df = pd.concat(dfList, ignore_index=True)
             df = PlumeSensor.prepare_measurements(df)
             self.join_dataframes(df)
@@ -59,7 +76,8 @@ class PlumeSensor(SensorProduct, SensorWritable):
 
     @staticmethod
     def prepare_measurements(df: pd.DataFrame) -> pd.DataFrame:
-        """Prepares the measurement dataframe for merging with the locations dataframe and renames columns to match other sensor platform types.
+        """Prepares the measurement dataframe from the Plume API JSON to make it ready for merging with the locations dataframe.\n
+        Addtionally it handles renaming columns to match other sensor platform types.\n
         :param df: The measurement dataframe.
         :return: The prepared measurement dataframe."""
 
@@ -78,7 +96,8 @@ class PlumeSensor(SensorProduct, SensorWritable):
         df.insert(0, "date", pd.to_datetime(df["timestamp"], unit="s"))
         df["date"] = df["date"].dt.floor("Min")  # used to match datetime of measurement data to the datetime of location data
         df.set_index("date", drop=True, inplace=True)
-        df = df.loc[~df.index.duplicated()]
+        df = df[~df.index.duplicated(keep="first")]  # remove any duplicated index (this will remove the extra hour recorded for daylight saving)
+        df = df.sort_index()
 
         return df
 
@@ -93,7 +112,6 @@ class PlumeSensor(SensorProduct, SensorWritable):
         """
         dfList = []
 
-        # TODO nested for loop like add_measurements_json
         try:
             for measurements in data:
                 temp_df = pd.DataFrame.from_records(measurements)
@@ -124,11 +142,11 @@ class PlumeSensor(SensorProduct, SensorWritable):
         df = pd.read_csv(csv_file, dialect=csv.unix_dialect)
         df["date"] = pd.to_datetime(df["date"]).dt.floor("Min")
         df.set_index("date", inplace=True)
-        # keeps only the median values of the location data (there are multiple values for each minute)
-        df = df.rolling("1Min").median().loc[~df.index.duplicated(keep="last")]
-        df.drop(["timestamp"], axis=1, inplace=True)
 
-        # drop all null rows with no location data
+        # round the datetime to the nearest minute (this is to match the datetime of the measurement data)
+        df.index.floor("60S")
+
+        # drop rows with no location data
         df = df[df["latitude"].notna()]
 
         if df.empty:

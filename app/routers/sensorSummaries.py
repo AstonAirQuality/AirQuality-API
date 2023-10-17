@@ -31,6 +31,7 @@ def get_sensorSummaries(
     start: str = Query(..., description="format dd-mm-yyyy"),
     end: str = Query(..., description="format dd-mm-yyyy"),
     columns: list[sensorSummaryColumns] = Query(...),
+    join_sensor_type: bool = Query(False, description="if true then the sensor type will be joined to the query"),
     spatial_query_type: spatialQueryType = Query(None),
     geom: str = Query(None, description="format: WKT string. **Required if spatial_query_type is provided**"),
     sensor_ids: list[int] = Query(default=[]),
@@ -40,6 +41,7 @@ def get_sensorSummaries(
     \n :param start: start date of the query in the format dd-mm-yyyy
     \n :param end: end date of the query in the format dd-mm-yyyy
     \n :param columns: list of columns to return from the sensor summaries table
+    \n :param join_sensor_type: if true then the sensor type will be joined to the query
     \n :param spatial_query_type: type of spatial query to perform (e.g intersects, contains, within ) - see spatialQueryBuilder for more info
     \n :param geom: geometry to use in the spatial query (e.g POINT(0 0), POLYGON((0 0, 0 1, 1 1, 1 0, 0 0)) ) - see spatialQueryBuilder for more info
     \n :param sensor_ids: list of sensor ids to filter by if none then all sensors that match the above filters will be returned
@@ -49,11 +51,18 @@ def get_sensorSummaries(
 
     try:
         fields = []
+        model = ModelSensorSummary
+        join_models = None
         for col in columns:
             fields.append(getattr(ModelSensorSummary, col))
 
+        if join_sensor_type:
+            fields.append(getattr(ModelSensorType, "name").label("type_name"))
+            fields.append(getattr(ModelSensor, "id").label("sensor_id"))
+            join_models = [ModelSensor, ModelSensorType]
+
         filter_expressions = searchQueryFilters([ModelSensorSummary.timestamp >= timestampStart, ModelSensorSummary.timestamp <= timestampEnd], spatial_query_type, geom, sensor_ids)
-        query_result = CRUD().db_get_fields_using_filter_expression(filter_expressions, fields)
+        query_result = CRUD().db_get_fields_using_filter_expression(filter_expressions, fields, model, join_models)
         return format_sensor_summary_data(query_result, deserialize)
 
     except Exception as e:
@@ -87,12 +96,12 @@ def get_sensorSummaries_geojson_export(
 
     # append all the columns we want to return from the sensor summary table and the sensor type name from the sensor type table
     fields = []
-    columns = ["sensor_id", "geom", "stationary", "measurement_data"]
+    columns = ["geom", "stationary", "measurement_data"]
     for col in columns:
         fields.append(getattr(ModelSensorSummary, col))
 
     fields.append(getattr(ModelSensorType, "name").label("type_name"))
-    fields.append(getattr(ModelSensor, "id").label("model_sensor_id"))
+    fields.append(getattr(ModelSensor, "id").label("sensor_id"))
 
     try:
         filter_expressions = searchQueryFilters([ModelSensorSummary.timestamp >= timestampStart, ModelSensorSummary.timestamp <= timestampEnd], spatial_query_type, geom, sensor_ids)
