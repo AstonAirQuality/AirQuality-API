@@ -8,6 +8,7 @@ from unittest import TestCase
 from unittest.mock import Mock, patch
 
 from core.schema import SensorSummary as SchemaSensorSummary
+from parameterized import parameterized
 from sensor_api_wrappers.concrete.factories.plume_factory import PlumeFactory
 from sensor_api_wrappers.concrete.products.plume_sensor import PlumeSensor
 from sensor_api_wrappers.concrete.products.sensorCommunity_sensor import (
@@ -15,6 +16,10 @@ from sensor_api_wrappers.concrete.products.sensorCommunity_sensor import (
 )
 from sensor_api_wrappers.concrete.products.zephyr_sensor import ZephyrSensor
 from sensor_api_wrappers.data_transfer_object.sensor_writeable import SensorWritable
+
+# parameterized tests
+bad_stationaryBox = "POLYGON ((-1.836323 52.425392, -1.836323 52.425726, -1.836288 52.425726, -1.836288 52.425392, -1.836323 52.425392))"
+stationaryBox = "POLYGON ((-1.8968080000000005 52.452656000000005, -1.8968080000000005 52.455859, -1.889424 52.455859, -1.889424 52.452656000000005, -1.8968080000000005 52.452656000000005))"
 
 
 class Test_sensorWriteable(TestCase):
@@ -26,7 +31,8 @@ class Test_sensorWriteable(TestCase):
     def setUpClass(cls):
         """Setup the test environment once before all tests"""
         warnings.simplefilter("ignore", ResourceWarning)
-        cls.stationaryBox = "POLYGON ((-1.8364709615707395 52.42585638758735, -1.8365299701690674 52.42562740611671, -1.8360203504562376 52.42557179615147, -1.8359881639480589 52.42583676065077, -1.8364709615707395 52.42585638758735))"
+        cls.bad_stationaryBox = bad_stationaryBox
+        cls.stationaryBox = stationaryBox
         pass
 
     @classmethod
@@ -42,32 +48,49 @@ class Test_sensorWriteable(TestCase):
         """Tear down the test environment after each test"""
         pass
 
-    def test_sensorSummary_from_plume_with_stationaryBox(self):
+    def larger_than_two(self, value):
+        return value > 2
+
+    @parameterized.expand(
+        [
+            ("bad_stationaryBox", bad_stationaryBox),
+            ("good_stationaryBox", stationaryBox),
+        ]
+    )
+    def test_sensorSummary_from_plume_with_stationaryBox_with_gps(self, test_type: str, value: str):
         zip_contents = PlumeFactory.extract_zip_content(zipfile.ZipFile("./testing/test_data/plume_sensorData.zip", "r"), include_measurements=True)
 
         (id_, buffer) = next(zip_contents)
         sensor = PlumeSensor.from_zip(sensor_id=id_, csv_file=buffer)
+        # subset df to only get data between 23-24 September string. There is location data in this time period
+        sensor.df = sensor.df.loc["2023-09-23 00:00:00":"2023-09-24 00:00:00"]
         sensor = SensorWritable(sensor.id, sensor.df)  # type cast to SensorWritable for readability
 
         self.assertTrue(isinstance(sensor, SensorWritable))
 
-        sensor_summaries = sensor.create_sensor_summaries(stationary_box=self.stationaryBox)
+        sensor_summaries = sensor.create_sensor_summaries(stationary_box=value)
         self.assertIsNotNone(sensor_summaries)
 
         for sensor_summary in sensor_summaries:
             self.assertTrue(isinstance(sensor_summary, SchemaSensorSummary))
             self.assertEqual(str(sensor_summary.sensor_id), sensor.id)
-
-            self.assertTrue(sensor_summary.geom == self.stationaryBox)
+            if test_type == "bad_stationaryBox":
+                self.assertFalse(sensor_summary.geom == self.stationaryBox)
+                self.assertFalse(sensor_summary.stationary)
+            else:
+                self.assertTrue(sensor_summary.geom == self.stationaryBox)
+                self.assertTrue(sensor_summary.stationary)
             self.assertTrue(sensor_summary.measurement_count > 0)
             self.assertIsNotNone(sensor_summary.measurement_data)
-            self.assertEqual(sensor_summary.stationary, True)
 
-    def test_sensorSummary_from_plume_no_stationaryBox(self):
+    def test_sensorSummary_from_plume_no_stationaryBox_with_gps(self):
         zip_contents = PlumeFactory.extract_zip_content(zipfile.ZipFile("./testing/test_data/plume_sensorData.zip", "r"), include_measurements=True)
 
         (id_, buffer) = next(zip_contents)
         sensor = PlumeSensor.from_zip(sensor_id=id_, csv_file=buffer)
+
+        # subset df to only get data between 23-24 September string. There is location data in this time period
+        sensor.df = sensor.df.loc["2023-09-23 00:00:00":"2023-09-24 00:00:00"]
         sensor = SensorWritable(sensor.id, sensor.df)  # type cast to SensorWritable for readability
 
         self.assertTrue(isinstance(sensor, SensorWritable))
@@ -82,9 +105,8 @@ class Test_sensorWriteable(TestCase):
             # Skip sensor summaries that have no geometries (These sensors will not be included in the database. They can only exist through fetching merged csv files)
             # TODO validate geomerty is in WKT format
             if sensor_summary.geom != None:
-                expectedGeom = "POLYGON((-1.83631 52.425392,-1.83631 52.425603,-1.836288 52.425603,-1.836288 52.425392,-1.83631 52.425392))"
-                self.assertTrue(sensor_summary.geom == expectedGeom)
-
+                expectedGeom = "POLYGON((-1.912562 52.446574,-1.912562 52.455859,-1.8892 52.455859,-1.8892 52.446574,-1.912562 52.446574))"
+                self.assertEqual(sensor_summary.geom, expectedGeom)
                 self.assertTrue(sensor_summary.measurement_count > 0)
                 self.assertIsNotNone(sensor_summary.measurement_data)
                 self.assertEqual(sensor_summary.stationary, False)

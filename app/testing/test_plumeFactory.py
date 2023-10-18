@@ -64,7 +64,7 @@ class Test_plumeFactory(TestCase):
 
         mocked_get.assert_called_with("https://api-preprod.plumelabs.com/2.0/user/organizations/{org}/sensors".format(org=self.pf.org))
 
-        expected = {"02:00:00:00:48:45": 18749, "02:00:00:00:48:13": 18699}
+        expected = {"02:00:00:00:48:45": 19651, "02:00:00:00:48:13": 18699}
         self.assertEqual(sensor_platforms, expected)
 
     @patch.object(requests.Session, "get")
@@ -72,9 +72,9 @@ class Test_plumeFactory(TestCase):
         """Test fetch the sensor measurement data.
         \n Uses mock data"""
 
-        sensor_id = "18749"
-        start = dt.datetime(2022, 9, 10)
-        end = dt.datetime(2022, 9, 12)
+        sensor_id = "19651"
+        start = dt.datetime(2023, 9, 21)
+        end = dt.datetime(2023, 9, 22)
 
         file = open("testing/test_data/plume_measurements.json", "r")
         json_ = json.load(file)
@@ -86,7 +86,7 @@ class Test_plumeFactory(TestCase):
 
         mocked_get.assert_called_with(
             "https://api-preprod.plumelabs.com/2.0/user/organizations/{org}/sensors/{sensorId}/measures?start_date={start}&end_date={end}&offset={offset}".format(
-                org=self.pf.org, sensorId=18749, start=int(start.timestamp()), end=int(end.timestamp()), offset=0
+                org=self.pf.org, sensorId=19651, start=int(start.timestamp()), end=int(end.timestamp()), offset=0
             )
         )
 
@@ -110,14 +110,14 @@ class Test_plumeFactory(TestCase):
         mocked_get.assert_called_with("https://example.com", stream=True)
 
         for sensor_id, sensor_data in sensors:
-            self.assertEqual(sensor_id, "18749")
+            self.assertEqual(sensor_id, "19651")
             self.assertTrue(isinstance(sensor_data, StringIO))
 
     def test_fetch_location_data(self):
         """Test fetch the sensor data"""
-        sensor_id = "18749"
-        start = dt.datetime(2022, 9, 10)
-        end = dt.datetime(2022, 9, 12)
+        sensor_id = "19651"
+        start = dt.datetime(2023, 9, 21)
+        end = dt.datetime(2023, 9, 26)
         link = "https://example.com"
 
         with patch.object(PlumeFactory, "extract_zip") as mocked_sensors_from_zip:
@@ -128,18 +128,18 @@ class Test_plumeFactory(TestCase):
             mocked_sensors_from_zip.assert_called_with(link, include_measurements=False)
 
             for sensor in sensors:
-                self.assertEqual(sensor.id, "18749")
+                self.assertEqual(sensor.id, "19651")
                 self.assertTrue(len(sensor.df) > 0)
-                self.assertEqual(sensor.df.columns.tolist(), ["latitude", "longitude"])
+                self.assertEqual(sensor.df.columns.tolist(), ["timestamp", "latitude", "longitude"])
                 break
 
     def test_fetch_sensor_stationary_no_gps(self):
         """Test fetch the sensor data"""
-        sensor_id = "18749"
+        sensor_id = "19651"
         stationary_box = "POLYGON ((30 10, 40 40, 20 40, 10 20, 30 10))"
         sensor_dict = {sensor_id: {"stationary_box": stationary_box, "time_updated": None}}
-        start = dt.datetime(2022, 9, 10)
-        end = dt.datetime(2022, 9, 12)
+        start = dt.datetime(2023, 9, 21)
+        end = dt.datetime(2023, 9, 26)
 
         with patch.object(PlumeFactory, "get_sensor_location_data") as mocked_sensor_location_only:
             # bad zip data will be empty or will throw a bad zip file error so we set the return value to be empty to imitate this behavior
@@ -173,18 +173,18 @@ class Test_plumeFactory(TestCase):
                 ]
                 for sensor in sensors:
                     self.assertTrue(isinstance(sensor, PlumeSensor))
-                    self.assertEqual(sensor.id, "18749")
+                    self.assertEqual(sensor.id, "19651")
                     for col in expectedColumns:
                         self.assertTrue(col in sensor.df.columns)
                     break
 
     def test_fetch_sensor_stationary_with_gps(self):
-        """Test fetch the sensor data"""
-        sensor_id = "18749"
+        """Test fetch the sensor data does not call get measurements only function"""
+        sensor_id = "19651"
         stationary_box = "POLYGON ((30 10, 40 40, 20 40, 10 20, 30 10))"
         sensor_dict = {sensor_id: {"stationary_box": stationary_box, "time_updated": None}}
-        start = dt.datetime(2022, 9, 10)
-        end = dt.datetime(2022, 9, 12)
+        start = dt.datetime(2023, 9, 21)
+        end = dt.datetime(2023, 9, 26)
 
         with patch.object(PlumeFactory, "get_sensor_location_data") as mocked_sensor_location_only:
             sensor_items = self.pf.extract_zip_content(zipfile.ZipFile("./testing/test_data/plume_sensorData.zip", "r"), include_measurements=False)
@@ -212,18 +212,18 @@ class Test_plumeFactory(TestCase):
 
                     for sensor in sensors:
                         self.assertTrue(isinstance(sensor, PlumeSensor))
-                        self.assertEqual(sensor.id, "18749")
+                        self.assertEqual(sensor.id, "19651")
                         for col in expectedColumns:
                             self.assertTrue(col in sensor.df.columns)
                         break
 
     def test_fetch_sensor_not_stationary_with_gps(self):
         """Same as above but with a non-stationary sensor"""
-        sensor_id = "18749"
+        sensor_id = "19651"
         stationary_box = None
         sensor_dict = {sensor_id: {"stationary_box": stationary_box, "time_updated": None}}
-        start = dt.datetime(2022, 9, 10)
-        end = dt.datetime(2022, 9, 12)
+        start = dt.datetime(2023, 9, 21)
+        end = dt.datetime(2023, 9, 26)
 
         with patch.object(PlumeFactory, "get_sensor_location_data") as mocked_sensor_location_only:
             sensor_items = self.pf.extract_zip_content(zipfile.ZipFile("./testing/test_data/plume_sensorData.zip", "r"), include_measurements=False)
@@ -251,18 +251,18 @@ class Test_plumeFactory(TestCase):
 
                     for sensor in sensors:
                         self.assertTrue(isinstance(sensor, PlumeSensor))
-                        self.assertEqual(sensor.id, "18749")
+                        self.assertEqual(sensor.id, "19651")
                         for col in expectedColumns:
                             self.assertTrue(col in sensor.df.columns)
                         break
 
     def test_fetch_sensor_not_stationary_no_gps(self):
         """Same as above but with a non-stationary sensor"""
-        sensor_id = "18749"
+        sensor_id = "19651"
         stationary_box = None
         sensor_dict = {sensor_id: {"stationary_box": stationary_box, "time_updated": None}}
-        start = dt.datetime(2022, 9, 10)
-        end = dt.datetime(2022, 9, 12)
+        start = dt.datetime(2023, 9, 21)
+        end = dt.datetime(2023, 9, 26)
 
         with patch.object(PlumeFactory, "get_sensor_location_data") as mocked_sensor_location_only:
             # bad zip data will be empty or will throw a bad zip file error so we set the return value to be empty to imitate this behavior
@@ -283,9 +283,9 @@ class Test_plumeFactory(TestCase):
 
     def test_fetch_sensor_merged_data_zip(self):
         """Test fetch the sensor data"""
-        sensor_id = "18749"
-        start = dt.datetime(2022, 9, 10)
-        end = dt.datetime(2022, 9, 12)
+        sensor_id = "19651"
+        start = dt.datetime(2023, 9, 21)
+        end = dt.datetime(2023, 9, 26)
 
         with patch.object(PlumeFactory, "extract_zip") as mocked_sensors_from_zip:
             mocked_sensors_from_zip.return_value = self.pf.extract_zip_content(zipfile.ZipFile("./testing/test_data/plume_sensorData.zip", "r"), include_measurements=True)
@@ -304,7 +304,7 @@ class Test_plumeFactory(TestCase):
                 expectedColumns = ["NO2", "VOC", "timestamp", "latitude", "longitude", "particulatePM1", "particulatePM2.5", "particulatePM10"]
                 for sensor in sensors:
                     self.assertTrue(isinstance(sensor, PlumeSensor))
-                    self.assertEqual(sensor.id, "18749")
+                    self.assertEqual(sensor.id, "19651")
                     for col in expectedColumns:
                         self.assertTrue(col in sensor.df.columns)
                     break

@@ -35,7 +35,7 @@ class SensorReadable(SensorDTO):
         df_location = df[["latitude", "longitude", "boundingBox"]]
 
         # # calculate bounding box of the location data for each hour
-        df_location = df_location.groupby(pd.Grouper(freq="H")).agg({"latitude": ["min", "max"], "longitude": ["min", "max"], "boundingBox": ["first"]})
+        df_location = df_location.groupby(pd.Grouper(freq=averaging_frequency)).agg({"latitude": ["min", "max"], "longitude": ["min", "max"], "boundingBox": ["first"]})
 
         # print(df_location.head(-1))
         # # drop null values

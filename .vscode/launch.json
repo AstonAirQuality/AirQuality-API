@@ -16,24 +16,24 @@
             ],
         },
         {
-            "name": "Python: Module - api_wrappers",
+            "name": "Python: Module - sensor_api_wrappers",
             "type": "python",
             "request": "launch",
-            "module": "api_wrappers.${fileBasenameNoExtension}",
+            "module": "sensor_api_wrappers.${fileBasenameNoExtension}",
             "cwd": "${workspaceFolder}/app"
         },
         {
             "name": "Python: Module - sensor_factories",
             "type": "python",
             "request": "launch",
-            "module": "api_wrappers.concrete.factories.${fileBasenameNoExtension}",
+            "module": "sensor_api_wrappers.concrete.factories.${fileBasenameNoExtension}",
             "cwd": "${workspaceFolder}/app"
         },
         {
             "name": "Python: Module - sensor_products",
             "type": "python",
             "request": "launch",
-            "module": "api_wrappers.concrete.products.${fileBasenameNoExtension}",
+            "module": "sensor_api_wrappers.concrete.products.${fileBasenameNoExtension}",
             "cwd": "${workspaceFolder}/app"
         },
         {

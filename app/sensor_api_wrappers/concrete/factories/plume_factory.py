@@ -315,11 +315,35 @@ class PlumeFactory(SensorFactory):
                     continue
 
 
+# Testing as a standalone script
 # if __name__ == "__main__":
-
 #     zip_contents = PlumeFactory.extract_zip_content(zipfile.ZipFile("./testing/test_data/plume_sensorData.zip", "r"), include_measurements=True)
 
 #     (id_, buffer) = next(zip_contents)
 #     sensor = PlumeSensor.from_zip(sensor_id=id_, csv_file=buffer)
 #     # print dataframe columns
-#     print(sensor.df.head())
+#     print(sensor.df.loc["2023-09-23 09:06:00":"2023-09-23 09:26:00"])
+
+# import json
+# import zipfile
+
+# import pandas as pd
+
+# if __name__ == "__main__":
+#     # get the test data
+#     zip_contents = PlumeFactory.extract_zip_content(zipfile.ZipFile("./testing/test_data/plume_sensorData.zip", "r"), include_measurements=False)
+
+#     (id_, buffer) = next(zip_contents)
+#     sensor = PlumeSensor.from_csv(sensor_id=id_, csv_file=buffer)
+#     # print(sensor.df.loc["2023-09-23 09:06:00":"2023-09-23 09:26:00"])
+
+#     file = open("testing/test_data/plume_measurements.json", "r")
+#     json_ = json.load(file)
+#     file.close()
+
+#     sensor.add_measurements_json(json_["measures"])
+#     # print df between dates"2023-09-23 09:06:00", "2023-09-23 09:26:00"
+#     # print(sensor.df.loc["2023-09-23 09:06:00":"2023-09-23 09:26:00"])
+
+#     # print timestamp as whole number
+#     pd.options.display.float_format = "{:0}".format

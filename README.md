@@ -185,8 +185,10 @@ The following steps are requried for both local and docker setups.
 <!-- CONTACT -->
 ## Contact
 
-Your Name - [@dev_riyad](https://twitter.com/dev_riyad) - riyad2308@gmail.com
-
+Twitter (X): [@dev_riyad](https://twitter.com/dev_riyad) 
+<br/>
+Email: riyad2308@gmail.com
+<br/>
 Project Link: [https://github.com/AstonAirQuality/AirQuality-API](https://github.com/AstonAirQuality/AirQuality-API)
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>

@@ -14,7 +14,8 @@ from sensor_api_wrappers.concrete.factories.plume_factory import PlumeFactory
 class FetchTestData:
     def __init__(self):
         load_dotenv()
-        self.pf = PlumeFactory(env["PLUME_EMAIL_TEST"], env["PLUME_PASSWORD_TEST"], env["PLUME_FIREBASE_API_KEY"], env["PLUME_ORG_NUM"])
+        self.pf = PlumeFactory(env["PLUME_EMAIL"], env["PLUME_PASSWORD"], env["PLUME_FIREBASE_API_KEY"], env["PLUME_ORG_NUM"])
+        self.pf.login()
 
     def write_measurement_data_to_testdata_directory(self, sensor_id, start_date, end_date):
         """Fetches the measurement data for a given sensor"""
@@ -70,7 +71,7 @@ if __name__ == "__main__":
     # (sensor, buffer) = ftd.read_sensor_zip_from_testdata_directory()
     # print(sensor)
     # print(buffer)
-    ftd.write_measurement_data_to_testdata_directory(18749, dt.datetime(2022, 9, 28), dt.datetime(2022, 9, 30))
+    ftd.write_measurement_data_to_testdata_directory(19651, dt.datetime(2023, 9, 21), dt.datetime(2023, 9, 26))
     # print(ftd.read_measurement_data_from_testdata_directory())
 
 

@@ -80,7 +80,7 @@ class Test_Api_2_Sensor(TestCase):
         db_sensor = self.db.query(ModelSensor).filter(ModelSensor.lookup_id == "test_post_sensor").first()
         self.assertEqual(db_sensor.lookup_id, "test_post_sensor")
 
-    @patch.object(SensorFactoryWrapper, "fetch_plume_platform_lookupids", return_value={"02:00:00:00:48:13": 18699})
+    @patch.object(SensorFactoryWrapper, "fetch_plume_platform_lookupids", return_value={"02:00:00:00:48:13": 19651})
     def test_3_post_plume_sensor(self, mocked_sensor):
         """Test the post sensor route of the API."""
 
@@ -89,13 +89,13 @@ class Test_Api_2_Sensor(TestCase):
         response = self.client.post("/sensor/plume-sensors", json=plume_serial_numbers)
         mocked_sensor.assert_called()
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.json(), {"02:00:00:00:48:13": 18699})
+        self.assertEqual(response.json(), {"02:00:00:00:48:13": 19651})
 
         # check that the sensor was added to the database
-        db_sensor = self.db.query(ModelSensor).filter(ModelSensor.lookup_id == "18699").first()
-        self.assertEqual(db_sensor.lookup_id, "18699")
+        db_sensor = self.db.query(ModelSensor).filter(ModelSensor.lookup_id == "19651").first()
+        self.assertEqual(db_sensor.lookup_id, "19651")
 
-    @patch.object(SensorFactoryWrapper, "fetch_plume_platform_lookupids", return_value={"02:00:00:00:48:13": 18699})
+    @patch.object(SensorFactoryWrapper, "fetch_plume_platform_lookupids", return_value={"02:00:00:00:48:13": 19651})
     def test_4_post_duplicate_plume_sensor(self, mocked_sensor):
         """Test the post sensor route of the API."""
 
