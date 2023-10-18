@@ -2,9 +2,8 @@ import os
 from os import path
 from zipfile import ZIP_DEFLATED, ZipFile
 
+
 # TODO ignore coverage
-
-
 def zip_directory(directory_path, isDependancy: bool):
     for folderName, subfolders, filenames in os.walk(directory_path):
         if folderName.endswith("__pycache__"):
@@ -28,21 +27,17 @@ def zip_directory(directory_path, isDependancy: bool):
 
 
 def main():
-
     # Check if file exists
     dependaciesPath = os.getcwd() + "/deployment/lib"
 
     if path.exists(dependaciesPath):
-
         with ZipFile("deployment/export/app.zip", "w", ZIP_DEFLATED) as zipFileObj:
-
-            for (file, arcname) in zip_directory(dependaciesPath, False):
+            for file, arcname in zip_directory(dependaciesPath, False):
                 zipFileObj.write(file, arcname=arcname)
 
         path_to_app = os.getcwd() + "/app"
         with ZipFile("deployment/export/app.zip", "a", ZIP_DEFLATED) as zipFileObj:
-
-            for (file, arcname) in zip_directory(path_to_app, True):
+            for file, arcname in zip_directory(path_to_app, True):
                 zipFileObj.write(file, arcname=arcname)
 
     else:
