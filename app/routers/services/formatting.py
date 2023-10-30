@@ -4,7 +4,6 @@ from typing import Tuple
 import shapely.wkt
 from core.schema import GeoJsonExport
 from fastapi import HTTPException, status
-from fastapi.encoders import jsonable_encoder
 from geoalchemy2.shape import WKBElement, from_shape, to_shape
 from sensor_api_wrappers.data_transfer_object.sensor_readable import SensorReadable
 
@@ -97,9 +96,11 @@ def format_sensor_summary_data(query_result: any, deserialize: bool = True):
 
         if "measurement_data" in row_as_dict and deserialize:
             # convert the json string to a python dict
-            row_as_dict["measurement_data"] = jsonable_encoder(deserializeMeasurementData(row_as_dict["measurement_data"]))
+            row_as_dict["measurement_data"] = deserializeMeasurementData(row_as_dict["measurement_data"])
 
         results.append(row_as_dict)
+
+        
 
     return results
 

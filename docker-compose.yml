@@ -4,9 +4,7 @@ services:
 
   db:
     container_name: postgresql_db
-    build:
-      context: ./app/db
-      dockerfile: ./Dockerfile
+    image: postgis/postgis:14-3.2-alpine
     restart: always
     ports:
       - 5432:5432
@@ -15,17 +13,17 @@ services:
       - POSTGRES_PASSWORD=${DB_PASSWORD_TEST}
       - POSTGRES_DB=${DB_NAME_TEST}
 
-##host.docker.internal is used to connect to the host machine from the container
-  # pgadmin:
-  #   container_name: pgadmin
-  #   image: dpage/pgadmin4
-  #   environment:
-  #     - PGADMIN_DEFAULT_EMAIL=${PGADMIN_EMAIL_TEST}
-  #     - PGADMIN_DEFAULT_PASSWORD=${PGADMIN_PASSWORD_TEST}
-  #   ports:
-  #     - 5050:80
-  #   depends_on:
-  #     - db
+  ##host.docker.internal is used to connect to the host machine from the container
+  pgadmin-test:
+    container_name: pgadmin
+    image: dpage/pgadmin4
+    environment:
+      - PGADMIN_DEFAULT_EMAIL=${PGADMIN_EMAIL_TEST}
+      - PGADMIN_DEFAULT_PASSWORD=${PGADMIN_PASSWORD_TEST}
+    ports:
+      - 5050:80
+    depends_on:
+      - db
 
   app:
     container_name: app
@@ -50,9 +48,9 @@ services:
       PRODUCTION_MODE: "${PRODUCTION_MODE}"
       AWS_STAGE_NAME: "${AWS_STAGE_NAME}"
       JWT_SECRET: "${JWT_SECRET}"
-      ZEPHYR_USERNAME : "${ZEPHYR_USERNAME}"
-      ZEPHYR_PASSWORD : "${ZEPHYR_PASSWORD}"
-      SC_USERNAME : "${SC_USERNAME}"
-      SC_PASSWORD : "${SC_PASSWORD}"
+      ZEPHYR_USERNAME: "${ZEPHYR_USERNAME}"
+      ZEPHYR_PASSWORD: "${ZEPHYR_PASSWORD}"
+      SC_USERNAME: "${SC_USERNAME}"
+      SC_PASSWORD: "${SC_PASSWORD}"
       CRON_JOB_TOKEN: "${CRON_JOB_TOKEN}"
       FASTAPI_SENTRY_SAMPLE_RATE: "${FASTAPI_SENTRY_SAMPLE_RATE}"

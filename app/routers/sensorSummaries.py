@@ -64,7 +64,7 @@ def get_sensorSummaries(
         filter_expressions = searchQueryFilters([ModelSensorSummary.timestamp >= timestampStart, ModelSensorSummary.timestamp <= timestampEnd], spatial_query_type, geom, sensor_ids)
         query_result = CRUD().db_get_fields_using_filter_expression(filter_expressions, fields, model, join_models)
         return format_sensor_summary_data(query_result, deserialize)
-
+    
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
 
