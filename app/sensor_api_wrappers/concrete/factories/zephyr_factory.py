@@ -9,6 +9,8 @@ from sensor_api_wrappers.interfaces.sensor_factory import SensorFactory
 
 
 class ZephyrFactory(SensorFactory):
+    """docs page: https://docs.earthsense.co.uk/zapi/ """
+    
     def __init__(self, username: str, password: str):
         """Initializes the Zephyr Factory.
         :param username: username address of the Zephyr account
