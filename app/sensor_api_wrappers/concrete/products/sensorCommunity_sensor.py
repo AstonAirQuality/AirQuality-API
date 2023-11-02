@@ -95,15 +95,17 @@ class SensorCommunitySensor(SensorProduct, SensorWritable):
 
         # renaming columns
         df = df.rename(columns={"dht22_humidity": "ambHumidity", "dht22_temperature": "ambTempC", "sds011_p1": "particulatePM10", "sds011_p2": "particulatePM2.5"})
-
-        # create unix timestamp column
-        df["timestamp"] = df.index.astype(np.int64) // 10**9
-
         # decode geohash
         df[["latitude", "longitude"]] = decode_geohash(df["geohash"][0])
 
         # drop geohash column
         df.drop(columns=["geohash"], inplace=True)
+
+        # set all columns to float
+        df = df.astype(float)
+
+        # create unix timestamp column
+        df["timestamp"] = df.index.astype(np.int64) // 10**9
 
         return SensorCommunitySensor(sensor_id, df)
 

@@ -162,6 +162,7 @@ class SensorCommunityFactory(SensorFactory):
             except Exception:
                 yield SensorCommunitySensor(key, None)
 
+    @DeprecationWarning
     def get_sensors_from_csv(self, sensor_dict: dict[str, str], start: dt.datetime, end: dt.datetime) -> Iterator[SensorCommunitySensor]:
         """Fetch csv from API and return built SensorCommunity sensor objects.
         :param sensor_dict: A dictionary of lookup_ids and stationary_boxes [lookup_id] = {"stationary_box": stationary_box, "time_updated": time_updated}
@@ -183,17 +184,17 @@ class SensorCommunityFactory(SensorFactory):
                 yield SensorCommunitySensor(key, None)
 
 
-if __name__ == "__main__":
-    scf = SensorCommunityFactory("username", "password")
-    # sensor_dict = {"60641,SDS011,60642,BME280": {"stationary_box": None, "time_updated": None}}
-    start = dt.datetime(2023, 10, 30)
-    end = dt.datetime(2023, 10, 31)
-    # sensors = list(scf.get_sensors_from_csv(sensor_dict, start, end))
-    # for sensor in sensors:
-    #     print(sensor.id)
-    #     print(sensor.df)
-    sensor_dict = {"83636,SDS011,83637,DHT22": {"stationary_box": None, "time_updated": None}}
-    sensors = list(scf.get_sensors(sensor_dict, start, end))
-    for sensor in sensors:
-        print(sensor.id)
-        print(sensor.df)
+# if __name__ == "__main__":
+#     scf = SensorCommunityFactory("username", "password")
+#     start = dt.datetime(2023, 10, 30)
+#     end = dt.datetime(2023, 10, 31)
+# # sensor_dict = {"60641,SDS011,60642,BME280": {"stationary_box": None, "time_updated": None}}
+# # sensors = list(scf.get_sensors_from_csv(sensor_dict, start, end))
+# # for sensor in sensors:
+# #     print(sensor.id)
+# #     print(sensor.df)
+# sensor_dict = {"83636,SDS011,83637,DHT22": {"stationary_box": None, "time_updated": None}}
+# sensors = list(scf.get_sensors(sensor_dict, start, end))
+# for sensor in sensors:
+#     print(sensor.id)
+#     print(sensor.df)

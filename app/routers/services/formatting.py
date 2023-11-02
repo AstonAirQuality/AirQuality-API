@@ -13,6 +13,9 @@ def decode_geohash(geohash: str) -> tuple[float, float]:
     """
     Decode geohash, returning two strings with latitude and longitude
     containing only relevant digits and with trailing zeroes removed.
+    :reference: https://github.com/DBarthe/geohash/blob/master/geohash2/geohash.py
+    :param geohash: geohash to decode
+    :return: tuple of latitude and longitude
     """
     # decode geohash
     base32_ = "0123456789bcdefghjkmnpqrstuvwxyz"
@@ -144,8 +147,6 @@ def format_sensor_summary_data(query_result: any, deserialize: bool = True):
             row_as_dict["measurement_data"] = deserializeMeasurementData(row_as_dict["measurement_data"])
 
         results.append(row_as_dict)
-
-        
 
     return results
 
