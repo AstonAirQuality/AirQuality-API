@@ -1,6 +1,5 @@
 # data fetching dependacies
 import datetime as dt
-import json
 from typing import Iterator
 
 import requests
@@ -162,7 +161,7 @@ class SensorCommunityFactory(SensorFactory):
             except Exception:
                 yield SensorCommunitySensor(key, None)
 
-    @DeprecationWarning
+    # @DeprecationWarning
     def get_sensors_from_csv(self, sensor_dict: dict[str, str], start: dt.datetime, end: dt.datetime) -> Iterator[SensorCommunitySensor]:
         """Fetch csv from API and return built SensorCommunity sensor objects.
         :param sensor_dict: A dictionary of lookup_ids and stationary_boxes [lookup_id] = {"stationary_box": stationary_box, "time_updated": time_updated}
@@ -184,6 +183,7 @@ class SensorCommunityFactory(SensorFactory):
                 yield SensorCommunitySensor(key, None)
 
 
+# import json
 # if __name__ == "__main__":
 #     scf = SensorCommunityFactory("username", "password")
 #     start = dt.datetime(2023, 10, 30)

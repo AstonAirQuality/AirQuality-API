@@ -18,7 +18,7 @@ class SensorCommunitySensor(SensorProduct, SensorWritable):
         """
         super().__init__(sensor_id, dataframe)
 
-    @DeprecationWarning
+    # @DeprecationWarning
     @staticmethod
     def ResampleDataAndSortIntoDays(sensorPlatform: dict[str, dict[int, pd.DataFrame]], intervalString: str) -> pd.DataFrame:
         """Resamples data and combines all sensor data into one sensor platform. A unique key contains the sensor ids of each sensor in the sensor platform.
@@ -49,7 +49,7 @@ class SensorCommunitySensor(SensorProduct, SensorWritable):
 
         return combinedDataframe
 
-    @DeprecationWarning
+    # @DeprecationWarning
     @staticmethod
     def prepare_measurements(df: pd.DataFrame) -> pd.DataFrame:
         """Prepares the measurement dataframe to match the column names of the other sensors (zephyr)
@@ -109,7 +109,7 @@ class SensorCommunitySensor(SensorProduct, SensorWritable):
 
         return SensorCommunitySensor(sensor_id, df)
 
-    @DeprecationWarning
+    # @DeprecationWarning
     @staticmethod
     def from_csv(id_: str, content: dict[int, bytes]) -> SensorWritable:
         """Creates a SensorCommunitySensor object from a dictionary of csv files.

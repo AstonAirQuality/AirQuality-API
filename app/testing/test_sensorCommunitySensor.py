@@ -1,3 +1,4 @@
+import json
 import unittest  # The test framework
 import warnings
 from unittest import TestCase
@@ -47,6 +48,30 @@ class Test_sensorCommunitySensor(TestCase):
         sensor = SensorCommunitySensor.from_csv(sensor_id, csv_files)
 
         expected_columns = ["particulatePM10", "particulatePM2.5", "ambPressure", "humidity", "latitude", "longitude", "tempC", "timestamp"]
+
+        self.assertIsNotNone(sensor)
+        self.assertTrue(isinstance(sensor, SensorCommunitySensor))
+        self.assertEqual(sensor.id, sensor_id)
+        self.assertTrue(isinstance(sensor.df, pd.DataFrame))
+        # check that the dataframe contains the correct columns in any order
+        self.assertEqual(
+            set(sensor.df.columns.tolist()),
+            set(expected_columns),
+        )
+
+    def test_sensorCommunity_from_json(
+        self,
+    ):
+        """Tests that the SensorCommunitySensor class can be instantiated and that the json data is correctly parsed into a dataframe."""
+
+        file = open("testing/test_data/sensorCommunity.json", "r")
+        json_ = json.load(file)
+        file.close()
+
+        sensor_id = "83636,SDS011,83637,DHT22"
+        sensor = SensorCommunitySensor.from_json(sensor_id, json_)
+
+        expected_columns = ["particulatePM10", "particulatePM2.5", "ambHumidity", "ambTempC", "latitude", "longitude", "timestamp"]
 
         self.assertIsNotNone(sensor)
         self.assertTrue(isinstance(sensor, SensorCommunitySensor))
