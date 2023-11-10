@@ -101,9 +101,10 @@ def upsert_sensor_summary_by_id_list(
                     data_ingestion_logs = append_data_ingestion_logs(sensorSummary, data_ingestion_logs)
 
             elif sensorType.lower() == "sensorcommunity":
-                # if the cron job was used then we can use the same start and end date because the latest historical data is yesterday instead of today
-                if type_of_id == "sensor_type_id":
-                    endDate = startDate
+                # CSV ingest only
+                # # if the cron job was used then we can use the same start and end date because the latest historical data is yesterday instead of today
+                # if type_of_id == "sensor_type_id":
+                #     endDate = startDate
                 for sensorSummary in sfw.fetch_sensorCommunity_data(startDate, endDate, dict_lookupid_stationaryBox_and_timeUpdated):
                     data_ingestion_logs = append_data_ingestion_logs(sensorSummary, data_ingestion_logs)
                 continue
