@@ -128,7 +128,10 @@ class SensorCommunityFactory(SensorFactory):
             for i in range(0, len(sensor_id_type_pairs), 2):
                 sensorPlatform[sensor_id_type_pairs[i]] = sensor_id_type_pairs[i + 1]
             sensorPlatforms[sensor_lookupid] = sensorPlatform
-            sensorPlatforms[sensor_lookupid]["startDate"] = startDate
+            if "time_updated" not in sensor_dict[sensor_lookupid]:
+                sensorPlatforms[sensor_lookupid]["startDate"] = startDate
+            else:
+                sensorPlatforms[sensor_lookupid]["startDate"] = sensor_dict[sensor_lookupid]["time_updated"] if sensor_dict[sensor_lookupid]["time_updated"] is not None else startDate
         return sensorPlatforms
 
     def get_sensors(self, sensor_dict: dict[str, str], start: dt.datetime, end: dt.datetime) -> Iterator[SensorCommunitySensor]:
