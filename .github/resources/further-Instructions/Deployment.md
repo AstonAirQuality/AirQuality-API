@@ -10,3 +10,5 @@
 - upload the new app.zip file and copy the url path
 - navigate to lambda and click the code tab, select upload from Amazon s3 location and poste the url path
 - once the uplaod is complete navigate the api's base url and check if it works correctly.
+
+<p align="right">(<a href="../../../README.md">back to README</a>)</p>

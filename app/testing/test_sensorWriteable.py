@@ -11,9 +11,7 @@ from core.schema import SensorSummary as SchemaSensorSummary
 from parameterized import parameterized
 from sensor_api_wrappers.concrete.factories.plume_factory import PlumeFactory
 from sensor_api_wrappers.concrete.products.plume_sensor import PlumeSensor
-from sensor_api_wrappers.concrete.products.sensorCommunity_sensor import (
-    SensorCommunitySensor,
-)
+from sensor_api_wrappers.concrete.products.sensorCommunity_sensor import SensorCommunitySensor
 from sensor_api_wrappers.concrete.products.zephyr_sensor import ZephyrSensor
 from sensor_api_wrappers.data_transfer_object.sensor_writeable import SensorWritable
 
@@ -111,6 +109,31 @@ class Test_sensorWriteable(TestCase):
                 self.assertIsNotNone(sensor_summary.measurement_data)
                 self.assertEqual(sensor_summary.stationary, False)
 
+    def test_sensorSummary_from_plume_with_stationaryBox_no_gps(self):
+        zip_contents = PlumeFactory.extract_zip_content(zipfile.ZipFile("./testing/test_data/plume_sensorData.zip", "r"), include_measurements=False)
+
+        (id_, buffer) = next(zip_contents)
+        sensor = PlumeSensor.from_zip(sensor_id=id_, csv_file=buffer)
+
+        # subset df to only get data between 23-24 September string. There is location data in this time period
+        sensor.df = sensor.df.loc["2023-09-23 00:00:00":"2023-09-24 00:00:00"]
+        sensor.df.drop(columns=["latitude", "longitude"], inplace=True)
+        sensor = SensorWritable(sensor.id, sensor.df)
+
+        self.assertTrue(isinstance(sensor, SensorWritable))
+        self.assertTrue(sensor.df.columns.__contains__("latitude") == False)
+
+        sensor_summaries = sensor.create_sensor_summaries(stationary_box=self.stationaryBox)
+        self.assertIsNotNone(sensor_summaries)
+
+        for sensor_summary in sensor_summaries:
+            self.assertTrue(isinstance(sensor_summary, SchemaSensorSummary))
+            self.assertEqual(str(sensor_summary.sensor_id), sensor.id)
+            self.assertTrue(sensor_summary.geom == self.stationaryBox)
+            self.assertTrue(sensor_summary.measurement_count > 0)
+            self.assertIsNotNone(sensor_summary.measurement_data)
+            self.assertEqual(sensor_summary.stationary, True)
+
     def test_sensorSummary_from_zephyr_with_stationary_box(self):
         file = open("testing/test_data/zephyr_814_sensor_data.json", "r")
         json_ = json.load(file)
@@ -179,7 +202,7 @@ class Test_sensorWriteable(TestCase):
             # because the sensor is not in the original stationary box, it should be marked as not stationary
             self.assertFalse(sensor_summary.stationary)
 
-    def test_sensorSumamry_from_sensorCommunity_no_stationary_box(self):
+    def test_sensorSummary_from_sensorCommunity_no_stationary_box(self):
         csv_files = {60641: {0: None}, 60642: {0: None}}
         sensor_id = "60641,SDS011,60642,BME280"
 

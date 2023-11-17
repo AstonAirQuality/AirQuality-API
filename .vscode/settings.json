@@ -1,18 +1,11 @@
 {
-  "editor.formatOnSave": true,
-  "python.pythonPath": "venv\\Scripts\\python.exe",
-  "python.sortImports.args": [
-    "--profile=black",
-  ],
-  "python.formatting.provider": "none",
-  "python.formatting.blackArgs": [
-    "--line-length=200"
-  ],
+  // "python.pythonPath": "venv\\Scripts\\python.exe",
   "[python]": {
     "editor.codeActionsOnSave": {
       "source.organizeImports": true
     },
-    "editor.defaultFormatter": "ms-python.black-formatter"
+    "editor.formatOnSave": true,
+    "editor.defaultFormatter": "ms-python.black-formatter",
   },
   "python.testing.unittestArgs": [
     "-v",

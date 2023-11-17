@@ -63,6 +63,7 @@
             </ul>
       </ul>
     </li>
+    <li><a href="#additionalInformation">Addtional Information</a></li>
     <li><a href="#contact">Contact</a></li>
   </ol>
 </details>
@@ -181,6 +182,10 @@ The following steps are requried for both local and docker setups.
     
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
+<!-- Additional Info -->
+## Additional Information
+- [Database Migrations](.github/resources/further-instructions/DatabaseMigrations.md)
+- [Deployment](.github/resources/further-instructions/Deployment.md)
 
 <!-- CONTACT -->
 ## Contact

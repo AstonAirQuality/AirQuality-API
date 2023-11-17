@@ -137,7 +137,7 @@ class SensorWritable(SensorDTO):
         boundingBoxString = boxGeometry
 
         # if the dataframe has no location data, then replace the dataframe with the given coordinates
-        if math.isnan(df["latitude"].min()):
+        if not df.columns.__contains__("latitude") or math.isnan(df["latitude"].min()):
             df["latitude"] = centerPoint_lat
             df["longitude"] = centerPoint_long
         else:

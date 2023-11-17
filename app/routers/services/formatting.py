@@ -1,12 +1,59 @@
 import datetime as dt
+from math import log10
 from typing import Tuple
 
 import shapely.wkt
 from core.schema import GeoJsonExport
 from fastapi import HTTPException, status
-from fastapi.encoders import jsonable_encoder
 from geoalchemy2.shape import WKBElement, from_shape, to_shape
 from sensor_api_wrappers.data_transfer_object.sensor_readable import SensorReadable
+
+
+def decode_geohash(geohash: str) -> tuple[float, float]:
+    """
+    Decode geohash, returning two strings with latitude and longitude
+    containing only relevant digits and with trailing zeroes removed.
+    :reference: https://github.com/DBarthe/geohash/blob/master/geohash2/geohash.py
+    :param geohash: geohash to decode
+    :return: tuple of latitude and longitude
+    """
+    # decode geohash
+    base32_ = "0123456789bcdefghjkmnpqrstuvwxyz"
+    decode_map = {}
+    for i in range(len(base32_)):
+        decode_map[base32_[i]] = i
+    del i
+
+    lat_interval, lon_interval = (-90.0, 90.0), (-180.0, 180.0)
+    lat_err, lon_err = 90.0, 180.0
+    is_even = True
+    for c in geohash:
+        cd = decode_map[c]
+        for mask in [16, 8, 4, 2, 1]:
+            if is_even:  # adds longitude info
+                lon_err /= 2
+                if cd & mask:
+                    lon_interval = ((lon_interval[0] + lon_interval[1]) / 2, lon_interval[1])
+                else:
+                    lon_interval = (lon_interval[0], (lon_interval[0] + lon_interval[1]) / 2)
+            else:  # adds latitude info
+                lat_err /= 2
+                if cd & mask:
+                    lat_interval = ((lat_interval[0] + lat_interval[1]) / 2, lat_interval[1])
+                else:
+                    lat_interval = (lat_interval[0], (lat_interval[0] + lat_interval[1]) / 2)
+            is_even = not is_even
+    lat = (lat_interval[0] + lat_interval[1]) / 2
+    lon = (lon_interval[0] + lon_interval[1]) / 2
+
+    # Format to the number of decimals that are known
+    lats = "%.*f" % (max(1, int(round(-log10(lat_err)))) - 1, lat)
+    lons = "%.*f" % (max(1, int(round(-log10(lon_err)))) - 1, lon)
+    if "." in lats:
+        lats = lats.rstrip("0")
+    if "." in lons:
+        lons = lons.rstrip("0")
+    return lats, lons
 
 
 def convertDateRangeStringToDate(start: str, end: str) -> Tuple[dt.datetime, dt.datetime]:
@@ -97,7 +144,7 @@ def format_sensor_summary_data(query_result: any, deserialize: bool = True):
 
         if "measurement_data" in row_as_dict and deserialize:
             # convert the json string to a python dict
-            row_as_dict["measurement_data"] = jsonable_encoder(deserializeMeasurementData(row_as_dict["measurement_data"]))
+            row_as_dict["measurement_data"] = deserializeMeasurementData(row_as_dict["measurement_data"])
 
         results.append(row_as_dict)
 

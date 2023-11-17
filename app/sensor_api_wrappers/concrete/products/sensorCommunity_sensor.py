@@ -2,6 +2,7 @@ import io
 
 import numpy as np
 import pandas as pd
+from routers.services.formatting import decode_geohash
 from sensor_api_wrappers.data_transfer_object.sensor_writeable import SensorWritable
 from sensor_api_wrappers.interfaces.sensor_product import SensorProduct
 
@@ -17,6 +18,7 @@ class SensorCommunitySensor(SensorProduct, SensorWritable):
         """
         super().__init__(sensor_id, dataframe)
 
+    # @DeprecationWarning
     @staticmethod
     def ResampleDataAndSortIntoDays(sensorPlatform: dict[str, dict[int, pd.DataFrame]], intervalString: str) -> pd.DataFrame:
         """Resamples data and combines all sensor data into one sensor platform. A unique key contains the sensor ids of each sensor in the sensor platform.
@@ -47,6 +49,7 @@ class SensorCommunitySensor(SensorProduct, SensorWritable):
 
         return combinedDataframe
 
+    # @DeprecationWarning
     @staticmethod
     def prepare_measurements(df: pd.DataFrame) -> pd.DataFrame:
         """Prepares the measurement dataframe to match the column names of the other sensors (zephyr)
@@ -72,9 +75,41 @@ class SensorCommunitySensor(SensorProduct, SensorWritable):
         return df
 
     @staticmethod
-    def from_json(sensor_id: str, data: list) -> SensorWritable:
-        pass
+    def from_json(sensor_id: str, data: dict) -> SensorWritable:
+        df = pd.DataFrame(data["results"][0]["series"][0]["values"], columns=data["results"][0]["series"][0]["columns"])
+        df["time"] = pd.to_datetime(df["time"], unit="ms")
+        df = df.set_index("time")
 
+        # data aggregation
+        df = df.reset_index()
+        df["datetime"] = pd.to_datetime(df["time"], unit="ms")
+        df.set_index("datetime", inplace=True)
+
+        # measurements are taken every 145 seconds, sometimes there are gaps of variable length ranging from 1 to 30 seconds
+        # resampling with 180 seconds will group most/all valid measurements together even if there are gaps
+        df = df.resample("180S").first()
+
+        # drop rows with NaT time values
+        df = df.dropna(subset=["time"])
+        df.set_index("time", inplace=True)
+
+        # renaming columns
+        df = df.rename(columns={"dht22_humidity": "ambHumidity", "dht22_temperature": "ambTempC", "sds011_p1": "particulatePM10", "sds011_p2": "particulatePM2.5"})
+        # decode geohash
+        df[["latitude", "longitude"]] = decode_geohash(df["geohash"][0])
+
+        # drop geohash column
+        df.drop(columns=["geohash"], inplace=True)
+
+        # set all columns to float
+        df = df.astype(float)
+
+        # create unix timestamp column
+        df["timestamp"] = df.index.astype(np.int64) // 10**9
+
+        return SensorCommunitySensor(sensor_id, df)
+
+    # @DeprecationWarning
     @staticmethod
     def from_csv(id_: str, content: dict[int, bytes]) -> SensorWritable:
         """Creates a SensorCommunitySensor object from a dictionary of csv files.

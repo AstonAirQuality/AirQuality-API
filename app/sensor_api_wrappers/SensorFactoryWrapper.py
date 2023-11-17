@@ -7,9 +7,7 @@ from core.schema import Sensor as SchemaSensor
 from core.schema import SensorSummary as SchemaSensorSummary
 from dotenv import load_dotenv
 from sensor_api_wrappers.concrete.factories.plume_factory import PlumeFactory
-from sensor_api_wrappers.concrete.factories.sensorCommunity_factory import (
-    SensorCommunityFactory,
-)
+from sensor_api_wrappers.concrete.factories.sensorCommunity_factory import SensorCommunityFactory
 from sensor_api_wrappers.concrete.factories.zephyr_factory import ZephyrFactory
 
 
@@ -36,7 +34,7 @@ class SensorFactoryWrapper:
         Should not be used for bulk (multiple days) ingest if you want to ignore empty location data for sensors
         :param start: The start date of the data to fetch
         :param end: The end date of the data to fetch
-        :param sensor_dict: A dictionary of lookup_ids, stationary_boxes and time updated [lookup_id] = {"stationary_box": stationary_box, "time_updated": time_updated}
+        :param sensor_dict: a dictionary of the data ingestion information for each sensor
         :return: A list of sensor summaries
         """
         self.pf.login()
@@ -61,7 +59,7 @@ class SensorFactoryWrapper:
         """fetches the zephyr data from the api and returns a list of sensor summaries.
         :param start: The start date of the data to fetch
         :param end: The end date of the data to fetch
-        :param sensor_dict: A dictionary of lookup_ids, stationary_boxes and time updated [lookup_id] = {"stationary_box": stationary_box, "time_updated": time_updated}
+        :param sensor_dict: a dictionary of the data ingestion information for each sensor
         :return: A list of sensor summaries
         """
         for sensor in self.zf.get_sensors(sensor_dict, start, end, "B"):
@@ -72,7 +70,7 @@ class SensorFactoryWrapper:
         """fetches the sensor community data from the api and returns a list of sensor summaries.
         :param start: The start date of the data to fetch
         :param end: The end date of the data to fetch
-        :param sensor_dict: A dictionary of lookup_ids, stationary_boxes and time updated [lookup_id] = {"stationary_box": stationary_box, "time_updated": time_updated}
+        :param sensor_dict: a dictionary of the data ingestion information for each sensor
         :return: A list of sensor summaries
         """
         for sensor in self.scf.get_sensors(sensor_dict, start, end):

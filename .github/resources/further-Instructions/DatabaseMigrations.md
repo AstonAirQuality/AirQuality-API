@@ -5,12 +5,17 @@ To run a migration you must follow the below steps.
 ## Running a migration
 To begin run the docker containers.
 
-To create a new migration use the below command. ```docker-compose exec app alembic revision --autogenerate -m "New Migration"```.
-<br>You may use a custom migration name instead of "New Migration"
-
-
-To run the migration you can use this command. ```docker-compose exec app alembic upgrade head``` 
+Then create a new migration. You can replace "New Migration" with a custom name.
+```sh 
+docker-compose exec app alembic revision --autogenerate -m "New Migration"
+```
 <br> **You should always check your migration file before running it** 
+
+Then run the migration
+```sh 
+docker-compose exec app alembic upgrade head
+``` 
+
 
 
 ## Checking a migration file
@@ -30,3 +35,5 @@ You must follow the below steps if spatial fields exist in the migration file:
 
 - remove the create_index statement for spatial fields in the upgrade() function.
 - remove the drop_index statement for spatial fields  in the downgrade() function.
+
+<p align="right">(<a href="../../../README.md">back to README</a>)</p>

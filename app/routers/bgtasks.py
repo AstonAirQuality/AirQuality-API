@@ -13,31 +13,13 @@ from core.schema import SensorSummary as SchemaSensorSummary
 
 # sensor summary
 from dotenv import load_dotenv
-from fastapi import (
-    APIRouter,
-    BackgroundTasks,
-    Depends,
-    Header,
-    HTTPException,
-    Query,
-    status,
-)
+from fastapi import APIRouter, BackgroundTasks, Depends, Header, HTTPException, Query, status
 from routers.logs import add_log
 from routers.sensorSummaries import upsert_sensorSummary
 from routers.services.crud.crud import CRUD
-from routers.services.firebase_notifications import (
-    addFirebaseNotifcationDataIngestionTask,
-    clearFirebaseNotifcationDataIngestionTask,
-    updateFirebaseNotifcationDataIngestionTask,
-)
+from routers.services.firebase_notifications import addFirebaseNotifcationDataIngestionTask, clearFirebaseNotifcationDataIngestionTask, updateFirebaseNotifcationDataIngestionTask
 from routers.services.formatting import convertDateRangeStringToDate
-from routers.services.sensorsSharedFunctions import (
-    deactivate_unsynced_sensor,
-    get_lookupids_of_sensors,
-    get_sensor_dict,
-    get_sensor_id_and_serialnum_from_lookup_id,
-    set_last_updated,
-)
+from routers.services.sensorsSharedFunctions import deactivate_unsynced_sensor, get_lookupids_of_sensors, get_sensor_id_and_serialnum_from_lookup_id, set_last_updated
 from sensor_api_wrappers.SensorFactoryWrapper import SensorFactoryWrapper
 
 load_dotenv()
@@ -91,20 +73,21 @@ def upsert_sensor_summary_by_id_list(
 
     if sensor_dict:
         # for each sensor type, fetch the data from the sfw and write to the database
-        for sensorType, dict_lookupid_stationaryBox_and_timeUpdated in sensor_dict.items():
+        for sensorType, dict_dataIngestion_data in sensor_dict.items():
             if sensorType.lower() == "plume":
-                for sensorSummary in sfw.fetch_plume_data(startDate, endDate, dict_lookupid_stationaryBox_and_timeUpdated):
+                for sensorSummary in sfw.fetch_plume_data(startDate, endDate, dict_dataIngestion_data):
                     data_ingestion_logs = append_data_ingestion_logs(sensorSummary, data_ingestion_logs)
 
             elif sensorType.lower() == "zephyr":
-                for sensorSummary in sfw.fetch_zephyr_data(startDate, endDate, dict_lookupid_stationaryBox_and_timeUpdated):
+                for sensorSummary in sfw.fetch_zephyr_data(startDate, endDate, dict_dataIngestion_data):
                     data_ingestion_logs = append_data_ingestion_logs(sensorSummary, data_ingestion_logs)
 
             elif sensorType.lower() == "sensorcommunity":
-                # if the cron job was used then we can use the same start and end date because the latest historical data is yesterday instead of today
-                if type_of_id == "sensor_type_id":
-                    endDate = startDate
-                for sensorSummary in sfw.fetch_sensorCommunity_data(startDate, endDate, dict_lookupid_stationaryBox_and_timeUpdated):
+                # CSV ingest only
+                # # if the cron job was used then we can use the same start and end date because the latest historical data is yesterday instead of today
+                # if type_of_id == "sensor_type_id":
+                #     endDate = startDate
+                for sensorSummary in sfw.fetch_sensorCommunity_data(startDate, endDate, dict_dataIngestion_data):
                     data_ingestion_logs = append_data_ingestion_logs(sensorSummary, data_ingestion_logs)
                 continue
     else:

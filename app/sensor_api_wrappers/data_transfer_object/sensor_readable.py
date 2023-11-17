@@ -164,6 +164,10 @@ class SensorReadable(SensorDTO):
             df["boundingBox"] = boundingBox
         else:
             df["boundingBox"] = None
+
+        # convert any nan values to None
+        df.replace({np.nan: None}, inplace=True)
+
         return df
 
     @staticmethod
