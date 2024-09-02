@@ -1,0 +1,28 @@
+{
+    "query": "CALL ZAPI.GetUserZephyrs(\"AstonUniversity\", \"password\");",
+    "usersZephyrs": {
+        "13883": {
+            "zNumber": 814,
+            "location": {
+                "desc": "Automatic location",
+                "lat": "52.487640000",
+                "lng": "-1.890328333",
+                "since": "2021-03-09 16:16:00",
+                "locationType": 2,
+                "latLngAltered": "2021-11-26Z11:01:05"
+            }
+        },
+        "13916": {
+            "zNumber": 821,
+            "location": {
+                "desc": "Automatic location",
+                "lat": "52.487810000",
+                "lng": "-1.889885000",
+                "since": "2021-03-10 14:47:08",
+                "locationType": 2,
+                "latLngAltered": "2021-11-26Z06:05:16"
+            }
+        }
+    },
+    "userName": "AstonUniversity"
+}

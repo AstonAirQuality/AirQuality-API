@@ -1,0 +1,56 @@
+version: "3.8"
+
+services:
+
+  db:
+    container_name: postgresql_db
+    image: postgis/postgis:14-3.2-alpine
+    restart: always
+    ports:
+      - 5432:5432
+    environment:
+      - POSTGRES_USER=${DB_USER_TEST}
+      - POSTGRES_PASSWORD=${DB_PASSWORD_TEST}
+      - POSTGRES_DB=${DB_NAME_TEST}
+
+  ##host.docker.internal is used to connect to the host machine from the container
+  pgadmin-test:
+    container_name: pgadmin
+    image: dpage/pgadmin4
+    environment:
+      - PGADMIN_DEFAULT_EMAIL=${PGADMIN_EMAIL_TEST}
+      - PGADMIN_DEFAULT_PASSWORD=${PGADMIN_PASSWORD_TEST}
+    ports:
+      - 5050:80
+    depends_on:
+      - db
+
+  app:
+    container_name: app
+    build:
+      context: ./
+      dockerfile: ./app/Dockerfile
+    command: bash -c "alembic upgrade head && uvicorn main:app --host 0.0.0.0 --port 8000 --reload"
+    volumes:
+      - ./app:/app
+    ports:
+      - 8000:8000
+    depends_on:
+      - db
+    restart: always
+    environment:
+      DATABASE_URL: ${DATABASE_URL_DEV}
+      PLUME_EMAIL: "${PLUME_EMAIL}"
+      PLUME_PASSWORD: "${PLUME_PASSWORD}"
+      PLUME_FIREBASE_API_KEY: "${PLUME_FIREBASE_API_KEY}"
+      PLUME_ORG_NUM: "${PLUME_ORG_NUM}"
+      FASTAPI_SENTRY_DSN: "${FASTAPI_SENTRY_DSN}"
+      PRODUCTION_MODE: "${PRODUCTION_MODE}"
+      AWS_STAGE_NAME: "${AWS_STAGE_NAME}"
+      JWT_SECRET: "${JWT_SECRET}"
+      ZEPHYR_USERNAME: "${ZEPHYR_USERNAME}"
+      ZEPHYR_PASSWORD: "${ZEPHYR_PASSWORD}"
+      SC_USERNAME: "${SC_USERNAME}"
+      SC_PASSWORD: "${SC_PASSWORD}"
+      CRON_JOB_TOKEN: "${CRON_JOB_TOKEN}"
+      FASTAPI_SENTRY_SAMPLE_RATE: "${FASTAPI_SENTRY_SAMPLE_RATE}"

@@ -1,0 +1,93 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        ///////////////////////////Config for local debug//////////////////////////////////////
+        {
+            "name": "Python: Module - app", // top-level package called "app"
+            "type": "python",
+            "request": "launch",
+            "module": "uvicorn",
+            "cwd": "${workspaceFolder}\\app",
+            "args": [
+                "main:app",
+                "--port",
+                "8000",
+                "--reload"
+            ],
+        },
+        {
+            "name": "Python: Module - sensor_api_wrappers",
+            "type": "python",
+            "request": "launch",
+            "module": "sensor_api_wrappers.${fileBasenameNoExtension}",
+            "cwd": "${workspaceFolder}/app"
+        },
+        {
+            "name": "Python: Module - sensor_factories",
+            "type": "python",
+            "request": "launch",
+            "module": "sensor_api_wrappers.concrete.factories.${fileBasenameNoExtension}",
+            "cwd": "${workspaceFolder}/app"
+        },
+        {
+            "name": "Python: Module - sensor_products",
+            "type": "python",
+            "request": "launch",
+            "module": "sensor_api_wrappers.concrete.products.${fileBasenameNoExtension}",
+            "cwd": "${workspaceFolder}/app"
+        },
+        {
+            "name": "Python: Module - routerhelpers",
+            "type": "python",
+            "request": "launch",
+            "module": "routers.helpers.${fileBasenameNoExtension}",
+            "cwd": "${workspaceFolder}/app"
+        },
+        {
+            "name": "Python: Module - config",
+            "type": "python",
+            "request": "launch",
+            "module": "config.${fileBasenameNoExtension}",
+            "cwd": "${workspaceFolder}/app"
+        },
+        ///////////////////////////Testing config//////////////////////////////////////
+        {
+            "name": "Python: Module - testing",
+            "type": "python",
+            "request": "launch",
+            "module": "testing.${fileBasenameNoExtension}",
+            "cwd": "${workspaceFolder}/app"
+        },
+        {
+            "name": "Python: Module - testing-suite",
+            "type": "python",
+            "request": "launch",
+            "module": "testing.suite.${fileBasenameNoExtension}",
+            "cwd": "${workspaceFolder}/app"
+        },
+        ///////////////////////////Config for local debug//////////////////////////////////////
+        {
+            "name": "Python: Current File",
+            "type": "python",
+            "request": "launch",
+            "program": "${file}",
+            "console": "integratedTerminal",
+            "justMyCode": true
+        },
+        // {
+        //     "name": "Docker: Python - Fastapi",
+        //     "type": "docker",
+        //     "request": "launch",
+        //     "preLaunchTask": "docker-run: debug",
+        //     "python": {
+        //         "pathMappings": [
+        //             {
+        //                 "localRoot": "${workspaceFolder}",
+        //                 "remoteRoot": "/app"
+        //             }
+        //         ],
+        //         "projectType": "fastapi"
+        //     }
+        // }
+    ]
+}

@@ -1,0 +1,11 @@
+**/*.pyc
+*.md
+*.env
+*.gitignore
+*.gitattributes
+*.yml
+*.txt
+!requirements.txt
+*/.vscode*
+*/env*
+*/.devcontainer*
