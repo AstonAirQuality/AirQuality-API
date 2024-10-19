@@ -196,7 +196,7 @@ The following steps are requried for both local and docker setups.
 
 Twitter (X): [@dev_riyad](https://twitter.com/dev_riyad) 
 <br/>
-Email: riyad2308@gmail.com
+Email: riyad23008@gmail.com
 <br/>
 Project Link: [https://github.com/AstonAirQuality/AirQuality-API](https://github.com/AstonAirQuality/AirQuality-API)
 
