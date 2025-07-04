@@ -94,7 +94,14 @@ To get a local copy up and running follow these simple steps.
 
 ### Prerequisites
 
-You may choose to run the project locally or using docker by following the relevant setup instructions below.
+#### Complete setup project with Firebase Services
+1) Setup a firebase project 
+2) Enable Authentication and Realtime database services 
+3) Copy the admin sdk into the app/config directory in the project files.
+
+#### Local setup without Firebase Services
+1) Firevase services are not required, however you will still need to complete the environment variables setup in the next step.
+
 
 #### Docker Setup
 * Docker Desktop - install from [here](https://www.docker.com/products/docker-desktop)
@@ -121,6 +128,18 @@ The following steps are requried for both local and docker setups.
     SC_USERNAME = YOUR_SC_USERNAME
     SC_PASSWORD = YOUR_SC_PASSWORD
     CRON_JOB_TOKEN= YOUR_CRON_JOB_TOKEN
+   ```
+   If you are using Firebase services, you will also need to add the following variables:
+   ```env
+    FIREBASE_API_KEY= YOUR_FIREBASE_API_KEY
+    FIREBASE_AUTH_DOMAIN= YOUR_FIREBASE_AUTH_DOMAIN
+    FIREBASE_PROJECT_ID= YOUR_FIREBASE_PROJECT_ID
+    FIREBASE_STORAGE_BUCKET= YOUR_FIREBASE_STORAGE_BUCKET
+    FIREBASE_MESSAGING_SENDER_ID= YOUR_FIREBASE_MESSAGING_SENDER_ID
+    FIREBASE_APP_ID= YOUR_FIREABASE_APP_ID
+    FIREBASE_MEASUREMENT_ID= YOUR_FIREBASE_MEASUREMENT_ID
+    FIREBASE_SERVICE_ACCOUNT= YOUR_PATH_TO_SERVICE_ACCOUNT_JSON # remember to store the JSON inside app/config
+    FIREBASE_DATABASE_URL= YOUR_FIREBASE_DB_URL
    ```
 
 3. Copy `.env-template` to `.env` and enter your enviornment variables
@@ -192,7 +211,7 @@ The following steps are requried for both local and docker setups.
 
 Twitter (X): [@dev_riyad](https://twitter.com/dev_riyad) 
 <br/>
-Email: riyad2308@gmail.com
+Email: riyad23008@gmail.com
 <br/>
 Project Link: [https://github.com/AstonAirQuality/AirQuality-API](https://github.com/AstonAirQuality/AirQuality-API)
 
