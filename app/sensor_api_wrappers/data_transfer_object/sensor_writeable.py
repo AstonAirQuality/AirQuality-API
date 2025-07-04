@@ -37,7 +37,7 @@ class SensorWritable(SensorDTO):
         # if the dataframe is empty or None then yield an empty sensor summary with an error message
         if self.df is None or self.df.empty:
             yield SchemaSensorSummary(
-                timestamp=int(dt.datetime.utcnow().timestamp()), sensor_id=self.id, geom=None, measurement_count=0, measurement_data='{"message": "no data found"}', stationary=False
+                timestamp=int(dt.datetime.now().timestamp()), sensor_id=self.id, geom=None, measurement_count=0, measurement_data='{"message": "no data found"}', stationary=False
             )
         else:
             data_dict = self.dataframe_to_dict(self.df)

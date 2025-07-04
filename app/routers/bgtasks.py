@@ -65,7 +65,7 @@ def upsert_sensor_summary_by_id_list(
                 SchemaDataIngestionLog(
                     sensor_id=flaggedSensor["id"],
                     sensor_serial_number=flaggedSensor["serial_number"],
-                    timestamp=int(dt.datetime.utcnow().timestamp()),
+                    timestamp=int(dt.datetime.now().timestamp()),
                     success_status=False,
                     message="Sensor has not been updated in over 90 days",
                 )

@@ -62,8 +62,8 @@ class AuthHandler(Authorisation):
         payload = {
             "sub": decoded_jwt["sub"],
             "role": user_info[0],
-            "iat": dt.datetime.utcnow(),
-            "exp": dt.datetime.utcnow() + dt.timedelta(hours=1),
+            "iat": dt.datetime.now(),
+            "exp": dt.datetime.now() + dt.timedelta(hours=1),
         }
 
         token = jwt.encode(payload, self.secret, algorithm="HS256")
@@ -77,8 +77,8 @@ class AuthHandler(Authorisation):
         payload = {
             "sub": uid,
             "role": role,
-            "iat": dt.datetime.utcnow(),
-            "exp": dt.datetime.utcnow() + dt.timedelta(hours=1),
+            "iat": dt.datetime.now(),
+            "exp": dt.datetime.now() + dt.timedelta(hours=1),
         }
 
         # generate a custom jwt token

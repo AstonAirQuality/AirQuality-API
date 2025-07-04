@@ -144,3 +144,4 @@ app/testing/test_data/output/*
 .vscode/tasks.json
 *.ipynb
 app/testing/output/*
+app/config/firebase_adminsdk.json
