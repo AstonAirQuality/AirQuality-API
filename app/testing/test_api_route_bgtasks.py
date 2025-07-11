@@ -17,17 +17,11 @@ from fastapi.testclient import TestClient
 from main import app
 from sensor_api_wrappers.concrete.factories.plume_factory import PlumeFactory
 from sensor_api_wrappers.concrete.products.plume_sensor import PlumeSensor
-from sensor_api_wrappers.concrete.products.sensorCommunity_sensor import (
-    SensorCommunitySensor,
-)
+from sensor_api_wrappers.concrete.products.purpleAir_sensor import PurpleAirSensor
+from sensor_api_wrappers.concrete.products.sensorCommunity_sensor import SensorCommunitySensor
 from sensor_api_wrappers.concrete.products.zephyr_sensor import ZephyrSensor
 from sensor_api_wrappers.SensorFactoryWrapper import SensorFactoryWrapper
-from testing.application_config import (
-    authenticate_client,
-    database_config,
-    setUpSensor,
-    setUpSensorType,
-)
+from testing.application_config import authenticate_client, database_config, setUpSensor, setUpSensorType
 
 
 class Test_Api_7_BackgroundTasks(TestCase):
@@ -89,6 +83,38 @@ class Test_Api_7_BackgroundTasks(TestCase):
         file.close()
         sensor = SensorCommunitySensor.from_csv(sensor_id, csv_files)
         cls.sensorCommunity_summary = list(sensor.create_sensor_summaries(None))[0]
+
+        # purple air sensor type to be added to the database
+        cls.purpleAir_sensor_type_id = setUpSensorType(
+            cls.db,
+            "PurpleAir",
+            "test_purpleAir",
+            {
+                "pm1.0_atm_a": "ug/m3",
+                "pm1.0_atm_b": "ug/m3",
+                "pm2.5_atm_a": "ug/m3",
+                "pm2.5_atm_b": "ug/m3",
+                "pm10.0_atm_a": "ug/m3",
+                "pm10.0_atm_b": "ug/m3",
+                "temperature": "C",
+                "humidity": "%",
+                "pressure": "hPa",
+                "voc": "ppb",
+                "scattering_coefficient": "Mm-1",
+                "deciviews": "",
+                "visual_range": "",
+            },
+        )
+        # purple air sensor to be added to the database
+        cls.purpleAir_sensor_id = setUpSensor(
+            cls.db, "274866", "zen_2020", cls.purpleAir_sensor_type_id, True, None, "POLYGON((-1.889767 52.45279,-1.889767 52.45281,-1.889747 52.45281,-1.889747 52.45279,-1.889767 52.45279))"
+        )
+        # purple air sensor summary to be added to the database
+        file = open("testing/test_data/purpleair_sensor_274866.csv", "r")
+        data = file.read()
+        file.close()
+        sensor = PurpleAirSensor.from_csv("274866", data)
+        cls.purpleAir_summary = list(sensor.create_sensor_summaries(None))[0]
 
     @classmethod
     def tearDownClass(cls):
@@ -179,7 +205,28 @@ class Test_Api_7_BackgroundTasks(TestCase):
         # test that log was added to the database
         self.log_insert_shared_test()
 
-    def test_4_upsert_sensor_summary_by_type_id_active_sensors(self):
+    def test_4_purpleAir_upsert_sensor_summary_by_id_list(self):
+        """Test the upsert sensor summary by id list route of the API"""
+        # wait 2 second to ensure that the log date is different
+        time.sleep(2)
+
+        with patch.object(SensorFactoryWrapper, "fetch_purpleAir_data", return_value=[self.purpleAir_summary]) as mock_fetch_purpleAir_data:
+            response = self.client.post("/api-task/schedule/ingest-bysensorid/01-04-2023/02-04-2023", params={"sensor_ids": [self.purpleAir_sensor_id]})
+            mock_fetch_purpleAir_data.assert_called_once()
+            self.assertEqual(response.status_code, 200)
+            self.assertNotEqual(response, "No active sensors found")
+
+        # test that the sensor summary was added to the database
+        try:
+            res = self.db.query(ModelSensorSummary).filter(ModelSensorSummary.sensor_id == self.purpleAir_sensor_id).first()
+            self.assertIsNotNone(res)
+        except Exception as e:
+            self.db.rollback()
+
+        # test that log was added to the database
+        self.log_insert_shared_test()
+
+    def test_5_upsert_sensor_summary_by_type_id_active_sensors(self):
         """Test the upsert sensor summary by type id active sensors route of the API"""
         # wait 3 second to ensure that the log date is different
         time.sleep(2)

@@ -89,7 +89,10 @@ def upsert_sensor_summary_by_id_list(
                 #     endDate = startDate
                 for sensorSummary in sfw.fetch_sensorCommunity_data(startDate, endDate, dict_dataIngestion_data):
                     data_ingestion_logs = append_data_ingestion_logs(sensorSummary, data_ingestion_logs)
-                continue
+
+            elif sensorType.lower() == "purpleair":
+                for sensorSummary in sfw.fetch_purpleAir_data(startDate, endDate, dict_dataIngestion_data):
+                    data_ingestion_logs = append_data_ingestion_logs(sensorSummary, data_ingestion_logs)
     else:
         if type_of_id == "sensor_id":
             try:
