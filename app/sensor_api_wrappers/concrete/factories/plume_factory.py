@@ -159,7 +159,7 @@ class PlumeFactory(SensorFactory):
         # create a list of sensor ids that do not have location data
         lookupids_without_location_data = list(set(lookupids) - set(lookupids_with_location_data))
 
-        # STEP 4: for sensors without location data check if they have a stationary box value, if they do then get the measurements using the start and end time parameters
+        # STEP 4: for sensors without location data check if they have a stationary box value, and if they do then get the measurements using the start and end time parameters
         for sensorid in lookupids_without_location_data:
             if sensor_dict[sensorid]["stationary_box"] is not None:
                 try:

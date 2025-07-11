@@ -21,7 +21,7 @@ class ZephyrSensor(SensorProduct, SensorWritable):
         :return: The prepared measurement dataframe."""
 
         # drop rows with all NaN values
-        df.dropna(inplace=True)
+        df.dropna(how="all", inplace=True)
 
         # infer the data types of the columns
         df = df.infer_objects()
@@ -42,7 +42,7 @@ class ZephyrSensor(SensorProduct, SensorWritable):
 
         df = df.loc[~df.index.duplicated()]
 
-        # add latitude and longitude columns with NaN values
+        # add latitude and longitude columns with NaN values, which will be filled by the stationary box later
         df["latitude"] = np.nan
         df["longitude"] = np.nan
 
