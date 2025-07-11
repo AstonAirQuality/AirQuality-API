@@ -119,7 +119,8 @@ class Test_purpleAirFactory(TestCase):
         expected_df = pd.read_csv(StringIO(mocked_get.return_value.text), index_col="time_stamp")
         # check the number of columns and rows matches the sensor.df
         self.assertEqual(sensor.df.shape[0], expected_df.shape[0], "The number of rows in the sensor DataFrame should match the test data.")
-        self.assertEqual(sensor.df.shape[1], expected_df.shape[1], "The number of columns in the sensor DataFrame should match the test data.")
+        # latitude and longitude columns are not included in the sensor DataFrame
+        self.assertEqual(sensor.df.shape[1], expected_df.shape[1] + 2, "The number of columns in the sensor DataFrame should match the test data.")
 
 
 if __name__ == "__main__":
