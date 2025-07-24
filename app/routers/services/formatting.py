@@ -72,13 +72,20 @@ def convertDateRangeStringToDate(start: str, end: str) -> Tuple[dt.datetime, dt.
     return startDate, endDate
 
 
-def convertDateRangeStringToTimestamp(start: dt.datetime, end: dt.datetime) -> Tuple[int, int]:
+def convertDateRangeStringToTimestamp(start: dt.datetime, end: dt.datetime, max_days: int = None) -> Tuple[int, int]:
     """converts a date range string to a tuple of timestamps
-    :param start: start date string in format DD-MM-YYYY
-    :param end: end date string in format DD-MM-YYYY
+
+    Args:
+        start (dt.datetime): start date
+        end (dt.datetime): end date
+        max_days (int): maximum number of days between start and end date (default is None, which means no limit)
+
     :return: tuple of timestamps
     """
     (startDate, endDate) = convertDateRangeStringToDate(start, end)
+    difference = (endDate - startDate).days
+    if max_days is not None and difference > max_days:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"Date range exceeds maximum of {max_days} days")
     timestampStart = int(dt.datetime.timestamp(startDate.replace(tzinfo=dt.timezone.utc)))
     timestampEnd = int(dt.datetime.timestamp(endDate.replace(tzinfo=dt.timezone.utc)))
     return timestampStart, timestampEnd
@@ -131,8 +138,36 @@ def format_sensor_joined_data(result: any):
     return results
 
 
+def format_sensor_summary_to_csv(query_result: any, use_datetime: bool) -> str:
+    """Format the sensor data as CSV
+
+    Args:
+        query_result (any): The query result to format
+        use_datetime (bool): Whether to return the timestamp as a datetime string instead of a unix timestamp
+    Returns:
+        str: The formatted CSV string
+    """
+    try:
+        df = SensorReadable.JsonStringToDataframe(query_result[0]["measurement_data"], boundingBox=None)
+        if use_datetime:
+            df.reset_index().drop(columns=["date", "boundingBox"], inplace=True)
+            return df.set_index("timestamp").to_csv(index=True, header=True)
+        else:
+            df.drop(columns=["timestamp", "boundingBox"], inplace=True)
+            return df.to_csv(index=True, header=True)
+    except Exception as e:
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Could not format results as CSV: {e}")
+
+
 def format_sensor_summary_data(query_result: any, deserialize: bool = True):
-    """Format the sensor summary data"""
+    """Format the sensor summary data
+
+    Args:
+        query_result (any): The query result to format
+        deserialize (bool): Whether to deserialize the measurement data (default is True)
+    Returns:
+        list: A list of formatted sensor summary data as dictionaries
+    """
     results = []
     for row in query_result:
         row_as_dict = dict(row._mapping)
@@ -198,8 +233,10 @@ def sensorSummariesToGeoJson(results: list, averaging_methods: list[str], averag
 
 def deserializeMeasurementData(measurement_data: str) -> dict:
     """deserializes the measurement data
-    :param measurement_data: measurement data to deserialize
+    Args:
+        measurement_data (str): the measurement data in JSON string format
+
     :return: dictionary of deserialized measurement data"""
     df = SensorReadable.JsonStringToDataframe(measurement_data, boundingBox=None)
-    df.drop(columns=["timestamp", "boundingBox"], inplace=True)
-    return df.to_dict(orient="index")
+    df.drop(columns=["boundingBox"], inplace=True)
+    return df.to_dict(orient="records")  # use timestamps since they use less data

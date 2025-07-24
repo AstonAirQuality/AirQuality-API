@@ -4,6 +4,7 @@ from docsMarkdown import description, tags_metadata
 from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException, status
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.middleware.gzip import GZipMiddleware
 from mangum import Mangum
 from routers.auth import authRouter
 from routers.bgtasks import backgroundTasksRouter
@@ -29,6 +30,7 @@ app.include_router(usersRouter, prefix="/user", tags=["user"])
 app.include_router(logsRouter, prefix="/data-ingestion-logs", tags=["data-ingestion-logs"])
 
 origins = ["*"]
+app.add_middleware(GZipMiddleware, minimum_size=1000, compresslevel=9)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,
