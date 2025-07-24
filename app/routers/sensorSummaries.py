@@ -136,17 +136,16 @@ def get_sensorSummaries_geojson_export(
         HTTPException: if the date range exceeds the maximum allowed days (10 days for minutely data, 90 days for hourly data, 365 days for daily data, 1825 days for monthly data, no limit for yearly data)
     """
     max_days = 10
-    match averaging_frequency:
-        case "Min":
-            max_days = 10  # 10 days for minutely data
-        case "H":
-            max_days = 90  # 3 months for hourly data
-        case "D":
-            max_days = 365  # 1 year for daily data
-        case "M":
-            max_days = 1825  # 5 years for monthly data
-        case "Y":
-            max_days = None  # no limit for yearly data
+    if averaging_frequency == "Min":
+        max_days = 10  # 10 days for minutely data
+    elif averaging_frequency == "H":
+        max_days = 90  # 3 months for hourly data
+    elif averaging_frequency == "D":
+        max_days = 365  # 1 year for daily data
+    elif averaging_frequency == "M":
+        max_days = 1825  # 5 years for monthly data
+    elif averaging_frequency == "Y":
+        max_days = None  # no limit for yearly data
 
     (timestampStart, timestampEnd) = convertDateRangeStringToTimestamp(start, end, max_days)
 
@@ -178,14 +177,14 @@ def get_sensorSummaries_csv_export(
     start: str = Query(..., description="format: dd-mm-yyyy"),
     end: str = Query(..., description="format: dd-mm-yyyy"),
     sensor_id: int = Query(default=0, description="a sensor id to filter by"),
-    use_datetime: bool = Query(False, description="if true then the timestamp will be returned as a datetime string instead of a unix timestamp"),
+    use_timestamp: bool = Query(False, description="if true then the timestamp will be returned as a datetime string instead of a unix timestamp"),
 ):
     """read sensor summaries given a date range and one sensor id then return as csv
     Args:
         start (str): start date of the query in the format dd-mm-yyyy
         end (str): end date of the query in the format dd-mm-yyyy
         sensor_id (int): sensor id to filter by (default is 0 which means no filter)
-        use_datetime (bool): if true then the timestamp will be returned as a datetime string instead of a unix timestamp
+        use_timestamp (bool): if true then the timestamp will be returned as a datetime string instead of a unix timestamp
     Returns:
         StreamingResponse: a streaming response with the csv data
     Raises:
@@ -206,7 +205,7 @@ def get_sensorSummaries_csv_export(
         )
         query_result = CRUD().db_get_fields_using_filter_expression(filter_expressions, fields, ModelSensorSummary, join_models)
         response = StreamingResponse(
-            iter([format_sensor_summary_to_csv(query_result, use_datetime)]),
+            iter([format_sensor_summary_to_csv(query_result, use_timestamp)]),
             media_type="text/csv",
         )
         response.headers["Content-Disposition"] = "attachment; filename=sensor_summaries.csv"

@@ -138,7 +138,7 @@ def format_sensor_joined_data(result: any):
     return results
 
 
-def format_sensor_summary_to_csv(query_result: any, use_datetime: bool) -> str:
+def format_sensor_summary_to_csv(query_result: any, use_timestamp: bool) -> str:
     """Format the sensor data as CSV
 
     Args:
@@ -149,8 +149,8 @@ def format_sensor_summary_to_csv(query_result: any, use_datetime: bool) -> str:
     """
     try:
         df = SensorReadable.JsonStringToDataframe(query_result[0]["measurement_data"], boundingBox=None)
-        if use_datetime:
-            df.reset_index().drop(columns=["date", "boundingBox"], inplace=True)
+        if use_timestamp:
+            df.drop(columns=["boundingBox"], inplace=True)
             return df.set_index("timestamp").to_csv(index=True, header=True)
         else:
             df.drop(columns=["timestamp", "boundingBox"], inplace=True)
