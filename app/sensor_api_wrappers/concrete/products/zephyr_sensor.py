@@ -1,5 +1,6 @@
 import numpy as np
 import pandas as pd
+from sensor_api_wrappers.data_transfer_object.sensor_measurements import SensorMeasurementsColumns
 from sensor_api_wrappers.data_transfer_object.sensor_writeable import SensorWritable
 from sensor_api_wrappers.interfaces.sensor_product import SensorProduct
 
@@ -13,6 +14,23 @@ class ZephyrSensor(SensorProduct, SensorWritable):
         :param dataframe: The sensor data.
         """
         super().__init__(sensor_id, dataframe)
+        self.data_columns = [
+            SensorMeasurementsColumns.DATE.value,
+            SensorMeasurementsColumns.PM1.value,
+            SensorMeasurementsColumns.PM2_5.value,
+            SensorMeasurementsColumns.PM10.value,
+            SensorMeasurementsColumns.TEMPERATURE.value,
+            SensorMeasurementsColumns.HUMIDITY.value,
+            SensorMeasurementsColumns.AMBIENT_TEMPERATURE.value,
+            SensorMeasurementsColumns.AMBIENT_HUMIDITY.value,
+            SensorMeasurementsColumns.AMBIENT_PRESSURE.value,
+            SensorMeasurementsColumns.NO.value,
+            SensorMeasurementsColumns.NO2.value,
+            SensorMeasurementsColumns.O3.value,
+            SensorMeasurementsColumns.LATITUDE.value,
+            SensorMeasurementsColumns.LONGITUDE.value,
+        ]
+        self.df = self.df[self.data_columns]
 
     @staticmethod
     def prepare_measurements(df: pd.DataFrame) -> pd.DataFrame:
@@ -32,8 +50,18 @@ class ZephyrSensor(SensorProduct, SensorWritable):
         df.rename(
             columns={
                 "dateTime": "date",
-                "UTS": "timestamp",
-                "particulatePM25": "particulatePM2.5",
+                "UTS": SensorMeasurementsColumns.DATE.value,
+                "particulatePM25": SensorMeasurementsColumns.PM2_5.value,
+                "particulatePM10": SensorMeasurementsColumns.PM10.value,
+                "particulatePM1": SensorMeasurementsColumns.PM1.value,
+                "ambTempC": SensorMeasurementsColumns.AMBIENT_TEMPERATURE.value,
+                "ambHumidity": SensorMeasurementsColumns.AMBIENT_HUMIDITY.value,
+                "ambPressure": SensorMeasurementsColumns.AMBIENT_PRESSURE.value,
+                "humidity": SensorMeasurementsColumns.HUMIDITY.value,
+                "tempC": SensorMeasurementsColumns.TEMPERATURE.value,
+                "NO": SensorMeasurementsColumns.NO.value,
+                "NO2": SensorMeasurementsColumns.NO2.value,
+                "O3": SensorMeasurementsColumns.O3.value,
             },
             inplace=True,
         )
@@ -73,16 +101,16 @@ class ZephyrSensor(SensorProduct, SensorWritable):
         pass
 
 
-# import json
+if __name__ == "__main__":
+    import json
 
-# if __name__ == "__main__":
-#     file = open("testing/test_data/zephyr_814_sensor_data.json", "r")
-#     json_ = json.load(file)
-#     file.close()
-#     sensor = ZephyrSensor.from_json("814", json_["data"]["Unaveraged"]["slotB"])
-#     # print dataframe columns
-#     print(sensor.df.head())
-#     print(sensor.df.columns.tolist())
+    file = open("testing/test_data/zephyr_814_sensor_data.json", "r")
+    json_ = json.load(file)
+    file.close()
+    sensor = ZephyrSensor.from_json("814", json_["data"]["Unaveraged"]["slotB"])
+    # print dataframe columns
+    print(sensor.df.head())
+    print(sensor.df.columns.tolist())
 
-#     summaries = list(sensor.create_sensor_summaries(None))
-#     print(summaries[0])
+    # summaries = list(sensor.create_sensor_summaries(None))
+    # print(summaries[0])

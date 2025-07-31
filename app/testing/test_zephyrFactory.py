@@ -11,6 +11,7 @@ import requests
 from dotenv import load_dotenv
 from sensor_api_wrappers.concrete.factories.zephyr_factory import ZephyrFactory
 from sensor_api_wrappers.concrete.products.zephyr_sensor import ZephyrSensor
+from sensor_api_wrappers.data_transfer_object.sensor_measurements import SensorMeasurementsColumns
 
 
 class Test_zephyrFactory(TestCase):
@@ -27,7 +28,22 @@ class Test_zephyrFactory(TestCase):
         load_dotenv()
         # the env variables are set in the .env file. They must match the ones in the .env file
         cls.zf = ZephyrFactory(env["ZEPHYR_USERNAME"], env["ZEPHYR_PASSWORD"])
-        pass
+        cls.expected_columns = [
+            SensorMeasurementsColumns.DATE.value,
+            SensorMeasurementsColumns.PM1.value,
+            SensorMeasurementsColumns.PM2_5.value,
+            SensorMeasurementsColumns.PM10.value,
+            SensorMeasurementsColumns.TEMPERATURE.value,
+            SensorMeasurementsColumns.HUMIDITY.value,
+            SensorMeasurementsColumns.AMBIENT_HUMIDITY.value,
+            SensorMeasurementsColumns.AMBIENT_TEMPERATURE.value,
+            SensorMeasurementsColumns.AMBIENT_PRESSURE.value,
+            SensorMeasurementsColumns.NO.value,
+            SensorMeasurementsColumns.NO2.value,
+            SensorMeasurementsColumns.O3.value,
+            SensorMeasurementsColumns.LATITUDE.value,
+            SensorMeasurementsColumns.LONGITUDE.value,
+        ]
 
     @classmethod
     def tearDownClass(cls):
@@ -86,22 +102,7 @@ class Test_zephyrFactory(TestCase):
         )
 
         self.assertEqual(len(sensors), 1)
-        expected_columns = [
-            "NO",
-            "NO2",
-            "O3",
-            "timestamp",
-            "ambHumidity",
-            "ambPressure",
-            "ambTempC",
-            "humidity",
-            "particulatePM1",
-            "particulatePM10",
-            "particulatePM2.5",
-            "tempC",
-            "latitude",
-            "longitude",
-        ]
+
         for sensor in sensors:
             self.assertTrue(isinstance(sensor, ZephyrSensor))
             self.assertEqual(sensor.id, "814")
@@ -109,7 +110,7 @@ class Test_zephyrFactory(TestCase):
             # check that the dataframe has the correct columns in any order
             self.assertEqual(
                 set(sensor.df.columns.tolist()),
-                set(expected_columns),
+                set(self.expected_columns),
             )
 
 

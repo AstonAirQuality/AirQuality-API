@@ -32,7 +32,6 @@ class Test_purpleAirFactory(TestCase):
             referer_url=env["PURPLE_AIR_REFERER_URL"],
             api_key=env["PURPLE_AIR_API_KEY"],
         )
-        pass
 
     @classmethod
     def tearDownClass(cls):
@@ -81,7 +80,7 @@ class Test_purpleAirFactory(TestCase):
         mocked_get.return_value.text = json.dumps(error_response)
         mocked_get.return_value.json.return_value = error_response
 
-        sensor_dict = {"132169": {"stationary_box": None, "time_updated": None}}
+        sensor_dict = {"132169,outdoor": {"stationary_box": None, "time_updated": None}}
         start = dt.datetime(2025, 7, 7)
         end = dt.datetime(2025, 7, 8)
 
@@ -105,7 +104,7 @@ class Test_purpleAirFactory(TestCase):
 
         start = dt.datetime(2025, 7, 7, 23, 0, 0)
         end = dt.datetime(2025, 7, 8, 0, 0, 0)
-        sensor_dict = {"274866": {"stationary_box": None, "time_updated": None}}
+        sensor_dict = {"274866,outdoor": {"stationary_box": None, "time_updated": None}}
 
         sensors = list(self.pf.get_sensors(sensor_dict, start, end))
         mocked_get.assert_called_once()
@@ -113,14 +112,14 @@ class Test_purpleAirFactory(TestCase):
         self.assertEqual(len(sensors), 1, "There should be one sensor returned.")
         sensor = sensors[0]
         self.assertIsInstance(sensor, PurpleAirSensor, "The sensor should be an instance of PurpleAirSensor.")
-        self.assertEqual(sensor.id, "274866", "The sensor ID should match the one in the test data.")
+        self.assertEqual(sensor.id, "274866,outdoor", "The sensor ID should match the one in the test data.")
         self.assertIsNotNone(sensor.df, "The sensor DataFrame should not be None.")
 
         expected_df = pd.read_csv(StringIO(mocked_get.return_value.text), index_col="time_stamp")
         # check the number of columns and rows matches the sensor.df
         self.assertEqual(sensor.df.shape[0], expected_df.shape[0], "The number of rows in the sensor DataFrame should match the test data.")
         # latitude and longitude columns are not included in the sensor DataFrame
-        self.assertEqual(sensor.df.shape[1], expected_df.shape[1] + 2, "The number of columns in the sensor DataFrame should match the test data.")
+        self.assertEqual(sensor.df.shape[1], 19, "The number of columns in the sensor DataFrame should match the test data.")
 
 
 if __name__ == "__main__":

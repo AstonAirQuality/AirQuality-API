@@ -9,12 +9,9 @@ from unittest.mock import MagicMock, patch
 import pandas as pd
 import requests
 from dotenv import load_dotenv
-from sensor_api_wrappers.concrete.factories.sensorCommunity_factory import (
-    SensorCommunityFactory,
-)
-from sensor_api_wrappers.concrete.products.sensorCommunity_sensor import (
-    SensorCommunitySensor,
-)
+from sensor_api_wrappers.concrete.factories.sensorCommunity_factory import SensorCommunityFactory
+from sensor_api_wrappers.concrete.products.sensorCommunity_sensor import SensorCommunitySensor
+from sensor_api_wrappers.data_transfer_object.sensor_measurements import SensorMeasurementsColumns
 
 
 class MockResponse:
@@ -36,7 +33,25 @@ class Test_sensorCommunityFactory(TestCase):
         load_dotenv()
         # the env variables are set in the .env file. They must match the ones in the .env file
         cls.scf = SensorCommunityFactory(env["SC_USERNAME"], env["SC_PASSWORD"])
-        pass
+        cls.expected_columns = [
+            SensorMeasurementsColumns.DATE.value,
+            SensorMeasurementsColumns.PM10_RAW.value,
+            SensorMeasurementsColumns.PM2_5_RAW.value,
+            SensorMeasurementsColumns.AMBIENT_HUMIDITY.value,
+            SensorMeasurementsColumns.AMBIENT_TEMPERATURE.value,
+            SensorMeasurementsColumns.AMBIENT_PRESSURE.value,
+            SensorMeasurementsColumns.LATITUDE.value,
+            SensorMeasurementsColumns.LONGITUDE.value,
+        ]
+        cls.expected_columns_2 = [
+            SensorMeasurementsColumns.DATE.value,
+            SensorMeasurementsColumns.PM10_RAW.value,
+            SensorMeasurementsColumns.PM2_5_RAW.value,
+            SensorMeasurementsColumns.AMBIENT_HUMIDITY.value,
+            SensorMeasurementsColumns.AMBIENT_TEMPERATURE.value,
+            SensorMeasurementsColumns.LATITUDE.value,
+            SensorMeasurementsColumns.LONGITUDE.value,
+        ]
 
     @classmethod
     def tearDownClass(cls):
@@ -78,7 +93,6 @@ class Test_sensorCommunityFactory(TestCase):
 
             self.assertEqual(len(sensors), 1)
 
-            expected_columns = ["particulatePM10", "particulatePM2.5", "ambPressure", "humidity", "latitude", "longitude", "tempC", "timestamp"]
             sensor = sensors[0]
             self.assertTrue(isinstance(sensor, SensorCommunitySensor))
             self.assertEqual(sensor.id, sensor_id)
@@ -86,7 +100,7 @@ class Test_sensorCommunityFactory(TestCase):
             # check that the dataframe contains the correct columns in any order
             self.assertEqual(
                 set(sensor.df.columns.tolist()),
-                set(expected_columns),
+                set(self.expected_columns),
             )
 
     def test_prepare_sensor_platform_dict(self):
@@ -174,7 +188,6 @@ class Test_sensorCommunityFactory(TestCase):
         sensors = list(self.scf.get_sensors(sensor_dict, start, end))
         self.assertEqual(len(sensors), 1)
 
-        expected_columns = ["particulatePM10", "particulatePM2.5", "ambHumidity", "ambTempC", "latitude", "longitude", "timestamp"]
         sensor = sensors[0]
         self.assertTrue(isinstance(sensor, SensorCommunitySensor))
         self.assertEqual(sensor.id, "83636,SDS011,83637,DHT22")
@@ -182,7 +195,7 @@ class Test_sensorCommunityFactory(TestCase):
         # check that the dataframe contains the correct columns in any order
         self.assertEqual(
             set(sensor.df.columns.tolist()),
-            set(expected_columns),
+            set(self.expected_columns_2),
         )
 
 

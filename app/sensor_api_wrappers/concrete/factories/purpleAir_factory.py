@@ -82,19 +82,33 @@ class PurpleAirFactory(SensorFactory):
                 # Format with milliseconds and timezone offset as required: YYYY-MM-DDTHH:MM:SS.sss+00:00
                 start_date_str = startDate.strftime("%Y-%m-%dT%H:%M:%S.%f")[:-3] + "+00:00"
                 end_date_str = end.strftime("%Y-%m-%dT%H:%M:%S.%f")[:-3] + "+00:00"
+
+                sensor_id = sensor_lookupid.split(",")[0]  # split by comma to get the sensor id
+                outside = False
+                if sensor_lookupid.split(",")[1] == "outdoor":
+                    # if the sensor is outside then set the outside flag to True
+                    outside = True
+
                 field_list = [
-                    # ["pm1.0_a", "pm1.0_b", "pm2.5_a", "pm2.5_b", "pm10.0_a", "pm10.0_b"], # these fields are not available in the API onlyfor sensor summaries
+                    # ["pm1.0_a", "pm1.0_b", "pm2.5_a", "pm2.5_b", "pm10.0_a", "pm10.0_b"], # these fields are not available in the API only for sensor summaries on the map
                     ["pm1.0_atm_a", "pm1.0_atm_b", "pm2.5_atm_a", "pm2.5_atm_b", "pm10.0_atm_a", "pm10.0_atm_b"],
                     ["pm1.0_cf_1_a", "pm1.0_cf_1_b", "pm2.5_cf_1_a", "pm2.5_cf_1_b", "pm10.0_cf_1_a", "pm10.0_cf_1_b"],
                     ["temperature", "humidity", "pressure", "voc", "scattering_coefficient", "deciviews", "visual_range"],
                 ]
-                # Flatten the list of lists into a single list of fields
-                fields = [item for sublist in field_list for item in sublist]
+
+                # Flatten the list of lists into a single list of fields and filter based on the sensor type
+                # if outside then remove all cf_1 fields
+                if outside:
+                    fields = [item for sublist in field_list for item in sublist if "cf_1" not in item]
+                else:
+                    # if inside then remove all atm fields
+                    fields = [item for sublist in field_list for item in sublist if "atm" not in item]
+
                 # convert the fields list to a string
                 fields_str = ",".join(fields)
 
                 url = "https://map.purpleair.com/v1/sensors/{sensor_id}/history/csv?fields={fields}&start_timestamp={start_date}&end_timestamp={end_date}&average={averaging_id}".format(
-                    sensor_id=sensor_lookupid, fields=fields_str, start_date=start_date_str, end_date=end_date_str, averaging_id=0
+                    sensor_id=sensor_id, fields=fields_str, start_date=start_date_str, end_date=end_date_str, averaging_id=0
                 )
 
                 headers = {
@@ -127,18 +141,36 @@ class PurpleAirFactory(SensorFactory):
                 # print(f"Error fetching data for sensor {sensor_lookupid}: {e}")
                 yield PurpleAirSensor(sensor_lookupid, None)
 
+    def get_sensors_from_file(self, sensor_dict: dict[str, str], file: bytes) -> Iterator[PurpleAirSensor]:
+        """Factory method for creating PurpleAir sensor objects from a csv file.
 
-# from os import environ as env
+        Args:
+            sensor_dict (dict[str, str]): A dictionary where keys are sensor lookup IDs and values are stationary boxes.
+            file (bytes): The file containing sensor data in CSV format.
 
-# from dotenv import load_dotenv
+        Yields:
+            PurpleAirSensor: An instance of PurpleAirSensor for each sensor in the sensor_dict.
+        """
+        # read the file as a string
+        file_str = io.StringIO(file.decode("utf-8"))
+        # create a zip file object from the string
+        for sensor_lookupid in sensor_dict.keys():
+            try:
+                yield PurpleAirSensor.from_csv(sensor_lookupid, file_str.getvalue())
+            except Exception as e:
+                # if the sensor has no data for the given time period then return an empty sensor
+                yield PurpleAirSensor(sensor_lookupid, None)
+
 
 # if __name__ == "__main__":
+# from os import environ as env
+# from dotenv import load_dotenv
 #     load_dotenv()
 
 #     pf = PurpleAirFactory(token_url=env["PURPLE_AIR_TOKEN_URL"], referer_url=env["PURPLE_AIR_REFERER_URL"], api_key=env["PURPLE_AIR_API_KEY"])
 #     pf.login()
 
-#     sensor_dict = {"132169": {"stationary_box": None, "time_updated": None}}
+#     sensor_dict = {"132169,outdoor": {"stationary_box": None, "time_updated": None}}
 
 #     sensors = pf.get_sensors(sensor_dict, dt.datetime(2025, 3, 30), dt.datetime(2025, 3, 31))
 
@@ -146,4 +178,5 @@ class PurpleAirFactory(SensorFactory):
 #         print(sensor.df.head(-1))
 #         # write df to csv file
 #         sensor.df.to_csv(f"purple_air_sensor_{sensor.id}.csv")
+#         break
 #         break

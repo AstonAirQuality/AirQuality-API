@@ -4,9 +4,8 @@ import warnings
 from unittest import TestCase
 
 import pandas as pd
-from sensor_api_wrappers.concrete.products.sensorCommunity_sensor import (
-    SensorCommunitySensor,
-)
+from sensor_api_wrappers.concrete.products.sensorCommunity_sensor import SensorCommunitySensor
+from sensor_api_wrappers.data_transfer_object.sensor_measurements import SensorMeasurementsColumns
 
 
 class Test_sensorCommunitySensor(TestCase):
@@ -16,7 +15,25 @@ class Test_sensorCommunitySensor(TestCase):
     def setUpClass(cls):
         """Setup the test environment once before all tests"""
         warnings.simplefilter("ignore", ResourceWarning)
-        pass
+        cls.expected_columns_1 = [
+            SensorMeasurementsColumns.DATE.value,
+            SensorMeasurementsColumns.PM10_RAW.value,
+            SensorMeasurementsColumns.PM2_5_RAW.value,
+            SensorMeasurementsColumns.AMBIENT_HUMIDITY.value,
+            SensorMeasurementsColumns.AMBIENT_TEMPERATURE.value,
+            SensorMeasurementsColumns.AMBIENT_PRESSURE.value,
+            SensorMeasurementsColumns.LATITUDE.value,
+            SensorMeasurementsColumns.LONGITUDE.value,
+        ]
+        cls.expected_columns_2 = [
+            SensorMeasurementsColumns.DATE.value,
+            SensorMeasurementsColumns.PM10_RAW.value,
+            SensorMeasurementsColumns.PM2_5_RAW.value,
+            SensorMeasurementsColumns.AMBIENT_HUMIDITY.value,
+            SensorMeasurementsColumns.AMBIENT_TEMPERATURE.value,
+            SensorMeasurementsColumns.LATITUDE.value,
+            SensorMeasurementsColumns.LONGITUDE.value,
+        ]
 
     @classmethod
     def tearDownClass(cls):
@@ -47,8 +64,6 @@ class Test_sensorCommunitySensor(TestCase):
 
         sensor = SensorCommunitySensor.from_csv(sensor_id, csv_files)
 
-        expected_columns = ["particulatePM10", "particulatePM2.5", "ambPressure", "humidity", "latitude", "longitude", "tempC", "timestamp"]
-
         self.assertIsNotNone(sensor)
         self.assertTrue(isinstance(sensor, SensorCommunitySensor))
         self.assertEqual(sensor.id, sensor_id)
@@ -56,7 +71,7 @@ class Test_sensorCommunitySensor(TestCase):
         # check that the dataframe contains the correct columns in any order
         self.assertEqual(
             set(sensor.df.columns.tolist()),
-            set(expected_columns),
+            set(self.expected_columns_1),
         )
 
     def test_sensorCommunity_from_json(
@@ -71,8 +86,6 @@ class Test_sensorCommunitySensor(TestCase):
         sensor_id = "83636,SDS011,83637,DHT22"
         sensor = SensorCommunitySensor.from_json(sensor_id, json_)
 
-        expected_columns = ["particulatePM10", "particulatePM2.5", "ambHumidity", "ambTempC", "latitude", "longitude", "timestamp"]
-
         self.assertIsNotNone(sensor)
         self.assertTrue(isinstance(sensor, SensorCommunitySensor))
         self.assertEqual(sensor.id, sensor_id)
@@ -80,7 +93,7 @@ class Test_sensorCommunitySensor(TestCase):
         # check that the dataframe contains the correct columns in any order
         self.assertEqual(
             set(sensor.df.columns.tolist()),
-            set(expected_columns),
+            set(self.expected_columns_2),
         )
 
 

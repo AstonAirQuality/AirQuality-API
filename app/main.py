@@ -6,6 +6,7 @@ from fastapi import FastAPI, HTTPException, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
 from mangum import Mangum
+from middleware.file_check import FileSizeLimitMiddleware
 from routers.auth import authRouter
 from routers.bgtasks import backgroundTasksRouter
 from routers.logs import logsRouter
@@ -38,6 +39,7 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+app.add_middleware(FileSizeLimitMiddleware)
 
 
 @app.get("/")

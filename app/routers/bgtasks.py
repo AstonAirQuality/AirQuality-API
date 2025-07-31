@@ -13,7 +13,7 @@ from core.schema import SensorSummary as SchemaSensorSummary
 
 # sensor summary
 from dotenv import load_dotenv
-from fastapi import APIRouter, BackgroundTasks, Depends, Header, HTTPException, Query, status
+from fastapi import APIRouter, BackgroundTasks, Depends, Header, HTTPException, Query, UploadFile, status
 from routers.logs import add_log
 from routers.sensorSummaries import upsert_sensorSummary
 from routers.services.crud.crud import CRUD
@@ -54,9 +54,9 @@ def upsert_sensor_summary_by_id_list(
     data_ingestion_logs = []
 
     if type_of_id == "sensor_id":
-        sensor_dict, flagged_sensors = get_lookupids_of_sensors(id_list, "sensor_id")
+        sensor_dict, flagged_sensors = get_lookupids_of_sensors(acitive_only=True, ids=id_list, idtype="sensor_id")
     elif type_of_id == "sensor_type_id":
-        sensor_dict, flagged_sensors = get_lookupids_of_sensors(id_list, "sensor_type_id")
+        sensor_dict, flagged_sensors = get_lookupids_of_sensors(acitive_only=True, ids=id_list, idtype="sensor_type_id")
 
     if flagged_sensors:
         for flaggedSensor in flagged_sensors:
@@ -73,25 +73,29 @@ def upsert_sensor_summary_by_id_list(
 
     if sensor_dict:
         # for each sensor type, fetch the data from the sfw and write to the database
-        for sensorType, dict_dataIngestion_data in sensor_dict.items():
-            if sensorType.lower() == "plume":
-                for sensorSummary in sfw.fetch_plume_data(startDate, endDate, dict_dataIngestion_data):
+        for sensorType, sensorDataMapping in sensor_dict.items():
+            if "plume" in sensorType.lower():
+                for sensorSummary in sfw.fetch_plume_data(startDate, endDate, sensorDataMapping):
                     data_ingestion_logs = append_data_ingestion_logs(sensorSummary, data_ingestion_logs)
 
-            elif sensorType.lower() == "zephyr":
-                for sensorSummary in sfw.fetch_zephyr_data(startDate, endDate, dict_dataIngestion_data):
+            elif "zephyr" in sensorType.lower():
+                for sensorSummary in sfw.fetch_zephyr_data(startDate, endDate, sensorDataMapping):
                     data_ingestion_logs = append_data_ingestion_logs(sensorSummary, data_ingestion_logs)
 
-            elif sensorType.lower() == "sensorcommunity":
+            elif "sensorcommunity" in sensorType.lower():
                 # CSV ingest only
                 # # if the cron job was used then we can use the same start and end date because the latest historical data is yesterday instead of today
                 # if type_of_id == "sensor_type_id":
                 #     endDate = startDate
-                for sensorSummary in sfw.fetch_sensorCommunity_data(startDate, endDate, dict_dataIngestion_data):
+                for sensorSummary in sfw.fetch_sensorCommunity_data(startDate, endDate, sensorDataMapping):
                     data_ingestion_logs = append_data_ingestion_logs(sensorSummary, data_ingestion_logs)
 
-            elif sensorType.lower() == "purpleair":
-                for sensorSummary in sfw.fetch_purpleAir_data(startDate, endDate, dict_dataIngestion_data):
+            elif "purpleair" in sensorType.lower():
+                for sensorSummary in sfw.fetch_purpleAir_data(startDate, endDate, sensorDataMapping):
+                    data_ingestion_logs = append_data_ingestion_logs(sensorSummary, data_ingestion_logs)
+
+            elif "airgradient" in sensorType.lower():
+                for sensorSummary in sfw.fetch_airGradient_data(startDate, endDate, sensorDataMapping):
                     data_ingestion_logs = append_data_ingestion_logs(sensorSummary, data_ingestion_logs)
     else:
         if type_of_id == "sensor_id":
@@ -159,6 +163,70 @@ def append_data_ingestion_logs(sensorSummary: SchemaSensorSummary, data_ingestio
     return data_ingestion_logs
 
 
+@backgroundTasksRouter.post("/upload-file/")
+async def upload_sensor_data(sensor_ids: list[int], file: UploadFile, payload=Depends(auth_handler.auth_wrapper)):
+    """
+    This endpoints allows admins to upload sensor data files for ingestion.
+    The file should be a CSV, JSON or ZIP file (depending on the sensor type) and it should not exceed the maximum file size limit.
+    Stationary boxes should be provided before running this endpoint.
+
+    Args:
+        sensor_ids (list[int]): List of sensor ids to upload data for.
+        file (UploadFile): The file containing sensor data.
+        payload: The authentication payload containing user information.
+    Returns:
+        list[SchemaDataIngestionLog]: A list of data ingestion logs indicating the success or failure of the data ingestion process.
+    Raises:
+        HTTPException: If the user is not authorized or if the file type is not supported.
+    """
+    try:
+        if not auth_handler.checkRoleAdmin(payload):
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authorized")
+        # TODO add firebase notification task to the realtime db
+        data_ingestion_logs = []
+        file_content = await file.read()
+        # get sensor dict of the sensor
+        (sensor_dict, flagged_sensors) = get_lookupids_of_sensors(acitive_only=False, ids=sensor_ids, idtype="sensor_id")
+
+        if not sensor_dict:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No sensors found with the provided sensor ids")
+
+        sfw = SensorFactoryWrapper()
+        if sensor_dict:
+            # for each sensor type, fetch the data from the sfw and write to the database
+            # in practice this should only be one sensor type since there is only one file being uploaded at a time
+            for sensorType, sensorDataMapping in sensor_dict.items():
+                if "plume" in sensorType.lower():
+                    raise HTTPException(status_code=status.HTTP_501_NOT_IMPLEMENTED, detail="Plume sensor data will not be implemented until plumelabs fix their csv data export issue")
+                    # # check if the file is a zip file
+                    # if check_file_type(file, ["application/zip", "application/x-zip-compressed"]):
+                elif "zephyr" in sensorType.lower():
+                    raise HTTPException(status_code=status.HTTP_501_NOT_IMPLEMENTED, detail="Unbucketed zephyr data upload is not supported. Please use the Zephyr API to fetch data.")
+                    # check if the file is a csv file
+                elif "sensorcommunity" in sensorType.lower():
+                    raise HTTPException(
+                        status_code=status.HTTP_501_NOT_IMPLEMENTED, detail="SensorCommunity data upload is not supported because there is no bulk export feature in the SensorCommunity API for users"
+                    )
+                    # check if the file is a csv file
+                elif "purpleair" in sensorType.lower():
+                    # check if the file is a csv file
+                    if check_file_type(file, ["text/csv"]):
+                        for sensorSummary in sfw.upload_user_input_sensor_data("purpleair", sensorDataMapping, file_content):
+                            data_ingestion_logs = append_data_ingestion_logs(sensorSummary, data_ingestion_logs)
+                elif "airgradient" in sensorType.lower():
+                    # check if the file is a csv file
+                    if check_file_type(file, ["text/csv"]):
+                        for sensorSummary in sfw.upload_user_input_sensor_data("airgradient", sensorDataMapping, file_content):
+                            data_ingestion_logs = append_data_ingestion_logs(sensorSummary, data_ingestion_logs)
+                else:
+                    raise ValueError(f"Unsupported sensor type: {sensorType}")
+        return data_ingestion_logs
+    except HTTPException as e:
+        raise e
+    except Exception as e:
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
+
+
 @backgroundTasksRouter.post("/schedule/ingest-bysensorid/{start}/{end}")
 async def schedule_data_ingest_task_by_sensorid(
     background_tasks: BackgroundTasks,
@@ -219,6 +287,22 @@ async def clear_data_ingestion_queue(cron_job_token=Header(...)):
 #################################################################################################################################
 #                                              helper functions                                                                 #
 #################################################################################################################################
+def check_file_type(file: UploadFile, accepted_file_types: list[str]) -> bool:
+    """
+    Check if the file type matches the expected file type.
+
+    Args:
+        file (UploadFile): The file to check.
+        accepted_file_types (list[str]): A list ofaccepted file types.
+    Returns:
+        bool: True if the file type matches the expected file type, False otherwise.
+    """
+    if file.content_type in accepted_file_types:
+        return True
+    else:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"File type must be {accepted_file_types}. Received: {file.content_type}")
+
+
 def get_dates(days: int) -> Tuple[str, str]:
     """
     :return: Tuple[start, end] -> now +/- days, now in format dd-mm-yyyy

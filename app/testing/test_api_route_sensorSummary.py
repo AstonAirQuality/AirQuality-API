@@ -11,12 +11,7 @@ from main import app
 from routers.sensorSummaries import upsert_sensorSummary
 from sensor_api_wrappers.concrete.factories.plume_factory import PlumeFactory
 from sensor_api_wrappers.concrete.products.plume_sensor import PlumeSensor
-from testing.application_config import (
-    authenticate_client,
-    database_config,
-    setUpSensor,
-    setUpSensorType,
-)
+from testing.application_config import authenticate_client, database_config, setUpSensor, setUpSensorType
 
 
 class Test_Api_6_SensorSummary(TestCase):

@@ -5,6 +5,7 @@ from unittest import TestCase
 
 import pandas as pd
 from sensor_api_wrappers.concrete.products.zephyr_sensor import ZephyrSensor
+from sensor_api_wrappers.data_transfer_object.sensor_measurements import SensorMeasurementsColumns
 
 
 class Test_zephyrSensor(TestCase):
@@ -14,7 +15,22 @@ class Test_zephyrSensor(TestCase):
     def setUpClass(cls):
         """Setup the test environment once before all tests"""
         warnings.simplefilter("ignore", ResourceWarning)
-        pass
+        cls.expected_columns = [
+            SensorMeasurementsColumns.DATE.value,
+            SensorMeasurementsColumns.PM1.value,
+            SensorMeasurementsColumns.PM2_5.value,
+            SensorMeasurementsColumns.PM10.value,
+            SensorMeasurementsColumns.TEMPERATURE.value,
+            SensorMeasurementsColumns.HUMIDITY.value,
+            SensorMeasurementsColumns.AMBIENT_HUMIDITY.value,
+            SensorMeasurementsColumns.AMBIENT_TEMPERATURE.value,
+            SensorMeasurementsColumns.AMBIENT_PRESSURE.value,
+            SensorMeasurementsColumns.NO.value,
+            SensorMeasurementsColumns.NO2.value,
+            SensorMeasurementsColumns.O3.value,
+            SensorMeasurementsColumns.LATITUDE.value,
+            SensorMeasurementsColumns.LONGITUDE.value,
+        ]
 
     @classmethod
     def tearDownClass(cls):
@@ -36,29 +52,14 @@ class Test_zephyrSensor(TestCase):
         sensor = ZephyrSensor.from_json("814", json_["data"]["Unaveraged"]["slotB"])
 
         self.assertIsNotNone(sensor)
-        expected_columns = [
-            "NO",
-            "NO2",
-            "O3",
-            "timestamp",
-            "ambHumidity",
-            "ambPressure",
-            "ambTempC",
-            "humidity",
-            "particulatePM1",
-            "particulatePM10",
-            "particulatePM2.5",
-            "tempC",
-            "latitude",
-            "longitude",
-        ]
+
         self.assertTrue(isinstance(sensor, ZephyrSensor))
         self.assertEqual(sensor.id, "814")
         self.assertTrue(isinstance(sensor.df, pd.DataFrame))
         # check that the dataframe has the correct columns in any order
         self.assertEqual(
             set(sensor.df.columns.tolist()),
-            set(expected_columns),
+            set(self.expected_columns),
         )
 
 

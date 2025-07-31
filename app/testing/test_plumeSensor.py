@@ -6,6 +6,7 @@ from unittest import TestCase
 
 from sensor_api_wrappers.concrete.factories.plume_factory import PlumeFactory
 from sensor_api_wrappers.concrete.products.plume_sensor import PlumeSensor
+from sensor_api_wrappers.data_transfer_object.sensor_measurements import SensorMeasurementsColumns
 
 
 class Test_plumeSensor(TestCase):
@@ -17,7 +18,14 @@ class Test_plumeSensor(TestCase):
     def setUpClass(cls):
         """Setup the test environment once before all tests"""
         warnings.simplefilter("ignore", ResourceWarning)
-        pass
+        cls.expected_columns = [
+            SensorMeasurementsColumns.NO2.value,
+            SensorMeasurementsColumns.VOC.value,
+            SensorMeasurementsColumns.DATE.value,
+            SensorMeasurementsColumns.PM1.value,
+            SensorMeasurementsColumns.PM2_5.value,
+            SensorMeasurementsColumns.PM10.value,
+        ]
 
     @classmethod
     def tearDownClass(cls):
@@ -40,8 +48,8 @@ class Test_plumeSensor(TestCase):
 
         # asserts
         self.assertIsNotNone(sensor)
-        expectedColumns = ["NO2", "VOC", "timestamp", "latitude", "longitude", "particulatePM1", "particulatePM2.5", "particulatePM10"]
-        for col in expectedColumns:
+
+        for col in self.expected_columns:
             self.assertTrue(col in sensor.df.columns)
             break
 
@@ -60,8 +68,7 @@ class Test_plumeSensor(TestCase):
         # asserts
         self.assertIsNotNone(sensor)
         self.assertTrue("timestamp" in sensor.df.columns)
-        expectedColumns = ["latitude", "longitude"]
-        for col in expectedColumns:
+        for col in ["latitude", "longitude"]:
             self.assertTrue(col in sensor.df.columns)
             break
 
@@ -85,12 +92,11 @@ class Test_plumeSensor(TestCase):
 
         sensor.add_measurements_json(json_["measures"])
 
-        expectedColumns = ["NO2", "VOC", "timestamp", "latitude", "longitude", "particulatePM1", "particulatePM2.5", "particulatePM10"]
         # test for duplicate rows (where index is the same)
         self.assertEqual(len(sensor.df), len(sensor.df.loc[~sensor.df.index.duplicated()]))
         self.assertTrue(isinstance(sensor, PlumeSensor))
         self.assertEqual(sensor.id, "19651")
-        for col in expectedColumns:
+        for col in self.expected_columns:
             self.assertTrue(col in sensor.df.columns)
 
     def test_plume_from_json(self):
@@ -102,8 +108,7 @@ class Test_plumeSensor(TestCase):
 
         # asserts
         self.assertIsNotNone(sensor)
-        expectedColumns = ["timestamp", "NO2", "VOC", "particulatePM1", "particulatePM10", "particulatePM2.5"]
-        for col in expectedColumns:
+        for col in self.expected_columns:
             self.assertTrue(col in sensor.df.columns)
             break
 

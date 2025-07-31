@@ -138,33 +138,38 @@ def format_sensor_joined_data(result: any):
     return results
 
 
-def format_sensor_summary_to_csv(query_result: any, use_timestamp: bool) -> str:
+def format_sensor_summary_to_csv(query_result: any, columns: list[str]) -> str:
     """Format the sensor data as CSV
 
     Args:
         query_result (any): The query result to format
-        use_datetime (bool): Whether to return the timestamp as a datetime string instead of a unix timestamp
+        columns (list[str]): List of columns to include in the CSV (default is None, which means all columns)
     Returns:
         str: The formatted CSV string
     """
     try:
         df = SensorReadable.JsonStringToDataframe(query_result[0]["measurement_data"], boundingBox=None)
-        if use_timestamp:
-            df.drop(columns=["boundingBox"], inplace=True)
+        if columns:
+            # filter the dataframe to only include the specified columns
+            df = df[[col.value for col in columns if col.value in df.columns]]
+
+        # if "timestamp" column exists, use it otherwise use the index
+        if "timestamp" in df.columns:
             return df.set_index("timestamp").to_csv(index=True, header=True)
         else:
-            df.drop(columns=["timestamp", "boundingBox"], inplace=True)
             return df.to_csv(index=True, header=True)
+
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Could not format results as CSV: {e}")
 
 
-def format_sensor_summary_data(query_result: any, deserialize: bool = True):
-    """Format the sensor summary data
+def format_sensor_summary_data(query_result: any, deserialize: bool = True, columns: list[str] = None) -> list[dict]:
+    """Format the sensor summary data (converts geometry to WKT, renames timestamp, and deserializes measurement data if needed)
 
     Args:
         query_result (any): The query result to format
         deserialize (bool): Whether to deserialize the measurement data (default is True)
+        columns (list[str]): List of columns to include in the result (default is None, which means all columns)
     Returns:
         list: A list of formatted sensor summary data as dictionaries
     """
@@ -179,7 +184,7 @@ def format_sensor_summary_data(query_result: any, deserialize: bool = True):
 
         if "measurement_data" in row_as_dict and deserialize:
             # convert the json string to a python dict
-            row_as_dict["measurement_data"] = deserializeMeasurementData(row_as_dict["measurement_data"])
+            row_as_dict["measurement_data"] = deserializeMeasurementData(row_as_dict["measurement_data"], columns=columns)
 
         results.append(row_as_dict)
 
@@ -231,12 +236,18 @@ def sensorSummariesToGeoJson(results: list, averaging_methods: list[str], averag
     return geoJsons
 
 
-def deserializeMeasurementData(measurement_data: str) -> dict:
+def deserializeMeasurementData(measurement_data: str, columns: list[str]) -> dict:
     """deserializes the measurement data
     Args:
         measurement_data (str): the measurement data in JSON string format
+        columns (list[str]): list of columns to include in the result
 
     :return: dictionary of deserialized measurement data"""
     df = SensorReadable.JsonStringToDataframe(measurement_data, boundingBox=None)
     df.drop(columns=["boundingBox"], inplace=True)
+
+    if columns:
+        # filter the dataframe to only include the specified columns
+        df = df[[col.value for col in columns if col.value in df.columns]]
+
     return df.to_dict(orient="records")  # use timestamps since they use less data

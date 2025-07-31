@@ -6,6 +6,7 @@ from typing import Iterator
 from core.schema import Sensor as SchemaSensor
 from core.schema import SensorSummary as SchemaSensorSummary
 from dotenv import load_dotenv
+from sensor_api_wrappers.concrete.factories.airGradient_factory import AirGradientFactory
 from sensor_api_wrappers.concrete.factories.plume_factory import PlumeFactory
 from sensor_api_wrappers.concrete.factories.purpleAir_factory import PurpleAirFactory
 from sensor_api_wrappers.concrete.factories.sensorCommunity_factory import SensorCommunityFactory
@@ -22,6 +23,7 @@ class SensorFactoryWrapper:
         self.scf = SensorCommunityFactory(env["SC_USERNAME"], env["SC_PASSWORD"])
         self.pf = PlumeFactory(env["PLUME_EMAIL"], env["PLUME_PASSWORD"], env["PLUME_FIREBASE_API_KEY"], env["PLUME_ORG_NUM"])
         self.paf = PurpleAirFactory(env["PURPLE_AIR_TOKEN_URL"], env["PURPLE_AIR_REFERER_URL"], env["PURPLE_AIR_API_KEY"])
+        self.agf = AirGradientFactory(env["AIR_GRADIENT_API_KEY"])
 
     def fetch_plume_platform_lookupids(self, serial_nums: list[str]) -> dict[str, str]:
         """Fetches a list of plume sensor lookup_ids from a list of serial numbers
@@ -103,9 +105,57 @@ class SensorFactoryWrapper:
             if sensor is not None:
                 yield from sensor.create_sensor_summaries(sensor_dict[sensor.id]["stationary_box"])
 
+    def fetch_airGradient_data(self, start: dt.datetime, end: dt.datetime, sensor_dict: dict[str, str]) -> Iterator[SchemaSensorSummary]:
+        """fetches the air gradient data from the api and returns a list of sensor summaries.
+
+        Args:
+            start (dt.datetime): The start date of the data to fetch
+            end (dt.datetime): The end date of the data to fetch
+            sensor_dict (dict[str, str]): A dictionary of the data ingestion information for each sensor, where keys are sensor lookup_ids and values are stationary boxes.
+        Returns:
+            Iterator[SchemaSensorSummary]: An iterator yielding sensor summaries.
+        """
+        for sensor in self.agf.get_sensors(sensor_dict, start, end):
+            if sensor is not None:
+                yield from sensor.create_sensor_summaries(sensor_dict[sensor.id]["stationary_box"])
+
+    def upload_user_input_sensor_data(self, sensor_type: str, sensor_dict: dict[str, str], file: bytes) -> Iterator[SchemaSensorSummary]:
+        """Uploads user input sensor data from a file and returns sensor summaries.
+
+        Args:
+            sensor_type (str): The type of the sensor.
+            sensor_dict (dict[str, str]): A dictionary of the data ingestion information for each sensor, where keys are sensor lookup_ids and values are stationary boxes.
+            file (bytes): The file containing sensor data.
+        Returns:
+            Iterator[SchemaSensorSummary]: An iterator yielding sensor summaries.
+        """
+        if sensor_type == "plume":
+            raise Exception("Plume sensor data will not be implemented until plumelabs fix their csv data export issue")
+        elif sensor_type == "zephyr":
+            raise Exception("Unbucketed zephyr data upload is not supported. Please use the Zephyr API to fetch data.")
+        elif sensor_type == "sensorcommunity":
+            raise Exception("SensorCommunity data upload is not supported because there is no bulk export feature in the SensorCommunity API for users")
+        elif sensor_type == "purpleair":
+            for sensor in self.paf.get_sensors_from_file(sensor_dict, file):
+                if sensor is not None:
+                    yield from sensor.create_sensor_summaries(sensor_dict[sensor.id]["stationary_box"])
+        elif sensor_type == "airgradient":
+            for sensor in self.agf.get_sensors_from_file(sensor_dict, file):
+                if sensor is not None:
+                    yield from sensor.create_sensor_summaries(sensor_dict[sensor.id]["stationary_box"])
+        else:
+            raise ValueError(f"Unsupported sensor type: {sensor_type}")
+
 
 # if __name__ == "__main__":
 #     sfw = SensorFactoryWrapper()
+#     summaries = list(sfw.fetch_sensor_community_data(dt.datetime(2023, 3, 31), dt.datetime(2023, 4, 1), {"60641,SDS011,60642,BME280": None}))
+#     for summary in summaries:
+#         print(summary.geom)
+#     sfw = SensorFactoryWrapper()
+#     summaries = list(sfw.fetch_sensor_community_data(dt.datetime(2023, 3, 31), dt.datetime(2023, 4, 1), {"60641,SDS011,60642,BME280": None}))
+#     for summary in summaries:
+#         print(summary.geom)
 #     summaries = list(sfw.fetch_sensor_community_data(dt.datetime(2023, 3, 31), dt.datetime(2023, 4, 1), {"60641,SDS011,60642,BME280": None}))
 #     for summary in summaries:
 #         print(summary.geom)

@@ -8,6 +8,17 @@ class Read(abstractbaseCRUD):
     def __init__(self) -> None:
         super().__init__()
 
+    def db_get_count(self, model: any) -> int:
+        """Get the count of rows in the database for a given model
+        :param model: model to query
+        :return: count of rows"""
+        try:
+            count = self.db.query(model).count()
+        except Exception as e:
+            self.db.rollback()
+            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
+        return count
+
     def db_get_with_model(self, model: any, order_columns: bool = True, filter_expressions: list = None, first: bool = False, page: int = None, limit: int = None):
         """Get all rows from the database
         :param model: model to query

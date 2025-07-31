@@ -181,7 +181,7 @@ class PlumeFactory(SensorFactory):
 
         link = self.get_zip_file_link(lookupids, start, end, include_measurements=True)
 
-        for sensorid, buffer in self.extract_zip(link, include_measurements=True):
+        for sensorid, buffer in self.extract_zip_from_link(link, include_measurements=True):
             plumeSensors.append(PlumeSensor.from_zip(sensorid, buffer))
         return plumeSensors
 
@@ -189,7 +189,6 @@ class PlumeFactory(SensorFactory):
         sensors = []
         for sensor_id in lookupids:
             sensors.append(PlumeSensor.from_json(str(sensor_id), self.get_sensor_measurement_data(str(sensor_id), start, end)))
-
         return sensors
 
     ###############################################################################################
@@ -242,7 +241,7 @@ class PlumeFactory(SensorFactory):
         if link is None:
             link = self.get_zip_file_link(sensors, start, end, include_measurements=False)
 
-        for sensorid, buffer in self.extract_zip(link, include_measurements=False):
+        for sensorid, buffer in self.extract_zip_from_link(link, include_measurements=False):
             plumeSensors.append(PlumeSensor.from_csv(sensorid, buffer))
         return plumeSensors
 
@@ -280,7 +279,7 @@ class PlumeFactory(SensorFactory):
             raise APITimeoutException("Plume API timed out when attempting to retrieve zip file link")
         return link
 
-    def extract_zip(self, link: str, include_measurements: bool):
+    def extract_zip_from_link(self, link: str, include_measurements: bool):
         """Download and extract zip into memory using link URL.
         :param link: url to sensor data zip file
         :param include_measurements: boolean to include measurements in the zip file

@@ -3,8 +3,52 @@ import io
 import numpy as np
 import pandas as pd
 from routers.services.formatting import decode_geohash
+from sensor_api_wrappers.data_transfer_object.sensor_measurements import SensorMeasurementsColumns
 from sensor_api_wrappers.data_transfer_object.sensor_writeable import SensorWritable
 from sensor_api_wrappers.interfaces.sensor_product import SensorProduct
+
+mappings = {
+    "bme280_humidity": SensorMeasurementsColumns.AMBIENT_HUMIDITY.value,
+    "bme280_pressure": SensorMeasurementsColumns.PRESSURE.value,
+    "bme280_pressure_at_sealevel": SensorMeasurementsColumns.AMBIENT_PRESSURE.value,
+    "bme280_temperature": SensorMeasurementsColumns.AMBIENT_TEMPERATURE.value,
+    "bmp180_pressure": SensorMeasurementsColumns.PRESSURE.value,
+    "bmp180_pressure_at_sealevel": SensorMeasurementsColumns.AMBIENT_PRESSURE.value,
+    "bmp180_temperature": SensorMeasurementsColumns.AMBIENT_TEMPERATURE.value,
+    "bmp280_pressure": SensorMeasurementsColumns.PRESSURE.value,
+    "bmp280_pressure_at_sealevel": SensorMeasurementsColumns.AMBIENT_PRESSURE.value,
+    "bmp280_temperature": SensorMeasurementsColumns.AMBIENT_TEMPERATURE.value,
+    "dht22_humidity": SensorMeasurementsColumns.AMBIENT_HUMIDITY.value,
+    "dht22_temperature": SensorMeasurementsColumns.AMBIENT_TEMPERATURE.value,
+    "ds18b20_temperature": SensorMeasurementsColumns.AMBIENT_TEMPERATURE.value,
+    "hpm_p1": SensorMeasurementsColumns.PM10_RAW.value,
+    "hpm_p2": SensorMeasurementsColumns.PM2_5_RAW.value,
+    "htu21d_humidity": SensorMeasurementsColumns.AMBIENT_HUMIDITY.value,
+    "htu21d_temperature": SensorMeasurementsColumns.AMBIENT_TEMPERATURE.value,
+    "ips7100_p0": SensorMeasurementsColumns.PM10_RAW.value,
+    "ips7100_p1": SensorMeasurementsColumns.PM1_RAW.value,
+    "ips7100_p2": SensorMeasurementsColumns.PM2_5_RAW.value,
+    "noise_LA_max": SensorMeasurementsColumns.NOISE_LA_MAX.value,
+    "noise_LA_min": SensorMeasurementsColumns.NOISE_LA_MIN.value,
+    "noise_LAeq": SensorMeasurementsColumns.NOISE_LA_EQ.value,
+    "noise_LAeq_delog": SensorMeasurementsColumns.NOISE_LA_EQ_DELOG.value,
+    "npm_p0": SensorMeasurementsColumns.PM1_RAW.value,
+    "npm_p1": SensorMeasurementsColumns.PM10_RAW.value,
+    "npm_p2": SensorMeasurementsColumns.PM2_5_RAW.value,
+    "pms_p0": SensorMeasurementsColumns.PM1_RAW.value,
+    "pms_p1": SensorMeasurementsColumns.PM10_RAW.value,
+    "pms_p2": SensorMeasurementsColumns.PM2_5_RAW.value,
+    "ppd42ns_p1": SensorMeasurementsColumns.PM10_RAW.value,
+    "ppd42ns_p2": SensorMeasurementsColumns.PM2_5_RAW.value,
+    "sds011_p1": SensorMeasurementsColumns.PM10_RAW.value,
+    "sds011_p2": SensorMeasurementsColumns.PM2_5_RAW.value,
+    "sht_humidity": SensorMeasurementsColumns.AMBIENT_HUMIDITY.value,
+    "sht_temperature": SensorMeasurementsColumns.AMBIENT_TEMPERATURE.value,
+    "sps30_p0": SensorMeasurementsColumns.PM1_RAW.value,
+    "sps30_p1": SensorMeasurementsColumns.PM10_RAW.value,
+    "sps30_p2": SensorMeasurementsColumns.PM2_5_RAW.value,
+    "sps30_p4": SensorMeasurementsColumns.PM_4_RAW.value,
+}
 
 
 class SensorCommunitySensor(SensorProduct, SensorWritable):
@@ -65,7 +109,15 @@ class SensorCommunitySensor(SensorProduct, SensorWritable):
         df["timestamp"] = df["timestamp"].astype("int64") // 10**9
 
         df.rename(
-            columns={"P1": "particulatePM10", "P2": "particulatePM2.5", "temperature": "tempC", "pressure": "ambPressure", "lon": "longitude", "lat": "latitude"},
+            columns={
+                "P1": SensorMeasurementsColumns.PM10_RAW.value,
+                "P2": SensorMeasurementsColumns.PM2_5_RAW.value,
+                "humidity": SensorMeasurementsColumns.AMBIENT_HUMIDITY.value,
+                "temperature": SensorMeasurementsColumns.AMBIENT_TEMPERATURE.value,
+                "pressure": SensorMeasurementsColumns.AMBIENT_PRESSURE.value,
+                "lon": SensorMeasurementsColumns.LONGITUDE.value,
+                "lat": SensorMeasurementsColumns.LATITUDE.value,
+            },
             inplace=True,
         )
 
@@ -86,15 +138,16 @@ class SensorCommunitySensor(SensorProduct, SensorWritable):
         df.set_index("datetime", inplace=True)
 
         # measurements are taken every 145 seconds, sometimes there are gaps of variable length ranging from 1 to 30 seconds
-        # resampling with 180 seconds will group most/all valid measurements together even if there are gaps
-        df = df.resample("180S").first()
+        # resampling with 180 seconds will group most/all valid measurements together even if there are gaps, but for consistency we use 145 seconds
+        df = df.resample("145S").first()
 
         # drop rows with NaT time values
         df = df.dropna(subset=["time"])
         df.set_index("time", inplace=True)
 
-        # renaming columns
-        df = df.rename(columns={"dht22_humidity": "ambHumidity", "dht22_temperature": "ambTempC", "sds011_p1": "particulatePM10", "sds011_p2": "particulatePM2.5"})
+        # rename columns that exist in the df using the mapping
+        df.rename(columns={key: value for key, value in mappings.items() if key in df.columns}, inplace=True, errors="ignore")
+
         # decode geohash
         df[["latitude", "longitude"]] = decode_geohash(df["geohash"][0])
 
@@ -116,7 +169,6 @@ class SensorCommunitySensor(SensorProduct, SensorWritable):
         :param content: dictionary of csv files with a unique timestamp key to identify each day of data
         :return: Dataframe of sensor data
         """
-
         sensorPlatform = {}
         for data in content.values():
             for timestamp, csvData in data.items():
@@ -124,12 +176,7 @@ class SensorCommunitySensor(SensorProduct, SensorWritable):
                 buffer = io.StringIO(file_.read().decode("UTF-8"))
 
                 df = pd.read_csv(buffer, sep=";", parse_dates=True, index_col="timestamp")
-
-                try:
-                    df.drop(["sensor_id", "sensor_type", "location", "ratioP1", "ratioP2", "durP1", "durP2"], axis=1, inplace=True)
-                except KeyError:
-                    df.drop(["sensor_id", "sensor_type", "location"], axis=1, inplace=True)
-
+                df.drop(["sensor_id", "sensor_type", "location", "ratioP1", "ratioP2", "durP1", "durP2"], axis=1, inplace=True, errors="ignore")
                 data[timestamp] = df
 
         sensorPlatform[id_] = content

@@ -8,10 +8,16 @@ from routers.services.crud.crud import CRUD
 from routers.services.formatting import convertWKBtoWKT
 
 
-def get_sensor_dict(idtype: str, ids: list[int] = Query(default=[])) -> tuple[list[dict], list[dict]]:
-    """Get all active sensors data scraping information from the database. Flag sensors that have not been updated in over 90 days
-    :param type_ids: list of sensor type ids to filter by
-    :return tuple: list of sensor data scraping information and list of flagged sensors"""
+def get_sensor_dict(active_only: bool, idtype: str, ids: list[int] = Query(default=[])) -> tuple[list[dict], list[dict]]:
+    """Get all sensors data scraping information from the database. Flag sensors that have not been updated in over 90 days
+
+    Args:
+        active_only (bool): If True, only return active sensors.
+        idtype (str): Type of id. Can be sensor_id or sensor_type_id.
+        ids (list[int], optional): List of sensor ids or sensor type ids. Defaults to [].
+    Returns:
+        tuple: A tuple containing a list of sensors and a list of flagged sensors.
+    """
     try:
         fields = [
             ModelSensor.id,
@@ -23,7 +29,7 @@ def get_sensor_dict(idtype: str, ids: list[int] = Query(default=[])) -> tuple[li
 
         filter_expressions = []
         if idtype == "sensor_type_id":
-            filter_expressions = [ModelSensor.active == True, ModelSensor.type_id.in_(ids)]
+            filter_expressions = [ModelSensor.active == active_only, ModelSensor.type_id.in_(ids)]
         elif idtype == "sensor_id":
             filter_expressions = [ModelSensor.id.in_(ids)]
         result = CRUD().db_get_fields_using_filter_expression(filter_expressions, fields, ModelSensor, [ModelSensorTypes], first=False)
@@ -33,8 +39,8 @@ def get_sensor_dict(idtype: str, ids: list[int] = Query(default=[])) -> tuple[li
         flagged_sensors = []
         for row in result:
             row_as_dict = dict(row._mapping)
-            # if the sensor has been not been updated in over 90 days then include it in the flagged sensors list
-            if row_as_dict["time_updated"] is not None and (dt.datetime.today() - row_as_dict["time_updated"]).days > 90:
+            # if looking for active only and the sensor has been not been updated in over 90 days then include it in the flagged sensors list
+            if active_only and row_as_dict["time_updated"] is not None and (dt.datetime.today() - row_as_dict["time_updated"]).days > 90:
                 serial_number = CRUD().db_get_fields_using_filter_expression([ModelSensor.id == row_as_dict["id"]], [ModelSensor.serial_number], first=True)[0]
                 # do not include the sensor in the data scraping list if it has been flagged as inactive
                 flagged_sensors.append({"id": row_as_dict["id"], "serial_number": serial_number})
@@ -47,6 +53,17 @@ def get_sensor_dict(idtype: str, ids: list[int] = Query(default=[])) -> tuple[li
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
 
     return (results, flagged_sensors)
+
+
+# def get_sensor_type_from_sensor_id(sensor_id: int) -> str:
+#     """Get the sensor type name from the sensor id
+#     :param sensor_id: sensor id
+#     :return: sensor type name"""
+#     try:
+#         sensor_type = CRUD().db_get_fields_using_filter_expression([ModelSensor.id == sensor_id], [ModelSensorTypes.name], ModelSensor, [ModelSensorTypes], first=True)
+#         return sensor_type[0]
+#     except Exception as e:
+#         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
 
 
 # used by background tasks
@@ -73,14 +90,20 @@ def deactivate_unsynced_sensor(sensor_id: int):
     CRUD().db_update(ModelSensor, [ModelSensor.id == sensor_id], {ModelSensor.active: False, ModelSensor.active_reason: ActiveReason.NO_DATA.value})
 
 
-def get_lookupids_of_sensors(ids: list[int], idtype: str) -> tuple[dict[int, dict[str, str]], list[int]]:
+def get_lookupids_of_sensors(acitive_only: bool, ids: list[int], idtype: str) -> tuple[dict[str, dict[str, dict[str, str]]]]:
     """
     Get all active sensors data scraping information from the database and the flagged sensors that have not been updated in over 90 days
-    :param ids: list of sensor ids or sensor type ids
-    :param idtype: type of id. Can be sensor_id or sensor_type_id
-    :return dict: where nested dict is [sensor_type_name][lookup_id] = {"stationary_box": stationary_box, "time_updated": time_updated}
+
+    Args:
+        active_only (bool): If True, only return active sensors.
+        idtype (str): Type of id. Can be sensor_id or sensor_type_id.
+        ids (list[int], optional): List of sensor ids or sensor type ids. Defaults to [].
+    Returns:
+        tuple: A tuple containing a dictionary of sensors grouped by sensor type, where each sensor type maps to a dictionary of sensor lookup_ids and their data.
+        [sensor_type_name][lookup_id] = {"stationary_box": stationary_box, "time_updated": time_updated}
+
     """
-    sensors, flagged_sensors = get_sensor_dict(idtype, ids)
+    sensors, flagged_sensors = get_sensor_dict(acitive_only, idtype, ids)
 
     # group sensors by type into a new nested dictionary dict[sensor_type][lookup_id] = {"stationary_box": stationary_box, "time_updated": time_updated}
     sensor_dict = {}

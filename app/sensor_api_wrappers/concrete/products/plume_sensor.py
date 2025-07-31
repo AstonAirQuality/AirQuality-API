@@ -6,6 +6,7 @@ from typing import Any, List
 
 import numpy as np
 import pandas as pd
+from sensor_api_wrappers.data_transfer_object.sensor_measurements import SensorMeasurementsColumns
 from sensor_api_wrappers.data_transfer_object.sensor_writeable import SensorWritable
 from sensor_api_wrappers.interfaces.sensor_product import SensorProduct
 
@@ -23,6 +24,16 @@ class PlumeSensor(SensorProduct, SensorWritable):
         :param dataframe: The sensor data.
         """
         super().__init__(id_, dataframe)
+        self.data_columns = [
+            SensorMeasurementsColumns.DATE.value,
+            SensorMeasurementsColumns.PM1.value,
+            SensorMeasurementsColumns.PM2_5.value,
+            SensorMeasurementsColumns.PM10.value,
+            SensorMeasurementsColumns.NO2.value,
+            SensorMeasurementsColumns.VOC.value,
+            SensorMeasurementsColumns.LATITUDE.value,
+            SensorMeasurementsColumns.LONGITUDE.value,
+        ]
 
     def join_dataframes(self, mdf: pd.DataFrame):
         """Combines the measurement dataframe with the existing dataframe.
@@ -70,6 +81,8 @@ class PlumeSensor(SensorProduct, SensorWritable):
             df = PlumeSensor.prepare_measurements(df)
             self.join_dataframes(df)
 
+            self.df = self.df[self.data_columns]
+
         except (IndexError, ValueError):
             # print("No data found for sensor: {}".format(sensor_id))
             return
@@ -84,12 +97,12 @@ class PlumeSensor(SensorProduct, SensorWritable):
         df.drop(["id"], axis=1, inplace=True)
         df.rename(
             columns={
-                "date": "timestamp",
-                "no2": "NO2",
-                "voc": "VOC",
-                "pm1": "particulatePM1",
-                "pm10": "particulatePM10",
-                "pm25": "particulatePM2.5",
+                "date": SensorMeasurementsColumns.DATE.value,
+                "no2": SensorMeasurementsColumns.NO2.value,
+                "voc": SensorMeasurementsColumns.VOC.value,
+                "pm1": SensorMeasurementsColumns.PM1.value,
+                "pm10": SensorMeasurementsColumns.PM10.value,
+                "pm25": SensorMeasurementsColumns.PM2_5.value,
             },
             inplace=True,
         )
@@ -172,11 +185,11 @@ class PlumeSensor(SensorProduct, SensorWritable):
             df = df.rename(
                 columns={
                     "date (UTC)": "date",
-                    "NO2 (ppb)": "NO2",
-                    "VOC (ppb)": "VOC",
-                    "pm 1 (ug/m3)": "particulatePM1",
-                    "pm 10 (ug/m3)": "particulatePM10",
-                    "pm25 (ug/m3)": "particulatePM2.5",  # There is a typo in the csv file
+                    "NO2 (ppb)": SensorMeasurementsColumns.NO2.value,
+                    "VOC (ppb)": SensorMeasurementsColumns.VOC.value,
+                    "pm 1 (ug/m3)": SensorMeasurementsColumns.PM1.value,
+                    "pm25 (ug/m3)": SensorMeasurementsColumns.PM2_5.value,
+                    "pm 10 (ug/m3)": SensorMeasurementsColumns.PM10.value,
                 },
             )
 

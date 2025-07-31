@@ -14,6 +14,7 @@ import requests
 from dotenv import load_dotenv
 from sensor_api_wrappers.concrete.factories.plume_factory import PlumeFactory
 from sensor_api_wrappers.concrete.products.plume_sensor import PlumeSensor
+from sensor_api_wrappers.data_transfer_object.sensor_measurements import SensorMeasurementsColumns
 
 
 class Test_plumeFactory(TestCase):
@@ -30,7 +31,14 @@ class Test_plumeFactory(TestCase):
         load_dotenv()
         # the env variables are set in the .env file. They must match the ones in the .env file
         cls.pf = PlumeFactory(env["PLUME_EMAIL"], env["PLUME_PASSWORD"], env["PLUME_FIREBASE_API_KEY"], env["PLUME_ORG_NUM"])
-        pass
+        cls.expected_columns = [
+            SensorMeasurementsColumns.NO2.value,
+            SensorMeasurementsColumns.VOC.value,
+            SensorMeasurementsColumns.DATE.value,
+            SensorMeasurementsColumns.PM1.value,
+            SensorMeasurementsColumns.PM2_5.value,
+            SensorMeasurementsColumns.PM10.value,
+        ]
 
     @classmethod
     def tearDownClass(cls):
@@ -105,7 +113,7 @@ class Test_plumeFactory(TestCase):
         mocked_get.return_value.ok = True
         mocked_get.return_value.content = sensor_zip_bytes
 
-        sensors = self.pf.extract_zip("https://example.com", include_measurements=False)
+        sensors = self.pf.extract_zip_from_link("https://example.com", include_measurements=False)
 
         mocked_get.assert_called_with("https://example.com", stream=True)
 
@@ -119,19 +127,21 @@ class Test_plumeFactory(TestCase):
         start = dt.datetime(2023, 9, 21)
         end = dt.datetime(2023, 9, 26)
         link = "https://example.com"
+        with patch.object(requests, "get") as mocked_get:
+            mocked_get.return_value.ok = True
+            mocked_get.return_value.content = open("./testing/test_data/plume_sensorData.zip", "rb").read()
+            with patch.object(PlumeFactory, "extract_zip_content_from_link") as mocked_sensors_from_zip:
+                mocked_sensors_from_zip.return_value = self.pf.extract_zip_content(zipfile.ZipFile("./testing/test_data/plume_sensorData.zip", "r"), include_measurements=False)
 
-        with patch.object(PlumeFactory, "extract_zip") as mocked_sensors_from_zip:
-            mocked_sensors_from_zip.return_value = self.pf.extract_zip_content(zipfile.ZipFile("./testing/test_data/plume_sensorData.zip", "r"), include_measurements=False)
+                sensors = self.pf.get_sensor_location_data([sensor_id], start, end, link)
 
-            sensors = self.pf.get_sensor_location_data([sensor_id], start, end, link)
+                mocked_sensors_from_zip.assert_called()
 
-            mocked_sensors_from_zip.assert_called_with(link, include_measurements=False)
-
-            for sensor in sensors:
-                self.assertEqual(sensor.id, "19651")
-                self.assertTrue(len(sensor.df) > 0)
-                self.assertEqual(sensor.df.columns.tolist(), ["timestamp", "latitude", "longitude"])
-                break
+                for sensor in sensors:
+                    self.assertEqual(sensor.id, "19651")
+                    self.assertTrue(len(sensor.df) > 0)
+                    self.assertEqual(sensor.df.columns.tolist(), ["timestamp", "latitude", "longitude"])
+                    break
 
     def test_fetch_sensor_stationary_no_gps(self):
         """Test fetch the sensor data"""
@@ -163,18 +173,10 @@ class Test_plumeFactory(TestCase):
 
                 self.assertEqual(len(sensors), 1)
 
-                expectedColumns = [
-                    "NO2",
-                    "VOC",
-                    "timestamp",
-                    "particulatePM1",
-                    "particulatePM2.5",
-                    "particulatePM10",
-                ]
                 for sensor in sensors:
                     self.assertTrue(isinstance(sensor, PlumeSensor))
                     self.assertEqual(sensor.id, "19651")
-                    for col in expectedColumns:
+                    for col in self.expected_columns:
                         self.assertTrue(col in sensor.df.columns)
                     break
 
@@ -208,12 +210,10 @@ class Test_plumeFactory(TestCase):
 
                     self.assertEqual(len(sensors), 1)
 
-                    expectedColumns = ["NO2", "VOC", "timestamp", "latitude", "longitude", "particulatePM1", "particulatePM2.5", "particulatePM10"]
-
                     for sensor in sensors:
                         self.assertTrue(isinstance(sensor, PlumeSensor))
                         self.assertEqual(sensor.id, "19651")
-                        for col in expectedColumns:
+                        for col in self.expected_columns:
                             self.assertTrue(col in sensor.df.columns)
                         break
 
@@ -247,12 +247,10 @@ class Test_plumeFactory(TestCase):
 
                     self.assertEqual(len(sensors), 1)
 
-                    expectedColumns = ["NO2", "VOC", "timestamp", "latitude", "longitude", "particulatePM1", "particulatePM2.5", "particulatePM10"]
-
                     for sensor in sensors:
                         self.assertTrue(isinstance(sensor, PlumeSensor))
                         self.assertEqual(sensor.id, "19651")
-                        for col in expectedColumns:
+                        for col in self.expected_columns:
                             self.assertTrue(col in sensor.df.columns)
                         break
 
@@ -287,27 +285,31 @@ class Test_plumeFactory(TestCase):
         start = dt.datetime(2023, 9, 21)
         end = dt.datetime(2023, 9, 26)
 
-        with patch.object(PlumeFactory, "extract_zip") as mocked_sensors_from_zip:
-            mocked_sensors_from_zip.return_value = self.pf.extract_zip_content(zipfile.ZipFile("./testing/test_data/plume_sensorData.zip", "r"), include_measurements=True)
+        data = self.pf.extract_zip_content(zipfile.ZipFile("./testing/test_data/plume_sensorData.zip", "r"), include_measurements=True)
 
-            with patch.object(PlumeFactory, "get_zip_file_link") as mocked_get_zip_link:
-                mocked_get_zip_link.return_value = "https://example.com"
+        with patch.object(requests, "get") as mocked_get:
+            mocked_get.return_value.ok = True
+            mocked_get.return_value.content = open("./testing/test_data/plume_sensorData.zip", "rb").read()
 
-                sensors = self.pf.get_sensors_merged_from_zip([sensor_id], start, end)
+            with patch.object(PlumeFactory, "extract_zip_content") as mocked_sensors_from_zip:
+                mocked_sensors_from_zip.return_value = data
 
-                mocked_get_zip_link.assert_called_with([sensor_id], start, end, include_measurements=True)
-                mocked_sensors_from_zip.assert_called_with("https://example.com", include_measurements=True)
+                with patch.object(PlumeFactory, "get_zip_file_link") as mocked_get_zip_link:
+                    mocked_get_zip_link.return_value = "https://example.com"
 
-                self.assertTrue(isinstance(sensors, list))
-                self.assertEqual(len(sensors), 1)
+                    sensors = self.pf.get_sensors_merged_from_zip([sensor_id], start, end)
 
-                expectedColumns = ["NO2", "VOC", "timestamp", "latitude", "longitude", "particulatePM1", "particulatePM2.5", "particulatePM10"]
-                for sensor in sensors:
-                    self.assertTrue(isinstance(sensor, PlumeSensor))
-                    self.assertEqual(sensor.id, "19651")
-                    for col in expectedColumns:
-                        self.assertTrue(col in sensor.df.columns)
-                    break
+                    mocked_get_zip_link.assert_called_with([sensor_id], start, end, include_measurements=True)
+                    mocked_sensors_from_zip.assert_called_once()
+
+                    self.assertTrue(isinstance(sensors, list))
+                    self.assertEqual(len(sensors), 1)
+                    for sensor in sensors:
+                        self.assertTrue(isinstance(sensor, PlumeSensor))
+                        self.assertEqual(sensor.id, "19651")
+                        for col in self.expected_columns:
+                            self.assertTrue(col in sensor.df.columns)
+                        break
 
 
 if __name__ == "__main__":

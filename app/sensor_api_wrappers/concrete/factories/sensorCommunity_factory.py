@@ -3,9 +3,7 @@ import datetime as dt
 from typing import Iterator
 
 import requests
-from sensor_api_wrappers.concrete.products.sensorCommunity_sensor import (
-    SensorCommunitySensor,
-)
+from sensor_api_wrappers.concrete.products.sensorCommunity_sensor import SensorCommunitySensor
 from sensor_api_wrappers.interfaces.sensor_factory import SensorFactory
 
 
@@ -161,7 +159,7 @@ class SensorCommunityFactory(SensorFactory):
                 res = requests.get("https://api-rrd.madavi.de:3000/grafana/api/datasources/proxy/uid/hoUeJn4Gz/query", params=payload)
                 yield SensorCommunitySensor.from_json(key, res.json())
 
-            except Exception:
+            except Exception as e:
                 yield SensorCommunitySensor(key, None)
 
     # @DeprecationWarning

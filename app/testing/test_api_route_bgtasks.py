@@ -16,6 +16,7 @@ from dotenv import load_dotenv
 from fastapi.testclient import TestClient
 from main import app
 from sensor_api_wrappers.concrete.factories.plume_factory import PlumeFactory
+from sensor_api_wrappers.concrete.products.airGradient_sensor import AirGradientSensor
 from sensor_api_wrappers.concrete.products.plume_sensor import PlumeSensor
 from sensor_api_wrappers.concrete.products.purpleAir_sensor import PurpleAirSensor
 from sensor_api_wrappers.concrete.products.sensorCommunity_sensor import SensorCommunitySensor
@@ -36,26 +37,71 @@ class Test_Api_7_BackgroundTasks(TestCase):
         cls.client = TestClient(app)
         cls.client = authenticate_client(cls.client, role="admin")
         cls.db = database_config()
+        cls.stationary_box = "POLYGON((-1.889767 52.45279,-1.889767 52.45281,-1.889747 52.45281,-1.889747 52.45279,-1.889767 52.45279))"
 
         # add a plume sensor type to the database
-        cls.plume_sensor_type_id = setUpSensorType(cls.db, "Plume", "test_plume", {"NO2": "ppb", "VOC": "ppb", "pm10": "ppb", "pm2.5": "ppb", "pm1": "ppb"})
+        cls.plume_sensor_type_id = setUpSensorType(
+            db=cls.db,
+            name="Plume",
+            description="test_plume",
+            properties={
+                "NO2": "ppb",
+                "VOC": "ppb",
+                "pm10": "ppb",
+                "pm2.5": "ppb",
+                "pm1": "ppb",
+            },
+        )
         # add a plume sensor to the database
-        cls.plume_sensor_id = setUpSensor(cls.db, "18749", "02:00:00:00:48:45", cls.plume_sensor_type_id, True, None, None)
+        cls.plume_sensor_id = setUpSensor(
+            db=cls.db, lookup_id="18749", serial_number="02:00:00:00:48:45", type_id=cls.plume_sensor_type_id, active=True, user_id=None, stationary_box=cls.stationary_box
+        )
 
         # add a zephyr sensor type to the database
         cls.zephyr_sensor_type_id = setUpSensorType(
-            cls.db,
-            "Zephyr",
-            "test_zephyr",
-            {"NO": "ppb", "NO2": "ppb", "O3": "ppb", "ambHumidity": "N/A", "ambPressure": "N/A", "ambTempC": "C", "humidity": "N/A", "pm10": "ppb", "pm2.5": "ppb", "pm1": "ppb", "tempC": "C"},
+            db=cls.db,
+            name="Zephyr",
+            description="test_zephyr",
+            properties={
+                "NO": "µg/m³",
+                "NO2": "µg/m³",
+                "O3": "µg/m³",
+                "ambHumidity": "N/A",
+                "ambPressure": "N/A",
+                "ambTempC": "C",
+                "humidity": "N/A",
+                "pm10": "µg/m³",
+                "pm2.5": "µg/m³",
+                "pm1": "µg/m³",
+                "tempC": "C",
+            },
         )
         # add a zephyr sensor to the database
-        cls.zephyr_sensor_id = setUpSensor(cls.db, "814", "814:Zephyr", cls.zephyr_sensor_type_id, True, None, None)
+        cls.zephyr_sensor_id = setUpSensor(db=cls.db, lookup_id="814", serial_number="814:Zephyr", type_id=cls.zephyr_sensor_type_id, active=True, user_id=None, stationary_box=cls.stationary_box)
 
         # add a sensorCommunity sensor type to the database
-        cls.sensorCommunity_sensor_type_id = setUpSensorType(cls.db, "SensorCommunity", "test_sensorCommunity", {"NO2": "ppb", "VOC": "ppb", "pm10": "ppb", "pm2.5": "ppb", "pm1": "ppb"})
+        cls.sensorCommunity_sensor_type_id = setUpSensorType(
+            db=cls.db,
+            name="SensorCommunity",
+            description="test_sensorCommunity",
+            properties={
+                "NO2": "µg/m³",
+                "VOC": "µg/m³",
+                "pm10": "µg/m³",
+                "pm2.5": "µg/m³",
+                "pm1": "µg/m³",
+            },
+        )
         # add a sensorCommunity sensor to the database
-        cls.sensorCommunity_sensor_id = setUpSensor(cls.db, "60641,SDS011,60642,BME280", "60641,SDS011,60642,BME280:SensorCommunity", cls.sensorCommunity_sensor_type_id, True, None, None)
+        cls.sensorCommunity_sensor_id = setUpSensor(
+            db=cls.db,
+            lookup_id="60641,SDS011,60642,BME280",
+            serial_number="60641,SDS011,60642,BME280:SensorCommunity",
+            type_id=cls.sensorCommunity_sensor_type_id,
+            active=True,
+            user_id=None,
+            stationary_box=cls.stationary_box,
+        )
 
         # plume sensor summary to be added to the database
         zip_contents = PlumeFactory.extract_zip_content(zipfile.ZipFile("./testing/test_data/plume_sensorData.zip", "r"), include_measurements=True)
@@ -86,10 +132,10 @@ class Test_Api_7_BackgroundTasks(TestCase):
 
         # purple air sensor type to be added to the database
         cls.purpleAir_sensor_type_id = setUpSensorType(
-            cls.db,
-            "PurpleAir",
-            "test_purpleAir",
-            {
+            db=cls.db,
+            name="PurpleAir",
+            description="test_purpleAir",
+            properties={
                 "pm1.0_atm_a": "µg/m³",
                 "pm1.0_atm_b": "µg/m³",
                 "pm2.5_atm_a": "µg/m³",
@@ -101,20 +147,56 @@ class Test_Api_7_BackgroundTasks(TestCase):
                 "pressure": "hPa",
                 "voc": "ppb",
                 "scattering_coefficient": "Mm-1",
-                "deciviews": "",
-                "visual_range": "",
+                "deciviews": "n/a",
+                "visual_range": "n/a",
             },
         )
         # purple air sensor to be added to the database
         cls.purpleAir_sensor_id = setUpSensor(
-            cls.db, "274866", "zen_2020", cls.purpleAir_sensor_type_id, True, None, "POLYGON((-1.889767 52.45279,-1.889767 52.45281,-1.889747 52.45281,-1.889747 52.45279,-1.889767 52.45279))"
+            db=cls.db, lookup_id="274866,outdoor", serial_number="zen_2020:PurpleAir", type_id=cls.purpleAir_sensor_type_id, active=True, user_id=None, stationary_box=cls.stationary_box
         )
         # purple air sensor summary to be added to the database
         file = open("testing/test_data/purpleair_sensor_274866.csv", "r")
         data = file.read()
         file.close()
-        sensor = PurpleAirSensor.from_csv("274866", data)
+        sensor = PurpleAirSensor.from_csv("274866,outdoor", data)
         cls.purpleAir_summary = list(sensor.create_sensor_summaries(None))[0]
+
+        # airGradient sensor type to be added to the database
+        cls.airGradient_sensor_type_id = setUpSensorType(
+            db=cls.db,
+            name="AirGradient",
+            description="test_airGradient",
+            properties={
+                "pm01": "µg/m³",
+                "pm02": "µg/m³",
+                "pm10": "µg/m³",
+                "pm01_corrected": "µg/m³",
+                "pm02_corrected": "µg/m³",
+                "pm10_corrected": "µg/m³",
+                "pm003Count": "µg/m³",
+                "atmp": "C",
+                "rhum": "%",
+                "rco2": "ppm",
+                "atmp_corrected": "C",
+                "rhum_corrected": "%",
+                "rco2_corrected": "ppm",
+                "tvoc": "ppb",
+                "tvocIndex": "n/a",
+                "noxIndex": "n/a",
+            },
+        )
+        # airGradient sensor to be added to the database
+        cls.airGradient_sensor_id = setUpSensor(
+            db=cls.db, lookup_id="163763", serial_number="2020:AirGradient", type_id=cls.airGradient_sensor_type_id, active=True, user_id=None, stationary_box=cls.stationary_box
+        )
+        # airGradient sensor summary to be added to the database
+        file = open("testing/test_data/airgradient_163763_data.json", "r")
+        json_ = json.load(file)
+        file.close()
+
+        sensor = AirGradientSensor.from_json("163763", json_)
+        cls.airGradient_summary = list(sensor.create_sensor_summaries(None))[0]
 
     @classmethod
     def tearDownClass(cls):
@@ -226,7 +308,28 @@ class Test_Api_7_BackgroundTasks(TestCase):
         # test that log was added to the database
         self.log_insert_shared_test()
 
-    def test_5_upsert_sensor_summary_by_type_id_active_sensors(self):
+    def test_6_airGradient_upsert_sensor_summary_by_id_list(self):
+        """Test the upsert sensor summary by id list route of the API"""
+        # wait 2 second to ensure that the log date is different
+        time.sleep(2)
+
+        with patch.object(SensorFactoryWrapper, "fetch_airGradient_data", return_value=[self.airGradient_summary]) as mock_fetch_airGradient_data:
+            response = self.client.post("/api-task/schedule/ingest-bysensorid/01-04-2023/02-04-2023", params={"sensor_ids": [self.airGradient_sensor_id]})
+            mock_fetch_airGradient_data.assert_called_once()
+            self.assertEqual(response.status_code, 200)
+            self.assertNotEqual(response, "No active sensors found")
+
+        # test that the sensor summary was added to the database
+        try:
+            res = self.db.query(ModelSensorSummary).filter(ModelSensorSummary.sensor_id == self.airGradient_sensor_id).first()
+            self.assertIsNotNone(res)
+        except Exception as e:
+            self.db.rollback()
+
+        # test that log was added to the database
+        self.log_insert_shared_test()
+
+    def test_6_upsert_sensor_summary_by_type_id_active_sensors(self):
         """Test the upsert sensor summary by type id active sensors route of the API"""
         # wait 3 second to ensure that the log date is different
         time.sleep(2)
