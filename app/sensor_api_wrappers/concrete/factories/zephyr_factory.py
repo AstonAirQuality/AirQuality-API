@@ -56,8 +56,8 @@ class ZephyrFactory(SensorFactory):
 
                 yield ZephyrSensor.from_json(sensor_lookupid, res.json()["data"]["Unaveraged"][f"slot{slot}"])
             # if the sensor has no data for the given time period then return an empty sensor
-            except Exception as e:
-                yield ZephyrSensor(sensor_lookupid, dataframe=None, error=str(e))
+            except Exception:
+                yield ZephyrSensor(sensor_lookupid, dataframe=None, error="failed to fetch data")
 
 
 # from os import environ as env

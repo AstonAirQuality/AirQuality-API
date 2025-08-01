@@ -1,70 +1,68 @@
 description = """
-Aston Air Quality API helps you do awesome stuff. 🚀
+# Aston Air Quality API
 
-## Sensors
-You can:
-* **Create sensors**.
-* **Read sensors**.
-* **Update sensors**.
-* **Delete sensors**.
+Easily manage air quality sensors, users, and data ingestion logs with a modern RESTful API. 🚀
 
-## Sensor Summaries
-You can:
-* **read sensor summaries**.
+## Features
 
-## Sensor Types
-You can:
-* **Create sensor types**.
-* **Read sensor types**.
-* **Update sensor types**.
-* **Delete sensor types**.
+### Sensors
+- **Create** new sensors
+- **Read** sensor details
+- **Update** sensor information
+- **Delete** sensors
 
-## Users.
-You can:
-* **read users**.
-* **create users**.
+### Sensor Summaries
+- **Read** sensor summary data
 
-## Logs.
-You can:
-* **read logs**.
-* **delete logs**.
+### Sensor Types
+- **Create** sensor types
+- **Read** sensor type details
+- **Update** sensor types
+- **Delete** sensor types
 
-## Auth
-You can:
-* **signin**.
-* **signup**.
-* **firebase login**.
-* **firebase register**.
-* **delete account**.
+### Users
+- **Create** users
+- **Read** user information
+
+### Logs
+- **Read** ingestion logs
+- **Delete** logs
+
+### Authentication
+- **Sign in**
+- **Sign up**
+- **Firebase login**
+- **Firebase register**
+- **Delete account**
 """
 
 tags_metadata = [
     {
         "name": "auth",
-        "description": "Firebase authentication.",
+        "description": "Endpoints for Firebase authentication and account management.",
     },
     {
         "name": "sensor",
-        "description": "Operations with sensors.",
+        "description": "CRUD operations for air quality sensors.",
     },
     {
         "name": "sensor-type",
-        "description": "Operations with sensor types.",
+        "description": "Manage different types of sensors.",
     },
     {
         "name": "sensor-summary",
-        "description": "Operations with sensor summaries.",
+        "description": "Access summarized sensor data.",
     },
     {
         "name": "api-task",
-        "description": "Operations with background tasks.",
+        "description": "Background and scheduled API tasks.",
     },
     {
         "name": "user",
-        "description": "Operations with users.",
+        "description": "User account operations.",
     },
     {
         "name": "data-ingestion-logs",
-        "description": "Operations with logs.",
+        "description": "View and manage data ingestion logs.",
     },
 ]

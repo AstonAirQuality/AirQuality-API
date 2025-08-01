@@ -126,9 +126,9 @@ class PurpleAirFactory(SensorFactory):
                     sensor_dict.pop(sensor_lookupid, None)
                     yield PurpleAirSensor.from_csv(sensor_lookupid, res.text)
             # if the sensor has no data for the given time period then return an empty sensor
-            except Exception as e:
+            except Exception:
                 # print(f"Error fetching data for sensor {sensor_lookupid}: {e}")
-                yield PurpleAirSensor(sensor_lookupid, dataframe=None, error=str(e))
+                yield PurpleAirSensor(sensor_lookupid, dataframe=None, error="failed to fetch data:")
 
     def get_sensors_from_file(self, sensor_dict: dict[str, str], file: bytes) -> Iterator[PurpleAirSensor]:
         """Factory method for creating PurpleAir sensor objects from a csv file.

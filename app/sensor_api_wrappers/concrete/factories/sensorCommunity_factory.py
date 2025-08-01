@@ -159,8 +159,8 @@ class SensorCommunityFactory(SensorFactory):
                 res = requests.get("https://api-rrd.madavi.de:3000/grafana/api/datasources/proxy/uid/hoUeJn4Gz/query", params=payload)
                 yield SensorCommunitySensor.from_json(key, res.json())
 
-            except Exception as e:
-                yield SensorCommunitySensor(key, dataframe=None, error=str(e))
+            except Exception:
+                yield SensorCommunitySensor(key, dataframe=None, error="failed to fetch data")
 
     # @DeprecationWarning
     def get_sensors_from_csv(self, sensor_dict: dict[str, str], start: dt.datetime, end: dt.datetime) -> Iterator[SensorCommunitySensor]:

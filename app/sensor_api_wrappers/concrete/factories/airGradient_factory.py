@@ -46,8 +46,8 @@ class AirGradientFactory(SensorFactory):
                 response.raise_for_status()
                 data = response.json()
                 yield AirGradientSensor.from_json(sensor_id, data)
-            except requests.RequestException as e:
-                yield AirGradientSensor(sensor_id, dataframe=None, error=str(e))
+            except requests.RequestException:
+                yield AirGradientSensor(sensor_id, dataframe=None, error=f"failed to fetch data")
 
     def get_sensors(self, sensor_dict: dict[str, str], start: dt.datetime, end: dt.datetime) -> Iterator[AirGradientSensor]:
         """Fetches data from the AirGradient API and returns built AirGradient sensor objects.
