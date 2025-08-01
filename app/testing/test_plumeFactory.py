@@ -130,7 +130,7 @@ class Test_plumeFactory(TestCase):
         with patch.object(requests, "get") as mocked_get:
             mocked_get.return_value.ok = True
             mocked_get.return_value.content = open("./testing/test_data/plume_sensorData.zip", "rb").read()
-            with patch.object(PlumeFactory, "extract_zip_content_from_link") as mocked_sensors_from_zip:
+            with patch.object(PlumeFactory, "extract_zip_content") as mocked_sensors_from_zip:
                 mocked_sensors_from_zip.return_value = self.pf.extract_zip_content(zipfile.ZipFile("./testing/test_data/plume_sensorData.zip", "r"), include_measurements=False)
 
                 sensors = self.pf.get_sensor_location_data([sensor_id], start, end, link)

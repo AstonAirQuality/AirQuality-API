@@ -4,12 +4,13 @@ import pandas as pd
 
 
 class SensorDTO(ABC):
-    def __init__(self, id_, merged_df: pd.DataFrame):
+    def __init__(self, id_, merged_df: pd.DataFrame, error: str = None):
         """Initialises the SensorDTO object
         :param id_: sensor id
         :param merged_df: dataframe of sensor data"""
         self.id = id_
         self.df = merged_df
+        self.error = error
 
     def __iter__(self):
         """Iterator for the SensorDTO object

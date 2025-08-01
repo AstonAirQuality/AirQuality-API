@@ -9,8 +9,8 @@ from sensor_api_wrappers.interfaces.sensor_factory import SensorFactory
 
 
 class ZephyrFactory(SensorFactory):
-    """docs page: https://docs.earthsense.co.uk/zapi/ """
-    
+    """docs page: https://docs.earthsense.co.uk/zapi/"""
+
     def __init__(self, username: str, password: str):
         """Initializes the Zephyr Factory.
         :param username: username address of the Zephyr account
@@ -57,7 +57,7 @@ class ZephyrFactory(SensorFactory):
                 yield ZephyrSensor.from_json(sensor_lookupid, res.json()["data"]["Unaveraged"][f"slot{slot}"])
             # if the sensor has no data for the given time period then return an empty sensor
             except Exception as e:
-                yield ZephyrSensor(sensor_lookupid, None)
+                yield ZephyrSensor(sensor_lookupid, dataframe=None, error=str(e))
 
 
 # from os import environ as env

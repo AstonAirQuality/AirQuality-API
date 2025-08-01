@@ -8,12 +8,12 @@ from sensor_api_wrappers.interfaces.sensor_product import SensorProduct
 class ZephyrSensor(SensorProduct, SensorWritable):
     """Zephyr Sensor Product object designed to wrap the csv/json files returned by the Zephyr API."""
 
-    def __init__(self, sensor_id: str, dataframe: pd.DataFrame):
+    def __init__(self, sensor_id: str, dataframe: pd.DataFrame, error: str):
         """Initializes the ZephyrSensor object.
         :param sensor_id: The sensor id.
         :param dataframe: The sensor data.
         """
-        super().__init__(sensor_id, dataframe)
+        super().__init__(sensor_id, dataframe, error)
         self.data_columns = [
             SensorMeasurementsColumns.DATE.value,
             SensorMeasurementsColumns.PM1.value,
@@ -30,7 +30,8 @@ class ZephyrSensor(SensorProduct, SensorWritable):
             SensorMeasurementsColumns.LATITUDE.value,
             SensorMeasurementsColumns.LONGITUDE.value,
         ]
-        self.df = self.df[self.data_columns]
+        if dataframe is not None:
+            self.df = self.df[self.data_columns]
 
     @staticmethod
     def prepare_measurements(df: pd.DataFrame) -> pd.DataFrame:
@@ -94,7 +95,7 @@ class ZephyrSensor(SensorProduct, SensorWritable):
 
         df = ZephyrSensor.prepare_measurements(df)
 
-        return ZephyrSensor(sensor_id, df)
+        return ZephyrSensor(sensor_id, dataframe=df, error=None)
 
     @staticmethod
     def from_csv(sensor_id: str, *args, **kwargs):

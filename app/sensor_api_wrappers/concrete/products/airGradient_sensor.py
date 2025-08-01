@@ -10,12 +10,12 @@ from sensor_api_wrappers.interfaces.sensor_product import SensorProduct
 class AirGradientSensor(SensorProduct, SensorWritable):
     """AirGradient Sensor Product object designed to wrap the csv/json files returned by the AirGradient API."""
 
-    def __init__(self, sensor_id: str, dataframe: pd.DataFrame):
+    def __init__(self, sensor_id: str, dataframe: pd.DataFrame, error: str):
         """Initializes the AirGradientSensor object.
         :param sensor_id: The sensor id.
         :param dataframe: The sensor data.
         """
-        super().__init__(sensor_id, dataframe)
+        super().__init__(sensor_id, dataframe, error)
         self.data_columns = [
             SensorMeasurementsColumns.DATE.value,
             SensorMeasurementsColumns.PM1.value,
@@ -34,7 +34,8 @@ class AirGradientSensor(SensorProduct, SensorWritable):
             SensorMeasurementsColumns.LATITUDE.value,
             SensorMeasurementsColumns.LONGITUDE.value,
         ]
-        self.df = self.df[self.data_columns]
+        if dataframe is not None:
+            self.df = self.df[self.data_columns]
 
     @staticmethod
     def from_json(sensor_id: str, data: list) -> SensorWritable:
@@ -84,7 +85,7 @@ class AirGradientSensor(SensorProduct, SensorWritable):
         df["latitude"] = np.nan
         df["longitude"] = np.nan
 
-        return AirGradientSensor(sensor_id, df)
+        return AirGradientSensor(sensor_id, dataframe=df, error=None)
 
     @staticmethod
     def from_csv(sensor_id: str, csv_data: str) -> SensorWritable:
@@ -134,7 +135,7 @@ class AirGradientSensor(SensorProduct, SensorWritable):
 
         print(df.columns.tolist())
 
-        return AirGradientSensor(sensor_id, df)
+        return AirGradientSensor(sensor_id, dataframe=df, error=None)
 
 
 # 'particulatePM1Raw', 'particulatePM2.5Raw', 'particulatePM10Raw', 'ambTempC' are not being found in the final df

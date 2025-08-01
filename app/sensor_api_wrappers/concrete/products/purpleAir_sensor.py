@@ -10,14 +10,15 @@ from sensor_api_wrappers.interfaces.sensor_product import SensorProduct
 class PurpleAirSensor(SensorProduct, SensorWritable):
     """PurpleAirSensor Sensor Product object designed to wrap the csv/json files returned by the Zephyr API."""
 
-    def __init__(self, sensor_id: str, dataframe: pd.DataFrame):
+    def __init__(self, sensor_id: str, dataframe: pd.DataFrame, error: str):
         """Initializes the PurpleAirSensor object.
 
         Args:
             sensor_id (str): The sensor id.
             dataframe (pd.DataFrame): The sensor data as a DataFrame.
+            error (str, optional): Error message if any. Defaults to None.
         """
-        super().__init__(sensor_id, dataframe)
+        super().__init__(sensor_id, dataframe, error)
         self.data_columns = [
             SensorMeasurementsColumns.DATE.value,
             SensorMeasurementsColumns.PM1.value,
@@ -39,7 +40,8 @@ class PurpleAirSensor(SensorProduct, SensorWritable):
             SensorMeasurementsColumns.LATITUDE.value,
             SensorMeasurementsColumns.LONGITUDE.value,
         ]
-        self.df = self.df[self.data_columns]
+        if dataframe is not None:
+            self.df = self.df[self.data_columns]
 
     @staticmethod
     def prepare_measurements(df: pd.DataFrame) -> pd.DataFrame:
@@ -136,12 +138,13 @@ class PurpleAirSensor(SensorProduct, SensorWritable):
             PurpleAirSensor: An instance of PurpleAirSensor with the data loaded into a DataFrame.
         """
         # Convert the csv string to a string io and then read it into a DataFrame
-        df = pd.read_csv(StringIO(data_string))
-        return PurpleAirSensor(sensor_id, PurpleAirSensor.prepare_measurements(df))
+        df = PurpleAirSensor.prepare_measurements(pd.read_csv(StringIO(data_string)))
+        return PurpleAirSensor(sensor_id, dataframe=df, error=None)
 
     @staticmethod
     def from_json(sensor_id: str, data: list) -> SensorWritable:
         pass
+        # return PurpleAirSensor(sensor_id, dataframe=None, error="Not implemented yet")
 
 
 # if __name__ == "__main__":

@@ -8,16 +8,9 @@ import zipfile
 from typing import Iterator, List, Tuple
 
 import requests
+from core.exception_utils import APITimeoutException
 from sensor_api_wrappers.concrete.products.plume_sensor import PlumeSensor
 from sensor_api_wrappers.interfaces.sensor_factory import SensorFactory
-
-
-class APITimeoutException(IOError):
-    """Exception raised when the API times out.
-    Extends the IOError class.
-    :param IOError: Base class for I/O related errors."""
-
-    pass
 
 
 class PlumeFactory(SensorFactory):
@@ -132,8 +125,8 @@ class PlumeFactory(SensorFactory):
                         plumeSensors.append(sensor)
                         lookupids_with_location_data.append(sensor.id)
                 # create a null sensor to be logged as a failed fetch if any errors occur
-                except Exception:
-                    plumeSensors.append(PlumeSensor(sensor_lookupid, None))
+                except Exception as e:
+                    plumeSensors.append(PlumeSensor(sensor_lookupid, dataframe=None, error=str(e)))
 
             # STEP 2: for sensors without a time_updated value, get the location data using the start and end time parameters
             else:
@@ -141,7 +134,7 @@ class PlumeFactory(SensorFactory):
                     sensors_with_location_data += self.get_sensor_location_data(sensor_lookupid, start, end, link=None)
                 # create a null sensor to be logged as a failed fetch
                 except Exception:
-                    plumeSensors.append(PlumeSensor(sensor_lookupid, None))
+                    plumeSensors.append(PlumeSensor(sensor_lookupid, dataframe=None, error="Failed to fetch location data"))
 
         # STEP 3: for sensors whose location data is not empty, get the measurements using the start and end time parameters
         if sensors_with_location_data != []:
@@ -152,7 +145,7 @@ class PlumeFactory(SensorFactory):
                     plumeSensors.append(sensor)
                     lookupids_with_location_data.append(sensor.id)
                 except Exception:
-                    plumeSensors.append(PlumeSensor(sensor.id, None))
+                    plumeSensors.append(PlumeSensor(sensor.id, dataframe=None, error="Failed to fetch measurements for sensor with location data"))
                     # remove sensor id from lookupids list (prevents a sensor that has location and stationay box data from being fetched twice)
                     lookupids.remove(sensor.id)
 
@@ -167,7 +160,7 @@ class PlumeFactory(SensorFactory):
                     # sensor = PlumeSensor.from_json(sensorid, self.get_sensor_measurement_data(sensorid, start, end))
                     plumeSensors.append(sensor)
                 except Exception:
-                    plumeSensors.append(PlumeSensor(sensorid, None))
+                    plumeSensors.append(PlumeSensor(sensorid, dataframe=None, error="Failed to fetch measurements for sensor without location data"))
 
         return plumeSensors
 

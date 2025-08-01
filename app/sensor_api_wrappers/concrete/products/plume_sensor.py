@@ -18,12 +18,14 @@ class PlumeSensor(SensorProduct, SensorWritable):
     :param SensorWritable: SensorWritable class to inherit from.
     """
 
-    def __init__(self, id_, dataframe: pd.DataFrame):
+    def __init__(self, id_, dataframe: pd.DataFrame, error: str):
         """Initializes the PlumeSensor object.
-        :param id_: The sensor id.
-        :param dataframe: The sensor data.
+        Args:
+            id_ (str): The sensor id.
+            dataframe (pd.DataFrame): The sensor data as a DataFrame.
+            error (str, optional): Error message if any. Defaults to None.
         """
-        super().__init__(id_, dataframe)
+        super().__init__(id_, dataframe, error)
         self.data_columns = [
             SensorMeasurementsColumns.DATE.value,
             SensorMeasurementsColumns.PM1.value,
@@ -68,24 +70,19 @@ class PlumeSensor(SensorProduct, SensorWritable):
     def add_measurements_json(self, data: list):
         """Extracts the measurement data from the Plume API JSON and adds it to the dataframe.
         :param data: The Plume API JSON data."""
-        try:
-            dfList = []
+        dfList = []
 
-            for measurements in data:
-                temp_df = pd.DataFrame.from_records(measurements)
-                dfList.append(temp_df)
+        for measurements in data:
+            temp_df = pd.DataFrame.from_records(measurements)
+            dfList.append(temp_df)
 
-            # concatenate all measurement dataframes and prepare dataframe.
-            # ignore_index=True to prevent duplicate index errors
-            df = pd.concat(dfList, ignore_index=True)
-            df = PlumeSensor.prepare_measurements(df)
-            self.join_dataframes(df)
+        # concatenate all measurement dataframes and prepare dataframe.
+        # ignore_index=True to prevent duplicate index errors
+        df = pd.concat(dfList, ignore_index=True)
+        df = PlumeSensor.prepare_measurements(df)
+        self.join_dataframes(df)
 
-            self.df = self.df[self.data_columns]
-
-        except (IndexError, ValueError):
-            # print("No data found for sensor: {}".format(sensor_id))
-            return
+        self.df = self.df[self.data_columns]
 
     @staticmethod
     def prepare_measurements(df: pd.DataFrame) -> pd.DataFrame:
@@ -135,13 +132,13 @@ class PlumeSensor(SensorProduct, SensorWritable):
 
         except (IndexError, ValueError):
             # print("No data found for sensor: {}".format(sensor_id))
-            return None
+            return PlumeSensor(sensor_id, dataframe=None, error="No data found for sensor")
 
         if df.empty:
-            return None
+            return PlumeSensor(sensor_id, dataframe=None, error="No data found for sensor")
         else:
             df = PlumeSensor.prepare_measurements(df)
-            return PlumeSensor(sensor_id, df)
+            return PlumeSensor(sensor_id, dataframe=df, error=None)
 
     @staticmethod
     def from_csv(sensor_id: str, csv_file: io.StringIO) -> SensorWritable:
@@ -165,7 +162,7 @@ class PlumeSensor(SensorProduct, SensorWritable):
         if df.empty:
             return None
         else:
-            return PlumeSensor(sensor_id, df)
+            return PlumeSensor(sensor_id, df, error=None)
 
     @staticmethod
     def from_zip(sensor_id: str, csv_file: io.StringIO) -> SensorWritable:
@@ -199,4 +196,4 @@ class PlumeSensor(SensorProduct, SensorWritable):
 
             df.set_index("date", inplace=True)
 
-            return PlumeSensor(sensor_id, df)
+            return PlumeSensor(sensor_id, df, error=None)

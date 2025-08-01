@@ -101,6 +101,7 @@ class SensorFactoryWrapper:
             Iterator[SchemaSensorSummary]: An iterator yielding sensor summaries.
         """
         self.paf.login()
+        # we use a copy because we edit the dictionary on retry (pop off completed sensor tasks)
         for sensor in self.paf.get_sensors(sensor_dict.copy(), start, end):
             if sensor is not None:
                 yield from sensor.create_sensor_summaries(sensor_dict[sensor.id]["stationary_box"])

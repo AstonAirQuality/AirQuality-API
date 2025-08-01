@@ -16,11 +16,11 @@ from sensor_api_wrappers.data_transfer_object.sensorDTO import SensorDTO
 class SensorWritable(SensorDTO):
     """Sensor Data Transfer Object, used to transfer and process data between api wrappers, main API and the database"""
 
-    def __init__(self, id_, merged_df: pd.DataFrame):
+    def __init__(self, id_, merged_df: pd.DataFrame, error: str = None):
         """Initialises the SensorDTO object
         :param id_: sensor id
         :param merged_df: dataframe of sensor data"""
-        super().__init__(id_, merged_df)
+        super().__init__(id_, merged_df, error)
 
     def to_json(self, df: pd.DataFrame) -> str:
         """Converts the dataframe to a json string.
@@ -36,9 +36,15 @@ class SensorWritable(SensorDTO):
 
         # if the dataframe is empty or None then yield an empty sensor summary with an error message
         if self.df is None or self.df.empty:
-            yield SchemaSensorSummary(
-                timestamp=int(dt.datetime.now().timestamp()), sensor_id=self.id, geom=None, measurement_count=0, measurement_data='{"message": "no data found"}', stationary=False
-            )
+            if self.error:
+                yield SchemaSensorSummary(
+                    timestamp=int(dt.datetime.now().timestamp()), sensor_id=self.id, geom=None, measurement_count=0, measurement_data=json.dumps({"message": self.error}), stationary=False
+                )
+            # sensor summary with a generic message
+            else:
+                yield SchemaSensorSummary(
+                    timestamp=int(dt.datetime.now().timestamp()), sensor_id=self.id, geom=None, measurement_count=0, measurement_data='{"message": "no data found"}', stationary=False
+                )
         else:
             data_dict = self.dataframe_to_dict(self.df)
             # sensor_summaries = []

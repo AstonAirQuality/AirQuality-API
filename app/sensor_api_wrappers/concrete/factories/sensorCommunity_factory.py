@@ -160,7 +160,7 @@ class SensorCommunityFactory(SensorFactory):
                 yield SensorCommunitySensor.from_json(key, res.json())
 
             except Exception as e:
-                yield SensorCommunitySensor(key, None)
+                yield SensorCommunitySensor(key, dataframe=None, error=str(e))
 
     # @DeprecationWarning
     def get_sensors_from_csv(self, sensor_dict: dict[str, str], start: dt.datetime, end: dt.datetime) -> Iterator[SensorCommunitySensor]:
@@ -181,7 +181,7 @@ class SensorCommunityFactory(SensorFactory):
                 yield SensorCommunitySensor.from_csv(key, sensorPlatforms[key])
             # if the sensor has no data for the given time period then return an empty sensor
             except Exception as e:
-                yield SensorCommunitySensor(key, None)
+                yield SensorCommunitySensor(key, dataframe=None, error=str(e))
 
 
 # import json

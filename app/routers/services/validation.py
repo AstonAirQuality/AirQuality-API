@@ -33,8 +33,8 @@ def validate_json_file_size(file_size: int) -> None:
     """
     try:
         file_size = file_size / 1024 / 1024  # convert to MB
-        filesize_limit_str = env.get("FILESIZE_LIMIT", "1024") * 1.5  # default to 1024 MB. Multiply by 1.5 because this is before gzip compression
-        filesize_limit = int(filesize_limit_str)
+        filesize_limit_str = env.get("FILESIZE_LIMIT", "1024")
+        filesize_limit = int(filesize_limit_str) * 1.5  # default to 1024 MB. Multiply by 1.5 because this is before gzip compression
         if file_size > filesize_limit:
             raise HTTPException(status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE, detail="File size exceeds the limit")
         elif file_size >= 1024:  # 1GB

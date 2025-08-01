@@ -9,16 +9,9 @@ from io import StringIO
 from typing import Iterator, List, Tuple
 
 import requests
+from core.exception_utils import APITimeoutException
 from sensor_api_wrappers.concrete.products.purpleAir_sensor import PurpleAirSensor
 from sensor_api_wrappers.interfaces.sensor_factory import SensorFactory
-
-
-class APITimeoutException(IOError):
-    """Exception raised when the API times out.
-    Extends the IOError class.
-    :param IOError: Base class for I/O related errors."""
-
-    pass
 
 
 class PurpleAirFactory(SensorFactory):
@@ -46,14 +39,10 @@ class PurpleAirFactory(SensorFactory):
 
         response = requests.get(self.token_url, headers={"referer": self.referer_url}, timeout=30)  # wait up to 30 seconds for the API to respond
         if response.status_code != 200:
-            raise APITimeoutException(response.text)
+            return self.api_key  # return the api key from the environment variable if the request fails
         else:
-            # check if the response is not empty and contains a valid token (len = 172 characters)
-            if not response.text:  # or len(response.text) != 172:
-                raise ValueError("Invalid API token received.")
-            else:
-                self.api_key = response.text
-                return self.api_key
+            self.api_key = response.text
+            return self.api_key
 
     def get_sensors(self, sensor_dict: dict[str, str], start: dt.datetime, end: dt.datetime) -> Iterator[PurpleAirSensor]:
         """Factory method for creating PurpleAir sensor objects by fetching data from the PurpleAir API.
@@ -139,7 +128,7 @@ class PurpleAirFactory(SensorFactory):
             # if the sensor has no data for the given time period then return an empty sensor
             except Exception as e:
                 # print(f"Error fetching data for sensor {sensor_lookupid}: {e}")
-                yield PurpleAirSensor(sensor_lookupid, None)
+                yield PurpleAirSensor(sensor_lookupid, dataframe=None, error=str(e))
 
     def get_sensors_from_file(self, sensor_dict: dict[str, str], file: bytes) -> Iterator[PurpleAirSensor]:
         """Factory method for creating PurpleAir sensor objects from a csv file.
@@ -159,24 +148,25 @@ class PurpleAirFactory(SensorFactory):
                 yield PurpleAirSensor.from_csv(sensor_lookupid, file_str.getvalue())
             except Exception as e:
                 # if the sensor has no data for the given time period then return an empty sensor
-                yield PurpleAirSensor(sensor_lookupid, None)
+                yield PurpleAirSensor(sensor_lookupid, dataframe=None, error=str(e))
 
 
-# if __name__ == "__main__":
-# from os import environ as env
-# from dotenv import load_dotenv
-#     load_dotenv()
+if __name__ == "__main__":
+    from os import environ as env
 
-#     pf = PurpleAirFactory(token_url=env["PURPLE_AIR_TOKEN_URL"], referer_url=env["PURPLE_AIR_REFERER_URL"], api_key=env["PURPLE_AIR_API_KEY"])
-#     pf.login()
+    from dotenv import load_dotenv
 
-#     sensor_dict = {"132169,outdoor": {"stationary_box": None, "time_updated": None}}
+    load_dotenv()
 
-#     sensors = pf.get_sensors(sensor_dict, dt.datetime(2025, 3, 30), dt.datetime(2025, 3, 31))
+    pf = PurpleAirFactory(token_url=env["PURPLE_AIR_TOKEN_URL"], referer_url=env["PURPLE_AIR_REFERER_URL"], api_key=env["PURPLE_AIR_API_KEY"])
+    pf.login()
 
-#     for sensor in sensors:
-#         print(sensor.df.head(-1))
-#         # write df to csv file
-#         sensor.df.to_csv(f"purple_air_sensor_{sensor.id}.csv")
-#         break
-#         break
+    sensor_dict = {"132169,outdoor": {"stationary_box": None, "time_updated": None}}
+
+    sensors = pf.get_sensors(sensor_dict, dt.datetime(2025, 3, 30), dt.datetime(2025, 3, 31))
+
+    for sensor in sensors:
+        print(sensor.df.head(-1))
+        # write df to csv file
+        sensor.df.to_csv(f"purple_air_sensor_{sensor.id}.csv")
+        break

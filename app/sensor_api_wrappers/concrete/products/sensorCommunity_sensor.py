@@ -55,12 +55,12 @@ class SensorCommunitySensor(SensorProduct, SensorWritable):
     """SensorCommunity Sensor Product object designed to wrap the csv/json files returned by the SensorCommunity API.
     \n currently only supports SHT31, SDS011, and BME280 sensors"""
 
-    def __init__(self, sensor_id: str, dataframe: pd.DataFrame):
+    def __init__(self, sensor_id: str, dataframe: pd.DataFrame, error: str):
         """Initializes the SensorCommunitySensor object.
         :param sensor_id: The sensor id.
         :param dataframe: The sensor data.
         """
-        super().__init__(sensor_id, dataframe)
+        super().__init__(sensor_id, dataframe, error)
 
     # @DeprecationWarning
     @staticmethod
@@ -160,7 +160,7 @@ class SensorCommunitySensor(SensorProduct, SensorWritable):
         # create unix timestamp column
         df["timestamp"] = df.index.astype(np.int64) // 10**9
 
-        return SensorCommunitySensor(sensor_id, df)
+        return SensorCommunitySensor(sensor_id, df, error=None)
 
     # @DeprecationWarning
     @staticmethod
@@ -182,4 +182,4 @@ class SensorCommunitySensor(SensorProduct, SensorWritable):
         sensorPlatform[id_] = content
 
         df = SensorCommunitySensor.prepare_measurements(SensorCommunitySensor.ResampleDataAndSortIntoDays(sensorPlatform, "145S"))
-        return SensorCommunitySensor(id_, df)
+        return SensorCommunitySensor(id_, df, error=None)

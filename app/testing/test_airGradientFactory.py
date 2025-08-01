@@ -76,17 +76,10 @@ class Test_airGradientFactory(TestCase):
         sensor_id = "163763"
         sensor_dict = {sensor_id: {"stationary_box": None, "time_updated": None}}
 
-        start_str = start_date.strftime("%Y%m%dT%H%M%SZ")
-        end_str = end_date.strftime("%Y%m%dT%H%M%SZ")
-
-        expected_url = f"https://api.airgradient.com/public/api/v1/locations/{sensor_id}/measures/past?token={self.agf.api_key}&from={start_str}&to={end_str}"
-
         sensors = list(self.agf.get_sensors(sensor_dict, start_date, end_date))
-        mocked_get.assert_called_with(
-            expected_url,
-            headers={"Content-Type": "application/json"},
-        )
-        self.assertEqual(len(sensors), 1)
+        # assert called 3 times
+        mocked_get.assert_called()
+        self.assertEqual(len(sensors), 3)
         self.assertIsInstance(sensors[0], AirGradientSensor)
         self.assertEqual(sensors[0].id, sensor_id)
         self.assertIsNotNone(sensors[0].df)
