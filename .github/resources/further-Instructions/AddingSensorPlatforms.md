@@ -1,51 +1,44 @@
-This document provides instructions for adding new sensor platforms to the AirQuality-API project. It includes guidelines on how to implement the necessary code changes, update existing files, and ensure compatibility with the current system architecture.
+This document provides instructions for adding new sensor platforms to the AirQuality-API project, including code changes, file updates, and ensuring compatibility with the system architecture.
+
+# Adding Sensor Platform Types
+
+You can add a new sensor platform type via either the backend API or the frontend Webapp:
+
+**Required Fields:**
+- **Name:** Unique identifier for the sensor platform type.
+- **Description:** Brief description.
+- **Properties:** JSON defining measurements and units.
+
+**Backend Steps:**
+1. Authenticate (use `dev_login` in development).
+2. **POST** to `/sensor_platform-type` with the required fields.
+
+**Frontend Steps:**
+1. Login and go to "Manage Sensor Platform Types".
+2. Click "Create New SensorPlatformType" and fill in the fields.
+3. Submit.
 
 # Adding Sensor Platforms
-To add a new sensor platform to the AirQuality-API, you will need to follow these steps:
 
-## Using the backend
-1. Authenticate with the AirQuality-API backend, you can use the dev_login endpoint to get a token in the development environment.
-2. Create a new sensor platform type using the **POST** endpoint `/sensor_platform-type`. 
-    - This will require you to provide the following:
-        - Name: A unique identifier for the sensor platform.
-        - Description: A brief description of the sensor platform.
-        - Properties: (JSON) Define the measurements and units for the sensor platform.
+After creating a platform type, add a sensor platform using either the backend or frontend:
 
-## Using the frontend
-1. Login to the Webapp and navigate to the "Manage Sensor Platform Types" section.
-2. Click on "Create New SensorPlatformType" and fill in the required fields:
-    - Name: A unique identifier for the sensor platform.
-    - Description: A brief description of the sensor platform.
-    - Properties: (JSON) Define the measurements and units for the sensor platform.
-3. Click submit to create the new sensor platform type.
+**Required Fields:**
+- **Lookup ID:** Unique identifier (comma-separated if multiple sensors, e.g., `"60641,SDS011,60642,BME280"`).
+- **Serial Number:** Unique serial number.
+- **Type ID:** ID of the sensor platform type.
+- **Active:** Boolean for active status.
+- **Active Reason (Optional):** Reason for active status or null.
+- **User ID (Optional):** Owner's user ID or null.
+- **Stationary Box (Optional):** WKT POLYGON (BOX) for stationary sensors or null.
 
-# Adding A New Sensor Platform
-To add a new sensor platform to the AirQuality-API, you will need to follow these steps:
+**Backend Steps:**
+1. Authenticate.
+2. **POST** to `/sensor_platform` with the required fields.
 
-## Using the backend
-1. Authenticate with the AirQuality-API backend, you can use the dev_login endpoint to get a token in the development environment.
-2. Create a new sensor platform using the **POST** endpoint `/sensor_platform`.
-    - This will require you to provide the following:
-        - Lookup ID: A unique identifier for the sensor platform.
-            - If a sensor platform is made up of multiple sensors you should use comma separated values for each sensor's lookup ID. For example: `"lookup_id": "60641,SDS011,60642,BME280"`.
-        - Serial Number: A unique serial number of the sensor platform.
-        - Type ID: The ID of the sensor platform type you created earlier.
-        - Active: A boolean indicating if the sensor platform is active.
-        - Active Reason (Optionsal): A reason for the sensor platform's active status. Optionally leave it as null.
-        - User ID (Optional): The ID of the user who owns the sensor platform.
-        - Stationary Box (Optional): A JSON string defining the stationary box for the sensor platform.
-
-## Using the frontend
-1. Login to the Webapp and navigate to the "Manage Sensor Platforms" section.
-2. Click on "Create New SensorPlatform" and fill in the required fields:
-    - Lookup ID: A unique identifier for the sensor platform.
-        - If a sensor platform is made up of multiple sensors you should use comma separated values for each sensor's lookup ID. For example: `"lookup_id": "60641,SDS011,60642,BME280"`.
-    - Serial Number: A unique serial number of the sensor platform.
-    - Type ID: The ID of the sensor platform type you created earlier.
-    - Active: A boolean indicating if the sensor platform is active.
-    - Active Reason (Optional): A reason for the sensor platform's active status. Optionally leave it as null.
-    - User ID (Optional): The ID of the user who owns the sensor platform.
-    - Stationary Box (Optional): A JSON string defining the stationary box for the sensor platform.
+**Frontend Steps:**
+1. Login and go to "Manage Sensor Platforms".
+2. Click "Create New SensorPlatform" and fill in the fields.
+3. Submit.
 
 # Developing The Sensor Data Ingestion Pipeline
 To develop the sensor data ingestion pipeline for the new sensor platform, you will need to implement the following steps:
