@@ -16,13 +16,18 @@ from dotenv import load_dotenv
 from fastapi.testclient import TestClient
 from main import app
 from sensor_api_wrappers.concrete.factories.plume_factory import PlumeFactory
-from sensor_api_wrappers.concrete.products.airGradient_sensor import AirGradientSensor
+from sensor_api_wrappers.concrete.products.airGradient_sensor import \
+    AirGradientSensor
 from sensor_api_wrappers.concrete.products.plume_sensor import PlumeSensor
-from sensor_api_wrappers.concrete.products.purpleAir_sensor import PurpleAirSensor
-from sensor_api_wrappers.concrete.products.sensorCommunity_sensor import SensorCommunitySensor
+from sensor_api_wrappers.concrete.products.purpleAir_sensor import \
+    PurpleAirSensor
+from sensor_api_wrappers.concrete.products.sensorCommunity_sensor import \
+    SensorCommunitySensor
 from sensor_api_wrappers.concrete.products.zephyr_sensor import ZephyrSensor
-from sensor_api_wrappers.SensorFactoryWrapper import SensorFactoryWrapper
-from testing.application_config import authenticate_client, database_config, setUpSensor, setUpSensorType
+from sensor_api_wrappers.sensorPlatform_factory_wrapper import \
+    SensorPlatformFactoryWrapper
+from testing.application_config import (authenticate_client, database_config,
+                                        setUpSensor, setUpSensorType)
 
 
 class Test_Api_7_BackgroundTasks(TestCase):
@@ -231,7 +236,7 @@ class Test_Api_7_BackgroundTasks(TestCase):
         # wait 1 second to ensure that the log date is different
         time.sleep(1)
 
-        with patch.object(SensorFactoryWrapper, "fetch_plume_data", return_value=[self.plume_summary]) as mock_fetch_plume_data:
+        with patch.object(SensorPlatformFactoryWrapper, "fetch_plume_data", return_value=[self.plume_summary]) as mock_fetch_plume_data:
             response = self.client.post("/api-task/schedule/ingest-bysensorid/27-09-2022/28-09-2022", params={"sensor_ids": [self.plume_sensor_id]})
             mock_fetch_plume_data.assert_called_once()
             self.assertEqual(response.status_code, 200)
@@ -251,7 +256,7 @@ class Test_Api_7_BackgroundTasks(TestCase):
         """Test the upsert sensor summary by id list route of the API"""
         # wait 2 second to ensure that the log date is different
         time.sleep(2)
-        with patch.object(SensorFactoryWrapper, "fetch_zephyr_data", return_value=[self.zephyr_summary]) as mock_fetch_zephyr_data:
+        with patch.object(SensorPlatformFactoryWrapper, "fetch_zephyr_data", return_value=[self.zephyr_summary]) as mock_fetch_zephyr_data:
             response = self.client.post("/api-task/schedule/ingest-bysensorid/02-04-2023/03-04-2023", params={"sensor_ids": [self.zephyr_sensor_id]})
             mock_fetch_zephyr_data.assert_called_once()
             self.assertEqual(response.status_code, 200)
@@ -271,7 +276,7 @@ class Test_Api_7_BackgroundTasks(TestCase):
         """Test the upsert sensor summary by id list route of the API"""
         # wait 3 second to ensure that the log date is different
         time.sleep(2)
-        with patch.object(SensorFactoryWrapper, "fetch_sensorCommunity_data", return_value=[self.sensorCommunity_summary]) as mock_fetch_sensorCommunity_data:
+        with patch.object(SensorPlatformFactoryWrapper, "fetch_sensorCommunity_data", return_value=[self.sensorCommunity_summary]) as mock_fetch_sensorCommunity_data:
             response = self.client.post("/api-task/schedule/ingest-bysensorid/31-03-2023/01-04-2023", params={"sensor_ids": [self.sensorCommunity_sensor_id]})
             mock_fetch_sensorCommunity_data.assert_called_once()
             self.assertEqual(response.status_code, 200)
@@ -292,7 +297,7 @@ class Test_Api_7_BackgroundTasks(TestCase):
         # wait 2 second to ensure that the log date is different
         time.sleep(2)
 
-        with patch.object(SensorFactoryWrapper, "fetch_purpleAir_data", return_value=[self.purpleAir_summary]) as mock_fetch_purpleAir_data:
+        with patch.object(SensorPlatformFactoryWrapper, "fetch_purpleAir_data", return_value=[self.purpleAir_summary]) as mock_fetch_purpleAir_data:
             response = self.client.post("/api-task/schedule/ingest-bysensorid/01-04-2023/02-04-2023", params={"sensor_ids": [self.purpleAir_sensor_id]})
             mock_fetch_purpleAir_data.assert_called_once()
             self.assertEqual(response.status_code, 200)
@@ -313,7 +318,7 @@ class Test_Api_7_BackgroundTasks(TestCase):
         # wait 2 second to ensure that the log date is different
         time.sleep(2)
 
-        with patch.object(SensorFactoryWrapper, "fetch_airGradient_data", return_value=[self.airGradient_summary]) as mock_fetch_airGradient_data:
+        with patch.object(SensorPlatformFactoryWrapper, "fetch_airGradient_data", return_value=[self.airGradient_summary]) as mock_fetch_airGradient_data:
             response = self.client.post("/api-task/schedule/ingest-bysensorid/01-04-2023/02-04-2023", params={"sensor_ids": [self.airGradient_sensor_id]})
             mock_fetch_airGradient_data.assert_called_once()
             self.assertEqual(response.status_code, 200)
@@ -337,7 +342,7 @@ class Test_Api_7_BackgroundTasks(TestCase):
         # bug fix: the sensor id somehow gets set to plume_sensor_id instead of the lookupid
         self.plume_summary.sensor_id = "18749"
 
-        with patch.object(SensorFactoryWrapper, "fetch_plume_data", return_value=[self.plume_summary]) as mock_fetch_plume_data:
+        with patch.object(SensorPlatformFactoryWrapper, "fetch_plume_data", return_value=[self.plume_summary]) as mock_fetch_plume_data:
             response = self.client.get(f"/api-task/cron/ingest-active-sensors/{self.plume_sensor_type_id}", headers={"cron-job-token": env["CRON_JOB_TOKEN"]})
             mock_fetch_plume_data.assert_called_once()
             self.assertEqual(response.status_code, 200)

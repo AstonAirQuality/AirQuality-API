@@ -2,17 +2,17 @@ from unittest import TestLoader, TestSuite
 
 from HtmlTestRunner import HTMLTestRunner
 from testing.test_api_route_auth import Test_Api_3_Auth
-from testing.test_api_route_bgtasks import Test_Api_7_BackgroundTasks
+from testing.test_api_route_backgroundTasks import Test_Api_7_BackgroundTasks
 from testing.test_api_route_logs import Test_Api_5_Logs
-from testing.test_api_route_sensor import Test_Api_2_Sensor
+from testing.test_api_route_sensorPlatform import Test_Api_2_SensorPlatform
+from testing.test_api_route_sensorPlatformType import Test_Api_1_Sensor_Type
 from testing.test_api_route_sensorSummary import Test_Api_6_SensorSummary
-from testing.test_api_route_sensorType import Test_Api_1_Sensor_Type
 from testing.test_api_route_user import Test_Api_4_Users
 from testing.test_main import Test_Api_Main
 
 # load all tests from the test classes in order
 test_1 = TestLoader().loadTestsFromTestCase(Test_Api_1_Sensor_Type)
-test_2 = TestLoader().loadTestsFromTestCase(Test_Api_2_Sensor)
+test_2 = TestLoader().loadTestsFromTestCase(Test_Api_2_SensorPlatform)
 test_3 = TestLoader().loadTestsFromTestCase(Test_Api_3_Auth)
 test_4 = TestLoader().loadTestsFromTestCase(Test_Api_4_Users)
 test_5 = TestLoader().loadTestsFromTestCase(Test_Api_5_Logs)

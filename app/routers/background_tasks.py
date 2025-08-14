@@ -19,8 +19,8 @@ from routers.sensorSummaries import upsert_sensorSummary
 from routers.services.crud.crud import CRUD
 from routers.services.firebase_notifications import addFirebaseNotifcationDataIngestionTask, clearFirebaseNotifcationDataIngestionTask, updateFirebaseNotifcationDataIngestionTask
 from routers.services.formatting import convertDateRangeStringToDate
-from routers.services.sensorsSharedFunctions import deactivate_unsynced_sensor, get_lookupids_of_sensors, get_sensor_id_and_serialnum_from_lookup_id, set_last_updated
-from sensor_api_wrappers.SensorFactoryWrapper import SensorFactoryWrapper
+from routers.services.sensorPlatform_utils import deactivate_unsynced_sensor, get_lookupids_of_sensors, get_sensor_id_and_serialnum_from_lookup_id, set_last_updated
+from sensor_api_wrappers.sensorPlatform_factory_wrapper import SensorPlatformFactoryWrapper
 
 load_dotenv()
 
@@ -49,54 +49,33 @@ def upsert_sensor_summary_by_id_list(
 
     startDate, endDate = convertDateRangeStringToDate(start, end)
 
-    sfw = SensorFactoryWrapper()
+    sfw = SensorPlatformFactoryWrapper()
 
     data_ingestion_logs = []
 
     if type_of_id == "sensor_id":
-        sensor_dict, flagged_sensors = get_lookupids_of_sensors(acitive_only=True, ids=id_list, idtype="sensor_id")
+        sensor_dict, flagged_sensors = get_lookupids_of_sensors(active_only=False, ids=id_list, idtype="sensor_id")
     elif type_of_id == "sensor_type_id":
-        sensor_dict, flagged_sensors = get_lookupids_of_sensors(acitive_only=True, ids=id_list, idtype="sensor_type_id")
-
-    if flagged_sensors:
-        for flaggedSensor in flagged_sensors:
-            deactivate_unsynced_sensor(flaggedSensor["id"])
-            data_ingestion_logs.append(
-                SchemaDataIngestionLog(
-                    sensor_id=flaggedSensor["id"],
-                    sensor_serial_number=flaggedSensor["serial_number"],
-                    timestamp=int(dt.datetime.now().timestamp()),
-                    success_status=False,
-                    message="Sensor has not been updated in over 90 days",
+        sensor_dict, flagged_sensors = get_lookupids_of_sensors(active_only=True, ids=id_list, idtype="sensor_type_id")
+        # only deactivate sensors that have not been updated in over 90 days for the cron job which uses sensor_type_id
+        if flagged_sensors:
+            for flaggedSensor in flagged_sensors:
+                deactivate_unsynced_sensor(flaggedSensor["id"])
+                data_ingestion_logs.append(
+                    SchemaDataIngestionLog(
+                        sensor_id=flaggedSensor["id"],
+                        sensor_serial_number=flaggedSensor["serial_number"],
+                        timestamp=int(dt.datetime.now().timestamp()),
+                        success_status=False,
+                        message="Sensor has not been updated in over 90 days",
+                    )
                 )
-            )
 
     if sensor_dict:
         # for each sensor type, fetch the data from the sfw and write to the database
         for sensorType, sensorDataMapping in sensor_dict.items():
-            if "plume" in sensorType.lower():
-                for sensorSummary in sfw.fetch_plume_data(startDate, endDate, sensorDataMapping):
-                    data_ingestion_logs = append_data_ingestion_logs(sensorSummary, data_ingestion_logs)
-
-            elif "zephyr" in sensorType.lower():
-                for sensorSummary in sfw.fetch_zephyr_data(startDate, endDate, sensorDataMapping):
-                    data_ingestion_logs = append_data_ingestion_logs(sensorSummary, data_ingestion_logs)
-
-            elif "sensorcommunity" in sensorType.lower():
-                # CSV ingest only
-                # # if the cron job was used then we can use the same start and end date because the latest historical data is yesterday instead of today
-                # if type_of_id == "sensor_type_id":
-                #     endDate = startDate
-                for sensorSummary in sfw.fetch_sensorCommunity_data(startDate, endDate, sensorDataMapping):
-                    data_ingestion_logs = append_data_ingestion_logs(sensorSummary, data_ingestion_logs)
-
-            elif "purpleair" in sensorType.lower():
-                for sensorSummary in sfw.fetch_purpleAir_data(startDate, endDate, sensorDataMapping):
-                    data_ingestion_logs = append_data_ingestion_logs(sensorSummary, data_ingestion_logs)
-
-            elif "airgradient" in sensorType.lower():
-                for sensorSummary in sfw.fetch_airGradient_data(startDate, endDate, sensorDataMapping):
-                    data_ingestion_logs = append_data_ingestion_logs(sensorSummary, data_ingestion_logs)
+            for sensorSummary in sfw.fetch_sensor_data(sensorType, startDate, endDate, sensorDataMapping):
+                data_ingestion_logs = append_data_ingestion_logs(sensorSummary, data_ingestion_logs)
     else:
         if type_of_id == "sensor_id":
             try:
@@ -186,12 +165,12 @@ async def upload_sensor_data(sensor_ids: list[int], file: UploadFile, payload=De
         data_ingestion_logs = []
         file_content = await file.read()
         # get sensor dict of the sensor
-        (sensor_dict, flagged_sensors) = get_lookupids_of_sensors(acitive_only=False, ids=sensor_ids, idtype="sensor_id")
+        (sensor_dict, flagged_sensors) = get_lookupids_of_sensors(active_only=False, ids=sensor_ids, idtype="sensor_id")
 
         if not sensor_dict:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No sensors found with the provided sensor ids")
 
-        sfw = SensorFactoryWrapper()
+        sfw = SensorPlatformFactoryWrapper()
         if sensor_dict:
             # for each sensor type, fetch the data from the sfw and write to the database
             # in practice this should only be one sensor type since there is only one file being uploaded at a time
@@ -208,16 +187,11 @@ async def upload_sensor_data(sensor_ids: list[int], file: UploadFile, payload=De
                         status_code=status.HTTP_501_NOT_IMPLEMENTED, detail="SensorCommunity data upload is not supported because there is no bulk export feature in the SensorCommunity API for users"
                     )
                     # check if the file is a csv file
-                elif "purpleair" in sensorType.lower():
+                elif "purpleair" in sensorType.lower() or "airgradient" in sensorType.lower():
                     # check if the file is a csv file
                     if check_file_type(file, ["text/csv"]):
-                        for sensorSummary in sfw.upload_user_input_sensor_data("purpleair", sensorDataMapping, file_content):
-                            data_ingestion_logs = append_data_ingestion_logs(sensorSummary, data_ingestion_logs)
-                elif "airgradient" in sensorType.lower():
-                    # check if the file is a csv file
-                    if check_file_type(file, ["text/csv"]):
-                        for sensorSummary in sfw.upload_user_input_sensor_data("airgradient", sensorDataMapping, file_content):
-                            data_ingestion_logs = append_data_ingestion_logs(sensorSummary, data_ingestion_logs)
+                        for sensorSummary in sfw.upload_user_input_sensor_data(sensor_type=sensorType, sensor_dict=sensorDataMapping, file=file_content):
+                            data_ingestion_logs = append_data_ingestion_logs(sensorSummary=sensorSummary, data_ingestion_logs=data_ingestion_logs)
                 else:
                     raise ValueError(f"Unsupported sensor type: {sensorType}")
         return data_ingestion_logs

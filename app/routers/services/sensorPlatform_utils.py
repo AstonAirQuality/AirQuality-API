@@ -3,8 +3,8 @@ import datetime as dt
 from core.models import Sensors as ModelSensor
 from core.models import SensorTypes as ModelSensorTypes
 from fastapi import HTTPException, Query, status
-from routers.sensors import ActiveReason
 from routers.services.crud.crud import CRUD
+from routers.services.enums import ActiveReason
 from routers.services.formatting import convertWKBtoWKT
 
 
@@ -28,8 +28,10 @@ def get_sensor_dict(active_only: bool, idtype: str, ids: list[int] = Query(defau
         ]
 
         filter_expressions = []
-        if idtype == "sensor_type_id":
+        if idtype == "sensor_type_id" and active_only:
             filter_expressions = [ModelSensor.active == active_only, ModelSensor.type_id.in_(ids)]
+        elif idtype == "sensor_type_id" and not active_only:
+            filter_expressions = [ModelSensor.type_id.in_(ids)]
         elif idtype == "sensor_id":
             filter_expressions = [ModelSensor.id.in_(ids)]
         result = CRUD().db_get_fields_using_filter_expression(filter_expressions, fields, ModelSensor, [ModelSensorTypes], first=False)
@@ -90,7 +92,7 @@ def deactivate_unsynced_sensor(sensor_id: int):
     CRUD().db_update(ModelSensor, [ModelSensor.id == sensor_id], {ModelSensor.active: False, ModelSensor.active_reason: ActiveReason.NO_DATA.value})
 
 
-def get_lookupids_of_sensors(acitive_only: bool, ids: list[int], idtype: str) -> tuple[dict[str, dict[str, dict[str, str]]]]:
+def get_lookupids_of_sensors(active_only: bool, ids: list[int], idtype: str) -> tuple[dict[str, dict[str, dict[str, str]]]]:
     """
     Get all active sensors data scraping information from the database and the flagged sensors that have not been updated in over 90 days
 
@@ -103,7 +105,7 @@ def get_lookupids_of_sensors(acitive_only: bool, ids: list[int], idtype: str) ->
         [sensor_type_name][lookup_id] = {"stationary_box": stationary_box, "time_updated": time_updated}
 
     """
-    sensors, flagged_sensors = get_sensor_dict(acitive_only, idtype, ids)
+    sensors, flagged_sensors = get_sensor_dict(active_only, idtype, ids)
 
     # group sensors by type into a new nested dictionary dict[sensor_type][lookup_id] = {"stationary_box": stationary_box, "time_updated": time_updated}
     sensor_dict = {}

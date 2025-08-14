@@ -7,7 +7,7 @@ from testing.test_purpleAirFactory import Test_purpleAirFactory
 from testing.test_purpleAirSensor import Test_purpleAirSensor
 from testing.test_sensorCommunityFactory import Test_sensorCommunityFactory
 from testing.test_sensorCommunitySensor import Test_sensorCommunitySensor
-from testing.test_SensorFactoryWrapper import Test_SensorFactoryWrapper
+from testing.test_SensorPlatformFactoryWrapper import Test_SensorFactoryWrapper
 from testing.test_sensorReadable import Test_sensorReadable
 from testing.test_sensorWriteable import Test_sensorWriteable
 from testing.test_zephyrFactory import Test_zephyrFactory

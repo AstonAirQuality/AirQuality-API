@@ -13,7 +13,7 @@ from routers.services.crud.crud import CRUD
 from routers.services.enums import ActiveReason
 from routers.services.formatting import convertWKBtoWKT, format_sensor_joined_data
 from routers.services.query_building import joinQueryBuilder
-from sensor_api_wrappers.SensorFactoryWrapper import SensorFactoryWrapper
+from sensor_api_wrappers.sensorPlatform_factory_wrapper import SensorPlatformFactoryWrapper
 
 sensorsRouter = APIRouter()
 auth_handler = AuthHandler()
@@ -24,10 +24,10 @@ auth_handler = AuthHandler()
 #################################################################################################################################
 @sensorsRouter.post("", response_model=SchemaSensor)
 def add_sensor(sensor: SchemaSensor, payload=Depends(auth_handler.auth_wrapper)):
-    """Adds a sensor to the database using the sensor schema
+    """Adds a sensor platform to the database using the sensor schema
     \n :param sensor: Sensor object to be added to the database
     \n :param payload: auth payload
-    \n :return: Sensor object"""
+    \n :return: sensor platform object"""
 
     if auth_handler.checkRoleAdmin(payload) == False:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authorized")
@@ -45,12 +45,12 @@ def add_plume_sensors(serialnumbers: SchemaPlumeSerialNumbers, payload=Depends(a
     """Adds plume sensor platforms by scraping the plume dashboard to fetch the lookupids of the inputted serial numbers
     \n :param serialnumbers: list of serial numbers
     \n :param payload: auth payload
-    \n :return: log of added/failed to add sensors"""
+    \n :return: log of added/failed to add sensor platforms"""
 
     if auth_handler.checkRoleAboveUser(payload) == False:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authorized")
 
-    sfw = SensorFactoryWrapper()
+    sfw = SensorPlatformFactoryWrapper()
 
     sensor_platforms = sfw.fetch_plume_platform_lookupids(serialnumbers.serial_numbers)
 
@@ -83,7 +83,7 @@ def add_plume_sensors(serialnumbers: SchemaPlumeSerialNumbers, payload=Depends(a
 #################################################################################################################################
 @sensorsRouter.get("")
 def get_sensors():
-    """Returns all sensors in the database
+    """Returns all sensor platforms in the database
     \n :return: list of sensors"""
 
     return CRUD().db_get_with_model(ModelSensor)
@@ -95,11 +95,11 @@ def get_sensors_joined(
     join_sensor_types: bool = Query(default=True),
     join_user: bool = Query(default=True),
 ):
-    """Returns all sensors in the database
+    """Returns all sensor platforms in the database
     \n :param columns: list of columns to return
     \n :param join_sensor_types: boolean to join sensor types
     \n :param join_user: boolean to join user
-    \n :return: list of sensors"""
+    \n :return: list of sensor platform"""
 
     join_dict = {}
     if join_user:
@@ -122,13 +122,13 @@ def get_sensors_joined_paginated(
     join_sensor_types: bool = Query(default=True),
     join_user: bool = Query(default=True),
 ):
-    """Returns all paginated sensors in the database
+    """Returns all paginated sensor platforms in the database
     \n :param page: page number
     \n :param limit: number of items per page
     \n :param columns: list of columns to return
     \n :param join_sensor_types: boolean to join sensor types
     \n :param join_user: boolean to join user
-    \n :return: list of sensors"""
+    \n :return: list of sensor platform"""
 
     join_dict = {}
     if join_user:
@@ -147,11 +147,11 @@ def get_sensors_joined_paginated(
 #################################################################################################################################
 @sensorsRouter.put("/{sensor_id}", response_model=SchemaSensor)
 def update_sensor(sensor_id: int, input_sensor: SchemaSensor, payload=Depends(auth_handler.auth_wrapper)):
-    """Updates a sensor in the database by sensor id using the sensor schema
+    """Updates a sensor platform in the database by sensor id using the sensor schema
     \n :param sensor_id: id of the sensor to be updated
     \n :param input_sensor: sensor object
     \n :param payload: auth payload
-    \n :return: updated sensor"""
+    \n :return: updated sensor platform"""
 
     if auth_handler.checkRoleAboveUser(payload) == False:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authorized")
@@ -186,11 +186,11 @@ def set_active_sensors(
     active_reason: ActiveReason = None,
     payload=Depends(auth_handler.auth_wrapper),
 ):
-    """Sets all sensors whose serialnumber matches to active
+    """Sets all sensor platforms whose serialnumber matches to active
     \n :param sensor_serialnumbers: list of serialnumbers
     \n :param active_state: boolean to set active state
     \n :param payload: auth payload
-    \n :return: list of updated sensors"""
+    \n :return: list of updated sensor platforms"""
 
     auth_handler.checkRoleAdmin(payload)
 

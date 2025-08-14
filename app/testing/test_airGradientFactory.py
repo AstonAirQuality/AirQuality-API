@@ -10,9 +10,9 @@ from unittest.mock import patch
 import pandas as pd
 import requests
 from dotenv import load_dotenv
+from routers.services.enums import SensorMeasurementsColumns
 from sensor_api_wrappers.concrete.factories.airGradient_factory import AirGradientFactory
 from sensor_api_wrappers.concrete.products.airGradient_sensor import AirGradientSensor
-from sensor_api_wrappers.data_transfer_object.sensor_measurements import SensorMeasurementsColumns
 
 
 class Test_airGradientFactory(TestCase):

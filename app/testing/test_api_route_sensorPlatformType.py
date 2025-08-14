@@ -44,7 +44,7 @@ class Test_Api_1_Sensor_Type(TestCase):
 
         sensorType = {"name": "test_sensor_type", "description": "test_sensor_type", "properties": {"NO2": "ppb", "VOC": "ppb", "pm10": "ppb", "pm2.5": "ppb", "pm1": "ppb"}}
 
-        response = self.client.post("/sensor-type", json=sensorType)
+        response = self.client.post("/sensor-platform-type", json=sensorType)
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json(), sensorType)
 
@@ -54,13 +54,13 @@ class Test_Api_1_Sensor_Type(TestCase):
 
     def test_3_get_sensor_type(self):
         """Test the get sensor type route of the API."""
-        response = self.client.get("/sensor-type")
+        response = self.client.get("/sensor-platform-type")
         self.assertEqual(response.status_code, 200)
         self.assertTrue("id" in response.json()[0])
 
     def test_4_get_sensor_type_paginated(self):
         """Test the get sensor type paginated route of the API."""
-        response = self.client.get("/sensor-type/1/1")
+        response = self.client.get("/sensor-platform-type/1/1")
         self.assertEqual(response.status_code, 200)
         self.assertTrue("id" in response.json()[0])
 
@@ -69,7 +69,7 @@ class Test_Api_1_Sensor_Type(TestCase):
 
         sensorType = {"name": "test_sensor_type", "description": "updated description", "properties": {"NO2": "ppb", "VOC": "ppb", "pm10": "ppb", "pm2.5": "ppb", "pm1": "ppb"}}
 
-        response = self.client.put("/sensor-type/1", json=sensorType)
+        response = self.client.put("/sensor-platform-type/1", json=sensorType)
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json(), sensorType)
 

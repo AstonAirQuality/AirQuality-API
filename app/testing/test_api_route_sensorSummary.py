@@ -76,7 +76,7 @@ class Test_Api_6_SensorSummary(TestCase):
 
     def test_2_get_sensorSummary(self):
         """Test that the sensor summary is returned"""
-        response = self.client.get("/sensor-summary", params={"start": "23-09-2023", "end": "24-09-2023", "columns": ["sensor_id", "measurement_count", "geom", "timestamp"]})
+        response = self.client.get("/sensor-platform-summary", params={"start": "23-09-2023", "end": "24-09-2023", "columns": ["sensor_id", "measurement_count", "geom", "timestamp"]})
         self.assertEqual(response.status_code, 200)
         self.assertIsNotNone(response.json())
         self.assertTrue(len(response.json()) > 0)
@@ -84,7 +84,7 @@ class Test_Api_6_SensorSummary(TestCase):
     def test_3_get_sensorSummary_with_measurement_data(self):
         """Test that the sensor summary is returned"""
 
-        response = self.client.get("/sensor-summary", params={"start": "23-09-2023", "end": "24-09-2023", "columns": ["sensor_id", "measurement_data", "geom", "timestamp"]})
+        response = self.client.get("/sensor-platform-summary", params={"start": "23-09-2023", "end": "24-09-2023", "columns": ["sensor_id", "measurement_data", "geom", "timestamp"]})
         self.assertEqual(response.status_code, 200)
         self.assertIsNotNone(response.json())
         self.assertTrue(len(response.json()) > 0)
@@ -92,7 +92,9 @@ class Test_Api_6_SensorSummary(TestCase):
     def test_4_get_sensorSummary_with_deserialized_data(self):
         """Test that the sensor summary is returned"""
 
-        response = self.client.get("/sensor-summary", params={"start": "23-09-2023", "end": "24-09-2023", "columns": ["sensor_id", "measurement_data", "geom", "timestamp"], "deserialized": True})
+        response = self.client.get(
+            "/sensor-platform-summary", params={"start": "23-09-2023", "end": "24-09-2023", "columns": ["sensor_id", "measurement_data", "geom", "timestamp"], "deserialized": True}
+        )
         self.assertEqual(response.status_code, 200)
         self.assertIsNotNone(response.json())
         self.assertTrue(len(response.json()) > 0)

@@ -5,7 +5,8 @@ from unittest import TestCase
 from unittest.mock import Mock, patch
 
 from requests import Session
-from sensor_api_wrappers.SensorFactoryWrapper import SensorFactoryWrapper
+from sensor_api_wrappers.sensorPlatform_factory_wrapper import \
+    SensorPlatformFactoryWrapper
 
 
 class Test_SensorFactoryWrapper(TestCase):
@@ -17,7 +18,7 @@ class Test_SensorFactoryWrapper(TestCase):
     def setUpClass(cls):
         """Setup the test environment once before all tests"""
         warnings.simplefilter("ignore", ResourceWarning)
-        cls.apiWrapper = SensorFactoryWrapper()
+        cls.apiWrapper = SensorPlatformFactoryWrapper()
         pass
 
     @classmethod

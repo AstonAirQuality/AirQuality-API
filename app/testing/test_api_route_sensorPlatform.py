@@ -7,16 +7,11 @@ from core.models import Sensors as ModelSensor
 from core.models import SensorTypes as ModelSensorType
 from fastapi.testclient import TestClient
 from main import app
-from sensor_api_wrappers.SensorFactoryWrapper import SensorFactoryWrapper
-from testing.application_config import (
-    authenticate_client,
-    database_config,
-    setUpSensor,
-    setUpSensorType,
-)
+from sensor_api_wrappers.sensorPlatform_factory_wrapper import SensorPlatformFactoryWrapper
+from testing.application_config import authenticate_client, database_config, setUpSensor, setUpSensorType
 
 
-class Test_Api_2_Sensor(TestCase):
+class Test_Api_2_SensorPlatform(TestCase):
     """
     The following tests are for the API endpoints
     """
@@ -71,7 +66,7 @@ class Test_Api_2_Sensor(TestCase):
             "stationary_box": geom,
         }
 
-        response = self.client.post("/sensor", json=sensor)
+        response = self.client.post("/sensor-platform", json=sensor)
         self.assertEqual(response.status_code, 200)
         sensor["active_reason"] = "ACTIVATED_BY_USER"
         self.assertEqual(response.json(), sensor)
@@ -80,13 +75,13 @@ class Test_Api_2_Sensor(TestCase):
         db_sensor = self.db.query(ModelSensor).filter(ModelSensor.lookup_id == "test_post_sensor").first()
         self.assertEqual(db_sensor.lookup_id, "test_post_sensor")
 
-    @patch.object(SensorFactoryWrapper, "fetch_plume_platform_lookupids", return_value={"02:00:00:00:48:13": 19651})
+    @patch.object(SensorPlatformFactoryWrapper, "fetch_plume_platform_lookupids", return_value={"02:00:00:00:48:13": 19651})
     def test_3_post_plume_sensor(self, mocked_sensor):
         """Test the post sensor route of the API."""
 
         plume_serial_numbers = {"serial_numbers": ["02:00:00:00:48:13"]}
 
-        response = self.client.post("/sensor/plume-sensors", json=plume_serial_numbers)
+        response = self.client.post("/sensor-platform/plume-sensors", json=plume_serial_numbers)
         mocked_sensor.assert_called()
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json(), {"02:00:00:00:48:13": 19651})
@@ -95,7 +90,7 @@ class Test_Api_2_Sensor(TestCase):
         db_sensor = self.db.query(ModelSensor).filter(ModelSensor.lookup_id == "19651").first()
         self.assertEqual(db_sensor.lookup_id, "19651")
 
-    @patch.object(SensorFactoryWrapper, "fetch_plume_platform_lookupids", return_value={"02:00:00:00:48:13": 19651})
+    @patch.object(SensorPlatformFactoryWrapper, "fetch_plume_platform_lookupids", return_value={"02:00:00:00:48:13": 19651})
     def test_4_post_duplicate_plume_sensor(self, mocked_sensor):
         """Test the post sensor route of the API."""
 
@@ -104,7 +99,7 @@ class Test_Api_2_Sensor(TestCase):
         self.assertEqual(db_sensor.serial_number, "02:00:00:00:48:13")
 
         plume_serial_numbers = {"serial_numbers": ["02:00:00:00:48:13"]}
-        response = self.client.post("/sensor/plume-sensors", json=plume_serial_numbers)
+        response = self.client.post("/sensor-platform/plume-sensors", json=plume_serial_numbers)
         self.assertEqual(response.status_code, 409)
 
         self.db.delete(db_sensor)
@@ -114,7 +109,7 @@ class Test_Api_2_Sensor(TestCase):
 
     def test_5_get_sensor(self):
         """Test the get sensor route of the API."""
-        response = self.client.get("/sensor")
+        response = self.client.get("/sensor-platform")
         self.assertEqual(response.status_code, 200)
         self.assertTrue("lookup_id" in response.json()[0])
 

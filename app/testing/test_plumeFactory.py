@@ -12,9 +12,9 @@ from unittest.mock import Mock, patch
 import pandas as pd
 import requests
 from dotenv import load_dotenv
+from routers.services.enums import SensorMeasurementsColumns
 from sensor_api_wrappers.concrete.factories.plume_factory import PlumeFactory
 from sensor_api_wrappers.concrete.products.plume_sensor import PlumeSensor
-from sensor_api_wrappers.data_transfer_object.sensor_measurements import SensorMeasurementsColumns
 
 
 class Test_plumeFactory(TestCase):

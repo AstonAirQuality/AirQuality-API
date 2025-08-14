@@ -11,7 +11,7 @@ You can add a new sensor platform type via either the backend API or the fronten
 
 **Backend Steps:**
 1. Authenticate (use `dev_login` in development).
-2. **POST** to `/sensor_platform-type` with the required fields.
+2. **POST** to `/sensor-platform-type` with the required fields.
 
 **Frontend Steps:**
 1. Login and go to "Manage Sensor Platform Types".
@@ -33,7 +33,7 @@ After creating a platform type, add a sensor platform using either the backend o
 
 **Backend Steps:**
 1. Authenticate.
-2. **POST** to `/sensor_platform` with the required fields.
+2. **POST** to `/sensor-platform` with the required fields.
 
 **Frontend Steps:**
 1. Login and go to "Manage Sensor Platforms".
@@ -61,7 +61,7 @@ To develop the sensor data ingestion pipeline for the new sensor platform, you w
 To ensure that the new sensor platform is working correctly, you should implement the following tests:
 1. **Manual Testing**: Manually test the new sensor platform by starting a data ingestion task using the cron job **GET** endpoint `api-task/cron/ingest-active-sensors/` (You need to set your sensor platform as active), or the **POST** endpoint `api-task/schedule/ingest-bysensorid`.
     - Verify that the data is being fetched correctly by checking the data ingestion logs for any errors
-    - Check the sensor summary data using the **GET** endpoint `/sensor_summary/as-json`(you can use as-geojson, or as-csv too) to ensure that the data is being processed correctly.
+    - Check the sensor summary data using the **GET** endpoint `/sensor-summary/as-json`(you can use as-geojson, or as-csv too) to ensure that the data is being processed correctly.
 2. **Automated Tests**: Implement automated unit/integration tests for the new sensor platform in the `tests` directory.
     - Create a new test file for the sensor platform in the `testing/` directory.
     - Use the `unittest` framework to write tests for the sensor factory and product classes.

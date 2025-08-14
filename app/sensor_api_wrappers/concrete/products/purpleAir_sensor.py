@@ -2,7 +2,7 @@ from io import StringIO
 
 import numpy as np
 import pandas as pd
-from sensor_api_wrappers.data_transfer_object.sensor_measurements import SensorMeasurementsColumns
+from routers.services.enums import SensorMeasurementsColumns
 from sensor_api_wrappers.data_transfer_object.sensor_writeable import SensorWritable
 from sensor_api_wrappers.interfaces.sensor_product import SensorProduct
 

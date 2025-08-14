@@ -11,10 +11,11 @@ from sensor_api_wrappers.concrete.factories.plume_factory import PlumeFactory
 from sensor_api_wrappers.concrete.factories.purpleAir_factory import PurpleAirFactory
 from sensor_api_wrappers.concrete.factories.sensorCommunity_factory import SensorCommunityFactory
 from sensor_api_wrappers.concrete.factories.zephyr_factory import ZephyrFactory
+from sensor_api_wrappers.interfaces.sensor_factory import SensorFactory
 
 
-class SensorFactoryWrapper:
-    """Wrapper class for all the different sensor factories, which fetch sensor data from the different apis"""
+class SensorPlatformFactoryWrapper:
+    """Wrapper class for all the different sensor platform factories, which fetch sensor data from the different apis"""
 
     def __init__(self):
         """initialise the api wrappers and load the environment variables"""
@@ -36,23 +37,6 @@ class SensorFactoryWrapper:
         self.pf.login()
         return self.pf.fetch_lookup_ids(serial_nums)
 
-    def fetch_plume_data(self, start: dt.datetime, end: dt.datetime, sensor_dict: dict[str, str]) -> Iterator[SchemaSensorSummary]:
-        """fetches the plume data from the api and returns a list of sensor summaries.
-        If the sensor has location data outside the stationary box, it will be overwrite the box and the location data will be saved.
-        Avoid bulk (multiple days) ingest if you know the sensors have no location data for some of the days. Instead try to fetch data for the mobile and stationary portion separately
-
-        Args:
-            start (dt.datetime): The start date of the data to fetch.
-            end (dt.datetime): The end date of the data to fetch.
-            sensor_dict (dict[str, str]): A dictionary of the data ingestion information for each sensor, where keys are sensor lookup_ids and values are stationary boxes.
-        Returns:
-            Iterator[SchemaSensorSummary]: An iterator yielding sensor summaries.
-        """
-        self.pf.login()
-        for sensor in self.pf.get_sensors(sensor_dict, start, end):
-            if sensor is not None:
-                yield from sensor.create_sensor_summaries(sensor_dict[sensor.id]["stationary_box"])
-
     def fetch_zephyr_platform_lookupids(self) -> list[str]:
         """Fetches a list of zephyr sensor lookup_ids
 
@@ -61,64 +45,48 @@ class SensorFactoryWrapper:
         """
         return self.zf.fetch_lookup_ids()
 
-    def fetch_zephyr_data(self, start: dt.datetime, end: dt.datetime, sensor_dict: dict[str, str]) -> Iterator[SchemaSensorSummary]:
-        """fetches the zephyr data from the api and returns a list of sensor summaries.
+    def fetch_data(self, sensor_factory: SensorFactory, start: dt.datetime, end: dt.datetime, sensor_dict: dict[str, str], *args) -> Iterator[SchemaSensorSummary]:
+        """Fetches data from the specified sensor factory and returns sensor summaries.
 
         Args:
-            start (dt.datetime): The start date of the data to fetch
-            end (dt.datetime): The end date of the data to fetch
+            sensor_factory (SensorFactory): The sensor factory to fetch data from.
+            start (dt.datetime): The start date of the data to fetch.
+            end (dt.datetime): The end date of the data to fetch.
+            sensor_dict (dict[str, str]): A dictionary of the data ingestion information for each sensor, where keys are sensor lookup_ids and values are stationary boxes.
+            *args: Additional arguments to pass to the sensor factory's get_sensors method (for example, slot for zephyr sensors).
+        Returns:
+            Iterator[SchemaSensorSummary]: An iterator yielding sensor summaries.
+        """
+        for sensor in sensor_factory.get_sensors(sensor_dict, start, end, *args):
+            if sensor is not None:
+                yield from sensor.create_sensor_summaries(sensor_dict[sensor.id]["stationary_box"])
+
+    def fetch_sensor_data(self, sensor_type: str, start: dt.datetime, end: dt.datetime, sensor_dict: dict[str, str]) -> Iterator[SchemaSensorSummary]:
+        """Fetches sensor data based on the sensor type and returns sensor summaries.
+
+        Args:
+            sensor_type (str): The type of the sensor.
+            start (dt.datetime): The start date of the data to fetch.
+            end (dt.datetime): The end date of the data to fetch.
             sensor_dict (dict[str, str]): A dictionary of the data ingestion information for each sensor, where keys are sensor lookup_ids and values are stationary boxes.
         Returns:
             Iterator[SchemaSensorSummary]: An iterator yielding sensor summaries.
         """
-        for sensor in self.zf.get_sensors(sensor_dict, start, end, "B"):
-            if sensor is not None:
-                yield from sensor.create_sensor_summaries(sensor_dict[sensor.id]["stationary_box"])
-
-    def fetch_sensorCommunity_data(self, start: dt.datetime, end: dt.datetime, sensor_dict: dict[str, str]) -> Iterator[SchemaSensorSummary]:
-        """fetches the sensor community data from the api and returns a list of sensor summaries.
-
-        Args:
-            start (dt.datetime): The start date of the data to fetch
-            end (dt.datetime): The end date of the data to fetch
-            sensor_dict (dict[str, str]): A dictionary of the data ingestion information for each sensor, where keys are sensor lookup_ids and values are stationary boxes.
-        Returns:
-            Iterator[SchemaSensorSummary]: An iterator yielding sensor summaries.
-        """
-        for sensor in self.scf.get_sensors(sensor_dict, start, end):
-            if sensor is not None:
-                yield from sensor.create_sensor_summaries(sensor_dict[sensor.id]["stationary_box"])
-
-    def fetch_purpleAir_data(self, start: dt.datetime, end: dt.datetime, sensor_dict: dict[str, str]) -> Iterator[SchemaSensorSummary]:
-        """fetches the purple air data from the api and returns a list of sensor summaries.
-        If the sensor location has changed then do separate calls for the initial and changed static location data.
-
-        Args:
-            start (dt.datetime): The start date of the data to fetch
-            end (dt.datetime): The end date of the data to fetch
-            sensor_dict (dict[str, str]): A dictionary of the data ingestion information for each sensor, where keys are sensor lookup_ids and values are stationary boxes.
-        Returns:
-            Iterator[SchemaSensorSummary]: An iterator yielding sensor summaries.
-        """
-        self.paf.login()
-        # we use a copy because we edit the dictionary on retry (pop off completed sensor tasks)
-        for sensor in self.paf.get_sensors(sensor_dict.copy(), start, end):
-            if sensor is not None:
-                yield from sensor.create_sensor_summaries(sensor_dict[sensor.id]["stationary_box"])
-
-    def fetch_airGradient_data(self, start: dt.datetime, end: dt.datetime, sensor_dict: dict[str, str]) -> Iterator[SchemaSensorSummary]:
-        """fetches the air gradient data from the api and returns a list of sensor summaries.
-
-        Args:
-            start (dt.datetime): The start date of the data to fetch
-            end (dt.datetime): The end date of the data to fetch
-            sensor_dict (dict[str, str]): A dictionary of the data ingestion information for each sensor, where keys are sensor lookup_ids and values are stationary boxes.
-        Returns:
-            Iterator[SchemaSensorSummary]: An iterator yielding sensor summaries.
-        """
-        for sensor in self.agf.get_sensors(sensor_dict, start, end):
-            if sensor is not None:
-                yield from sensor.create_sensor_summaries(sensor_dict[sensor.id]["stationary_box"])
+        if "plume" in sensor_type.lower():
+            self.pf.login()
+            yield from self.fetch_data(self.pf, start, end, sensor_dict)
+        elif "zephyr" in sensor_type.lower():
+            yield from self.fetch_data(self.zf, start, end, sensor_dict, "B")
+        elif "sensorcommunity" in sensor_type.lower():
+            yield from self.fetch_data(self.scf, start, end, sensor_dict)
+        elif "purpleair" in sensor_type.lower():
+            self.paf.login()
+            # we use a copy because we edit the dictionary on retry (pop off completed sensor tasks)
+            yield from self.fetch_data(self.paf, start, end, sensor_dict.copy())
+        elif "airgradient" in sensor_type.lower():
+            yield from self.fetch_data(self.agf, start, end, sensor_dict)
+        else:
+            raise ValueError(f"Unsupported sensor type: {sensor_type}")
 
     def upload_user_input_sensor_data(self, sensor_type: str, sensor_dict: dict[str, str], file: bytes) -> Iterator[SchemaSensorSummary]:
         """Uploads user input sensor data from a file and returns sensor summaries.
@@ -130,17 +98,17 @@ class SensorFactoryWrapper:
         Returns:
             Iterator[SchemaSensorSummary]: An iterator yielding sensor summaries.
         """
-        if sensor_type == "plume":
+        if "plume" in sensor_type.lower():
             raise Exception("Plume sensor data will not be implemented until plumelabs fix their csv data export issue")
-        elif sensor_type == "zephyr":
+        elif "zephyr" in sensor_type.lower():
             raise Exception("Unbucketed zephyr data upload is not supported. Please use the Zephyr API to fetch data.")
-        elif sensor_type == "sensorcommunity":
+        elif "sensorcommunity" in sensor_type.lower():
             raise Exception("SensorCommunity data upload is not supported because there is no bulk export feature in the SensorCommunity API for users")
-        elif sensor_type == "purpleair":
+        elif "purpleair" in sensor_type.lower():
             for sensor in self.paf.get_sensors_from_file(sensor_dict, file):
                 if sensor is not None:
                     yield from sensor.create_sensor_summaries(sensor_dict[sensor.id]["stationary_box"])
-        elif sensor_type == "airgradient":
+        elif "airgradient" in sensor_type.lower():
             for sensor in self.agf.get_sensors_from_file(sensor_dict, file):
                 if sensor is not None:
                     yield from sensor.create_sensor_summaries(sensor_dict[sensor.id]["stationary_box"])

@@ -4,9 +4,9 @@ import warnings
 import zipfile
 from unittest import TestCase
 
+from routers.services.enums import SensorMeasurementsColumns
 from sensor_api_wrappers.concrete.factories.plume_factory import PlumeFactory
 from sensor_api_wrappers.concrete.products.plume_sensor import PlumeSensor
-from sensor_api_wrappers.data_transfer_object.sensor_measurements import SensorMeasurementsColumns
 
 
 class Test_plumeSensor(TestCase):

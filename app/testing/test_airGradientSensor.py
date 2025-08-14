@@ -5,8 +5,8 @@ from io import StringIO
 from unittest import TestCase
 
 import pandas as pd
+from routers.services.enums import SensorMeasurementsColumns
 from sensor_api_wrappers.concrete.products.airGradient_sensor import AirGradientSensor
-from sensor_api_wrappers.data_transfer_object.sensor_measurements import SensorMeasurementsColumns
 
 
 class Test_airGradientSensor(TestCase):

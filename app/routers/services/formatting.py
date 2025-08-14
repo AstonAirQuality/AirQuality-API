@@ -248,6 +248,6 @@ def deserializeMeasurementData(measurement_data: str, columns: list[str]) -> dic
 
     if columns:
         # filter the dataframe to only include the specified columns
-        df = df[[col.value for col in columns if col.value in df.columns]]
+        df = df[[col for col in columns if col in df.columns]]
 
     return df.to_dict(orient="records")  # use timestamps since they use less data

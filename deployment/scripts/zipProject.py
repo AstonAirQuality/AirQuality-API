@@ -6,7 +6,7 @@ from zipfile import ZIP_DEFLATED, ZipFile
 # TODO ignore coverage
 def zip_directory(directory_path, isDependancy: bool):
     for folderName, subfolders, filenames in os.walk(directory_path):
-        if folderName.endswith("__pycache__"):
+        if folderName.endswith("__pycache__") or folderName.endswith(".analysis"):
             continue
 
         if isDependancy:

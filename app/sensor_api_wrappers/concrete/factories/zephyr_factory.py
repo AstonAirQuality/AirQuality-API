@@ -46,7 +46,6 @@ class ZephyrFactory(SensorFactory):
                 startDate = sensor_dict[sensor_lookupid]["time_updated"]
             else:
                 startDate = start
-
             # then try to fetch the data for the given time period
             try:
                 res = requests.get(
@@ -56,7 +55,7 @@ class ZephyrFactory(SensorFactory):
 
                 yield ZephyrSensor.from_json(sensor_lookupid, res.json()["data"]["Unaveraged"][f"slot{slot}"])
             # if the sensor has no data for the given time period then return an empty sensor
-            except Exception:
+            except Exception as e:
                 yield ZephyrSensor(sensor_lookupid, dataframe=None, error="failed to fetch data")
 
 

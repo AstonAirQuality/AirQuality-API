@@ -50,6 +50,13 @@
             "module": "config.${fileBasenameNoExtension}",
             "cwd": "${workspaceFolder}/app"
         },
+        {
+            "name": "Python Module - core",
+            "type": "python",
+            "request": "launch",
+            "module": "core.${fileBasenameNoExtension}",
+            "cwd": "${workspaceFolder}/app"
+        },
         ///////////////////////////Testing config//////////////////////////////////////
         {
             "name": "Python: Module - testing",

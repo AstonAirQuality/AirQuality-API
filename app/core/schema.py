@@ -15,7 +15,8 @@ class SensorSummary(BaseModel):
     :measurement_count (int)
     :measurement_data (str), JSON format
     :stationary (bool)
-    :sensor_id (str)"""
+    :sensor_id (str)
+    """
 
     timestamp: int
     geom: Optional[str] = None
@@ -33,7 +34,7 @@ class SensorSummary(BaseModel):
                     "timestamp": 0,
                     "geom": None,
                     "measurement_count": 0,
-                    "measurement_data": '{"name":"Riyad","age":22,"course":"CS"}',
+                    "measurement_data": '{"name":"Test","age":22,"course":"CS"}',
                     "sensor_id": 51,
                 }
             ]
@@ -87,12 +88,20 @@ class Sensor(BaseModel):
         orm_mode = True
 
     @validator("stationary_box", pre=True, always=True)
-    def stationary_box_must_be_valid_geometry(cls, v):
+    def stationary_box_must_be_box_polygon(cls, v):
         try:
             if v is not None:
-                shapely.wkt.loads(v)
+                geom = shapely.wkt.loads(v)
+                if geom.geom_type != "Polygon":
+                    raise ValueError("stationary_box must be a Polygon")
+                # Check if the polygon is a rectangle (box) by getting the coordinates from the string
+                if len(geom.exterior.coords) != 5:
+                    raise ValueError("stationary_box must be a rectangular box polygon (WKT)")
+                # Check if the first and last coordinates are the same (closed polygon)
+                if geom.exterior.coords[0] != geom.exterior.coords[-1]:
+                    raise ValueError("stationary_box must be a closed polygon (first and last coordinates must be the same)")
         except Exception as e:
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"geom must be a valid WKTE geometry: {e}")
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"stationary_box must be a valid rectangular box polygon (WKT): {e}")
         return v
 
 
@@ -110,6 +119,13 @@ class SensorType(BaseModel):
     class Config:
         orm_mode = True
         read_with_orm_mode = True
+
+
+class UserCredentials(BaseModel):
+    """UserCredentials Schema extends BaseModel used to validate form data from the API"""
+
+    username: str
+    password: str
 
 
 class User(BaseModel):
@@ -147,13 +163,6 @@ class Log(BaseModel):
             except Exception as e:
                 raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"measurement_data must be a valid json: {e}")
             return v
-
-
-class UserCredentials(BaseModel):
-    """UserCredentials Schema extends BaseModel used to validate form data from the API"""
-
-    username: str
-    password: str
 
 
 class DataIngestionLog(BaseModel):

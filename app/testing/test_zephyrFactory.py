@@ -9,9 +9,9 @@ from unittest.mock import patch
 import pandas as pd
 import requests
 from dotenv import load_dotenv
+from routers.services.enums import SensorMeasurementsColumns
 from sensor_api_wrappers.concrete.factories.zephyr_factory import ZephyrFactory
 from sensor_api_wrappers.concrete.products.zephyr_sensor import ZephyrSensor
-from sensor_api_wrappers.data_transfer_object.sensor_measurements import SensorMeasurementsColumns
 
 
 class Test_zephyrFactory(TestCase):
