@@ -16,7 +16,7 @@ class Test_sensorCommunitySensor(TestCase):
         """Setup the test environment once before all tests"""
         warnings.simplefilter("ignore", ResourceWarning)
         cls.expected_columns_1 = [
-            SensorMeasurementsColumns.DATE.value,
+            SensorMeasurementsColumns.TIMESTAMP.value,
             SensorMeasurementsColumns.PM10_RAW.value,
             SensorMeasurementsColumns.PM2_5_RAW.value,
             SensorMeasurementsColumns.AMBIENT_HUMIDITY.value,
@@ -26,7 +26,7 @@ class Test_sensorCommunitySensor(TestCase):
             SensorMeasurementsColumns.LONGITUDE.value,
         ]
         cls.expected_columns_2 = [
-            SensorMeasurementsColumns.DATE.value,
+            SensorMeasurementsColumns.TIMESTAMP.value,
             SensorMeasurementsColumns.PM10_RAW.value,
             SensorMeasurementsColumns.PM2_5_RAW.value,
             SensorMeasurementsColumns.AMBIENT_HUMIDITY.value,

@@ -18,7 +18,7 @@ class Test_airGradientSensor(TestCase):
         warnings.simplefilter("ignore", ResourceWarning)
 
         cls.expeted_columns = [
-            SensorMeasurementsColumns.DATE.value,
+            SensorMeasurementsColumns.TIMESTAMP.value,
             SensorMeasurementsColumns.PM1_RAW.value,
             SensorMeasurementsColumns.PM2_5_RAW.value,
             SensorMeasurementsColumns.PM10_RAW.value,

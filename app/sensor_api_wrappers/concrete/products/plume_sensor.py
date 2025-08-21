@@ -7,8 +7,7 @@ from typing import Any, List
 import numpy as np
 import pandas as pd
 from routers.services.enums import SensorMeasurementsColumns
-from sensor_api_wrappers.data_transfer_object.sensor_writeable import \
-    SensorWritable
+from sensor_api_wrappers.data_transfer_object.sensor_writeable import SensorWritable
 from sensor_api_wrappers.interfaces.sensor_product import SensorProduct
 
 
@@ -28,7 +27,7 @@ class PlumeSensor(SensorProduct, SensorWritable):
         """
         super().__init__(id_, dataframe, error)
         self.data_columns = [
-            SensorMeasurementsColumns.DATE.value,
+            SensorMeasurementsColumns.TIMESTAMP.value,
             SensorMeasurementsColumns.PM1.value,
             SensorMeasurementsColumns.PM2_5.value,
             SensorMeasurementsColumns.PM10.value,
@@ -95,7 +94,7 @@ class PlumeSensor(SensorProduct, SensorWritable):
         df.drop(["id"], axis=1, inplace=True)
         df.rename(
             columns={
-                "date": SensorMeasurementsColumns.DATE.value,
+                "date": SensorMeasurementsColumns.TIMESTAMP.value,
                 "no2": SensorMeasurementsColumns.NO2.value,
                 "voc": SensorMeasurementsColumns.VOC.value,
                 "pm1": SensorMeasurementsColumns.PM1.value,

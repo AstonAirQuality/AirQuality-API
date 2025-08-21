@@ -3,7 +3,7 @@ from enum import Enum
 
 class SensorMeasurementsColumns(Enum):
     # all columns should be in camelCase
-    DATE = "timestamp"  # save date as timestamp UTC
+    TIMESTAMP = "timestamp"  # save date as timestamp UTC
     PM1 = "PM1"
     PM2_5 = "PM2.5"
     PM_4 = "PM4"  # SensorCommunity specific columns

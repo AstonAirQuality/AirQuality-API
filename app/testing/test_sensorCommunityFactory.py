@@ -34,7 +34,7 @@ class Test_sensorCommunityFactory(TestCase):
         # the env variables are set in the .env file. They must match the ones in the .env file
         cls.scf = SensorCommunityFactory(env["SC_USERNAME"], env["SC_PASSWORD"])
         cls.expected_columns = [
-            SensorMeasurementsColumns.DATE.value,
+            SensorMeasurementsColumns.TIMESTAMP.value,
             SensorMeasurementsColumns.PM10_RAW.value,
             SensorMeasurementsColumns.PM2_5_RAW.value,
             SensorMeasurementsColumns.AMBIENT_HUMIDITY.value,
@@ -44,7 +44,7 @@ class Test_sensorCommunityFactory(TestCase):
             SensorMeasurementsColumns.LONGITUDE.value,
         ]
         cls.expected_columns_2 = [
-            SensorMeasurementsColumns.DATE.value,
+            SensorMeasurementsColumns.TIMESTAMP.value,
             SensorMeasurementsColumns.PM10_RAW.value,
             SensorMeasurementsColumns.PM2_5_RAW.value,
             SensorMeasurementsColumns.AMBIENT_HUMIDITY.value,

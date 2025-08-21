@@ -30,7 +30,6 @@ class PurpleAirFactory(SensorFactory):
         self.api_key = api_key
         self.retry_count = 0
 
-    # TODO if login fails use the backup api key from the environment variable
     def login(self) -> str:
         """Fetch the API token from the provided URL.
         :return: The API key as a string."""
@@ -38,10 +37,14 @@ class PurpleAirFactory(SensorFactory):
             raise ValueError("Token URL must be provided to login.")
 
         response = requests.get(self.token_url, headers={"referer": self.referer_url}, timeout=30)  # wait up to 30 seconds for the API to respond
+        response.raise_for_status()  # raise an error if the request failed
         if response.status_code != 200:
-            return self.api_key  # return the api key from the environment variable if the request fails
+            if self.api_key is None:
+                raise ValueError("API key must be provided if the authentication fails")
+            else:
+                return self.api_key  # return the api key from the environment variable if the request fails
         else:
-            self.api_key = response.text
+            self.api_key = response.text.strip()
             return self.api_key
 
     def get_sensors(self, sensor_dict: dict[str, str], start: dt.datetime, end: dt.datetime) -> Iterator[PurpleAirSensor]:
@@ -56,8 +59,8 @@ class PurpleAirFactory(SensorFactory):
             PlumeSensor: An instance of PlumeSensor for each sensor in the sensor_dict.
         """
         lookupids = list(sensor_dict.keys())
+        startDate = None  # default start date
 
-        startDate = start
         for sensor_lookupid in lookupids:
             # if the sensor has a time_updated field then use that as the start date
             if "time_updated" in sensor_dict[sensor_lookupid] and sensor_dict[sensor_lookupid]["time_updated"] is not None:
@@ -69,8 +72,8 @@ class PurpleAirFactory(SensorFactory):
             try:
                 # convert start and end date to valid format YYYY-MM-DDTHH:MM:SS.sss+00:000,
                 # Format with milliseconds and timezone offset as required: YYYY-MM-DDTHH:MM:SS.sss+00:00
-                start_date_str = startDate.strftime("%Y-%m-%dT%H:%M:%S.%f")[:-3] + "+00:00"
-                end_date_str = end.strftime("%Y-%m-%dT%H:%M:%S.%f")[:-3] + "+00:00"
+                start_date_str = startDate.strftime("%Y-%m-%dT%H:%M:%S.%f") + "+00:00"
+                end_date_str = end.strftime("%Y-%m-%dT%H:%M:%S.%f") + "+00:00"
 
                 sensor_id = sensor_lookupid.split(",")[0]  # split by comma to get the sensor id
                 outside = False
@@ -126,7 +129,7 @@ class PurpleAirFactory(SensorFactory):
                     sensor_dict.pop(sensor_lookupid, None)
                     yield PurpleAirSensor.from_csv(sensor_lookupid, res.text)
             # if the sensor has no data for the given time period then return an empty sensor
-            except Exception:
+            except Exception as e:
                 # print(f"Error fetching data for sensor {sensor_lookupid}: {e}")
                 yield PurpleAirSensor(sensor_lookupid, dataframe=None, error="failed to fetch data:")
 
@@ -163,7 +166,7 @@ if __name__ == "__main__":
 
     sensor_dict = {"132169,outdoor": {"stationary_box": None, "time_updated": None}}
 
-    sensors = pf.get_sensors(sensor_dict, dt.datetime(2025, 3, 30), dt.datetime(2025, 3, 31))
+    sensors = pf.get_sensors(sensor_dict, dt.datetime(2025, 8, 12), dt.datetime(2025, 8, 13))
 
     for sensor in sensors:
         print(sensor.df.head(-1))

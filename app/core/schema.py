@@ -114,7 +114,69 @@ class SensorType(BaseModel):
 
     name: str
     description: str
-    properties: Dict[str, str]
+    properties: Dict[str, object]
+
+    class Config:
+        orm_mode = True
+        read_with_orm_mode = True
+
+
+class SensorTypeConfig(BaseModel):
+    """SensorPlatformTypeConfig table extends Base class from database.py
+    stores configuration for generic sensor platform types
+
+    Args:
+        sensor_type_id (int): foreign key to SensorTypes table
+        authentication_url (Optional[str]): URL for authentication
+        authentication_method (Optional[Dict[str, str]]): JSON object containing authentication method details
+        api_url (str): URL for the API endpoint for fetching sensor data of the platform type
+        api_method (Dict[str, str]): HTTP method for the API (GET, POST, etc. and its headers)
+    """
+
+    sensor_type_id: int
+    authentication_url: Optional[str] = None
+    authentication_method: Optional[Dict[str, str]] = None
+    api_url: str
+    api_method: Dict[str, object]
+    sensor_mappings: Dict[str, str]
+
+    class Config:
+        orm_mode = True
+        read_with_orm_mode = True
+
+
+class ObservableProperties(BaseModel):
+    """ObservableProperties Schema extends BaseModel used to validate form data from the API
+
+    Args:
+        name (str): unique name of the observable property
+        url (str): URL for the observable property
+        description (Optional[str]): description of the observable property
+        datatype (str): data type of the observable property (e.g., int, float, str)
+    """
+
+    name: str
+    url: str
+    description: Optional[str] = None
+    datatype: str
+
+    class Config:
+        orm_mode = True
+        read_with_orm_mode = True
+
+
+class UnitsOfMeasurement(BaseModel):
+    """UnitsOfMeasurement Schema extends BaseModel used to validate form data from the API
+
+    Args:
+        name (str): unique name of the unit of measurement (primary key)
+        url (str): URL for the unit of measurement
+        symbol (str): symbol representing the unit of measurement
+    """
+
+    name: str
+    url: str
+    symbol: str
 
     class Config:
         orm_mode = True

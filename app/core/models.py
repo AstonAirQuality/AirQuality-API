@@ -43,8 +43,8 @@ class SensorTypes(Base):
     __tablename__ = "SensorTypes"
     id = Column(Integer, primary_key=True)
     name = Column(String(50), nullable=False)
-    description = Column(String(250), nullable=False)
-    properties = Column(JSON, nullable=False)
+    description = Column(String(), nullable=False)
+    properties = Column(JSON, nullable=False)  # to be a csvw
 
     def columns_iter():
         for c in SensorTypes.__getattribute__("__table__").columns:
@@ -123,3 +123,66 @@ class SensorSummaries(Base):
             "stationary": self.stationary,
             "sensor_id": self.sensor_id,
         }
+
+
+class SensorPlatformTypeConfig(Base):
+    """SensorPlatformTypeConfig table extends Base class from database.py
+    stores configuration for generic sensor platform types
+    Args:
+        sensor_type_id (Integer): foreign key to SensorTypes table
+        authentication_url (String): URL for authentication
+        authentication_method (JSON): JSON object containing authentication method details
+        api_url (String): URL for the API endpoint for fetching sensor data of the platform type
+        api_method (JSON): HTTP method for the API (GET, POST, etc. and its headers)
+        sensor_mappings (JSON): JSON object mapping sensor data fields to database columns
+    """
+
+    __tablename__ = "SensorPlatformTypeConfig"
+    sensor_type_id = Column(Integer, ForeignKey("SensorTypes.id"), primary_key=True, nullable=False)
+    authentication_url = Column(String(), nullable=True)
+    authentication_method = Column(JSON, nullable=True)
+    api_url = Column(String(), nullable=False)
+    api_method = Column(JSON, nullable=False)
+    sensor_mappings = Column(JSON, nullable=False)
+
+    SensorTypeFK = relationship("SensorTypes")
+
+
+class ObservableProperties(Base):
+    """ObservableProperties table extends Base class from database.py
+    :id (Integer), primary key
+    :name (String), unique
+    :description (String)
+    :url (String)
+    :datatype (String): data type of the observable property (e.g. int, float, str)
+    """
+
+    __tablename__ = "ObservableProperties"
+    name = Column(String(), primary_key=True, index=True, nullable=False)
+    description = Column(String(), nullable=True)
+    url = Column(String(), nullable=False)
+    datatype = Column(String(), nullable=False)
+
+    def columns_iter():
+        for c in ObservableProperties.__getattribute__("__table__").columns:
+            yield c.name
+
+
+class UnitsOfMeasurement(Base):
+    """UnitsOfMeasurement table extends Base class from database.py
+
+    Args:
+        id (Integer): primary key
+        name (String): unique name of the unit
+        url (String): URL for the unit of measurement
+        symbol (String): symbol representing the unit of measurement
+    """
+
+    __tablename__ = "UnitsOfMeasurement"
+    name = Column(String(), primary_key=True, unique=True, nullable=False)
+    url = Column(String(), nullable=False)
+    symbol = Column(String(), nullable=False)
+
+    def columns_iter():
+        for c in UnitsOfMeasurement.__getattribute__("__table__").columns:
+            yield c.name

@@ -1,5 +1,6 @@
 import datetime as dt
 
+from core.models import SensorPlatformTypeConfig as ModelSensorPlatformTypeConfig
 from core.models import Sensors as ModelSensor
 from core.models import SensorTypes as ModelSensorTypes
 from fastapi import HTTPException, Query, status
@@ -25,6 +26,12 @@ def get_sensor_dict(active_only: bool, idtype: str, ids: list[int] = Query(defau
             ModelSensor.lookup_id.label("lookup_id"),
             ModelSensor.stationary_box.label("stationary_box"),
             ModelSensor.time_updated.label("time_updated"),
+            # join with ModelSensorPlatformTypeConfig to get additional configurations for generic sensors
+            ModelSensorPlatformTypeConfig.authentication_url.label("authentication_url"),
+            ModelSensorPlatformTypeConfig.authentication_method.label("authentication_method"),
+            ModelSensorPlatformTypeConfig.api_method.label("api_method"),
+            ModelSensorPlatformTypeConfig.api_url.label("api_url"),
+            ModelSensorPlatformTypeConfig.sensor_mappings.label("sensor_mappings"),
         ]
 
         filter_expressions = []
@@ -34,7 +41,13 @@ def get_sensor_dict(active_only: bool, idtype: str, ids: list[int] = Query(defau
             filter_expressions = [ModelSensor.type_id.in_(ids)]
         elif idtype == "sensor_id":
             filter_expressions = [ModelSensor.id.in_(ids)]
-        result = CRUD().db_get_fields_using_filter_expression(filter_expressions, fields, ModelSensor, [ModelSensorTypes], first=False)
+        result = CRUD().db_get_fields_using_filter_expression(
+            filter_expressions=filter_expressions,
+            fields=fields,
+            model=ModelSensor,
+            join_models=[ModelSensorTypes, ModelSensorPlatformTypeConfig],
+            first=False,
+        )
 
         # The query returns geometry as a WKB. We must convert to WKT string
         results = []
@@ -69,11 +82,21 @@ def get_sensor_dict(active_only: bool, idtype: str, ids: list[int] = Query(defau
 
 
 # used by background tasks
-def get_sensor_id_and_serialnum_from_lookup_id(lookup_id: str):
+def get_sensor_info_from_lookup_id_and_type(lookup_id: str, sensor_type: str) -> tuple[int, str]:
     """Get the sensor id and serial number from the lookup id
     :param lookup_id: lookup id of the sensor
     :return: tuple (sensor id and serial number)"""
-    return CRUD().db_get_fields_using_filter_expression([ModelSensor.lookup_id == lookup_id], [ModelSensor.id.label("id"), ModelSensor.serial_number.label("serial_number")], ModelSensor, first=True)
+
+    # first get the sensor_type id from the sensor type name
+    (sensor_type_id,) = CRUD().db_get_fields_using_filter_expression(filter_expressions=[ModelSensorTypes.name == sensor_type], fields=[ModelSensorTypes.id], model=ModelSensorTypes, first=True)
+
+    return CRUD().db_get_fields_using_filter_expression(
+        filter_expressions=[ModelSensor.lookup_id == lookup_id, ModelSensor.type_id == sensor_type_id],
+        fields=[ModelSensor.id.label("id"), ModelSensor.serial_number.label("serial_number")],
+        model=ModelSensor,
+        join_models=[ModelSensorTypes],
+        first=True,
+    )
 
 
 # used by background tasks
@@ -107,13 +130,37 @@ def get_lookupids_of_sensors(active_only: bool, ids: list[int], idtype: str) -> 
     """
     sensors, flagged_sensors = get_sensor_dict(active_only, idtype, ids)
 
-    # group sensors by type into a new nested dictionary dict[sensor_type][lookup_id] = {"stationary_box": stationary_box, "time_updated": time_updated}
+    # group sensors by type into a new nested dictionary
+    ModelSensorPlatformTypeConfig.authentication_url.label("authentication_url"),
+    ModelSensorPlatformTypeConfig.authentication_method.label("authentication_method"),
+    ModelSensorPlatformTypeConfig.api_method.label("api_method"),
+    ModelSensorPlatformTypeConfig.api_url.label("api_url"),
+    ModelSensorPlatformTypeConfig.sensor_mappings.label("sensor_mappings"),
+    # dict[sensor_type][lookup_id] = {"stationary_box": stationary_box, "time_updated": time_updated, ""}
     sensor_dict = {}
     for data in sensors:
         if data["type_name"] in sensor_dict:
-            sensor_dict[data["type_name"]][str(data["lookup_id"])] = {"stationary_box": data["stationary_box"], "time_updated": data["time_updated"]}
+            sensor_dict[data["type_name"]][str(data["lookup_id"])] = {
+                "stationary_box": data["stationary_box"],
+                "time_updated": data["time_updated"],
+                "authentication_url": data["authentication_url"],
+                "authentication_method": data["authentication_method"],
+                "api_method": data["api_method"],
+                "api_url": data["api_url"],
+                "sensor_mappings": data["sensor_mappings"],
+            }
         else:
-            sensor_dict[data["type_name"]] = {str(data["lookup_id"]): {"stationary_box": data["stationary_box"], "time_updated": data["time_updated"]}}
+            sensor_dict[data["type_name"]] = {
+                str(data["lookup_id"]): {
+                    "stationary_box": data["stationary_box"],
+                    "time_updated": data["time_updated"],
+                    "authentication_url": data["authentication_url"],
+                    "authentication_method": data["authentication_method"],
+                    "api_method": data["api_method"],
+                    "api_url": data["api_url"],
+                    "sensor_mappings": data["sensor_mappings"],
+                }
+            }
 
         # if this is a user data ingestion task then we need to remove the time_updated field
         if idtype == "sensor_id":

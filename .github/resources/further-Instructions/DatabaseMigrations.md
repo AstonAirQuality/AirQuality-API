@@ -16,6 +16,11 @@ Then run the migration
 docker-compose exec app alembic upgrade head
 ``` 
 
+If you want to downgrade the migration, you can run the following command:
+```sh
+docker-compose exec app alembic downgrade -1
+```
+
 
 
 ## Checking a migration file

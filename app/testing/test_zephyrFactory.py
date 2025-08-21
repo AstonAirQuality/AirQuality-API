@@ -29,7 +29,7 @@ class Test_zephyrFactory(TestCase):
         # the env variables are set in the .env file. They must match the ones in the .env file
         cls.zf = ZephyrFactory(env["ZEPHYR_USERNAME"], env["ZEPHYR_PASSWORD"])
         cls.expected_columns = [
-            SensorMeasurementsColumns.DATE.value,
+            SensorMeasurementsColumns.TIMESTAMP.value,
             SensorMeasurementsColumns.PM1.value,
             SensorMeasurementsColumns.PM2_5.value,
             SensorMeasurementsColumns.PM10.value,

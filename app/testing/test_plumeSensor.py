@@ -21,7 +21,7 @@ class Test_plumeSensor(TestCase):
         cls.expected_columns = [
             SensorMeasurementsColumns.NO2.value,
             SensorMeasurementsColumns.VOC.value,
-            SensorMeasurementsColumns.DATE.value,
+            SensorMeasurementsColumns.TIMESTAMP.value,
             SensorMeasurementsColumns.PM1.value,
             SensorMeasurementsColumns.PM2_5.value,
             SensorMeasurementsColumns.PM10.value,

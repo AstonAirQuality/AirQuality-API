@@ -29,7 +29,7 @@ class PlumeFactory(SensorFactory):
         self.org = str(org_number)
         self.__session = None
 
-    def login(self):
+    def login(self) -> requests.Session:
         """Logs into the Plume API
 
         The API uses Google Firebase for auth, each subsequent request to the API after login must
@@ -64,6 +64,7 @@ class PlumeFactory(SensorFactory):
 
             # update session in class instance
             self.__session = session
+        return self.__session
 
     ####################################################################################################################
     # def check_last_sync(self, days: int = 4) -> Iterator[tuple]:

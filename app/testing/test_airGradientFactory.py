@@ -32,7 +32,7 @@ class Test_airGradientFactory(TestCase):
             api_key=env["AIR_GRADIENT_API_KEY"],
         )
         cls.expected_columns = [
-            SensorMeasurementsColumns.DATE.value,
+            SensorMeasurementsColumns.TIMESTAMP.value,
             SensorMeasurementsColumns.PM1.value,
             SensorMeasurementsColumns.PM2_5.value,
             SensorMeasurementsColumns.PM10.value,

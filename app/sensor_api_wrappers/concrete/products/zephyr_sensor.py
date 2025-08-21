@@ -15,7 +15,7 @@ class ZephyrSensor(SensorProduct, SensorWritable):
         """
         super().__init__(sensor_id, dataframe, error)
         self.data_columns = [
-            SensorMeasurementsColumns.DATE.value,
+            SensorMeasurementsColumns.TIMESTAMP.value,
             SensorMeasurementsColumns.PM1.value,
             SensorMeasurementsColumns.PM2_5.value,
             SensorMeasurementsColumns.PM10.value,
@@ -51,7 +51,7 @@ class ZephyrSensor(SensorProduct, SensorWritable):
         df.rename(
             columns={
                 "dateTime": "date",
-                "UTS": SensorMeasurementsColumns.DATE.value,
+                "UTS": SensorMeasurementsColumns.TIMESTAMP.value,
                 "particulatePM25": SensorMeasurementsColumns.PM2_5.value,
                 "particulatePM10": SensorMeasurementsColumns.PM10.value,
                 "particulatePM1": SensorMeasurementsColumns.PM1.value,

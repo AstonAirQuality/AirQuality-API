@@ -7,6 +7,7 @@ from core.schema import Sensor as SchemaSensor
 from core.schema import SensorSummary as SchemaSensorSummary
 from dotenv import load_dotenv
 from sensor_api_wrappers.concrete.factories.airGradient_factory import AirGradientFactory
+from sensor_api_wrappers.concrete.factories.generic_factory import GenericFactory
 from sensor_api_wrappers.concrete.factories.plume_factory import PlumeFactory
 from sensor_api_wrappers.concrete.factories.purpleAir_factory import PurpleAirFactory
 from sensor_api_wrappers.concrete.factories.sensorCommunity_factory import SensorCommunityFactory
@@ -57,7 +58,7 @@ class SensorPlatformFactoryWrapper:
         Returns:
             Iterator[SchemaSensorSummary]: An iterator yielding sensor summaries.
         """
-        for sensor in sensor_factory.get_sensors(sensor_dict, start, end, *args):
+        for sensor in sensor_factory.get_sensors(start=start, end=end, sensor_dict=sensor_dict, *args):
             if sensor is not None:
                 yield from sensor.create_sensor_summaries(sensor_dict[sensor.id]["stationary_box"])
 
@@ -68,7 +69,7 @@ class SensorPlatformFactoryWrapper:
             sensor_type (str): The type of the sensor.
             start (dt.datetime): The start date of the data to fetch.
             end (dt.datetime): The end date of the data to fetch.
-            sensor_dict (dict[str, str]): A dictionary of the data ingestion information for each sensor, where keys are sensor lookup_ids and values are stationary boxes.
+            sensor_dict (dict[str, str]): A dictionary of the data ingestion information for each sensor
         Returns:
             Iterator[SchemaSensorSummary]: An iterator yielding sensor summaries.
         """
@@ -85,6 +86,37 @@ class SensorPlatformFactoryWrapper:
             yield from self.fetch_data(self.paf, start, end, sensor_dict.copy())
         elif "airgradient" in sensor_type.lower():
             yield from self.fetch_data(self.agf, start, end, sensor_dict)
+        elif "generic" in sensor_type.lower():
+            # We need to group the generic sensors by sensor platform type, because if they are the same type, they can share the same factory instance
+            sensor_dicts = {}
+            for sensor_id, sensor_info in sensor_dict.items():
+                api_url = sensor_info["api_url"]
+                if api_url not in sensor_dicts:
+                    sensor_dicts[api_url] = {}
+                sensor_dicts[api_url][sensor_id] = {
+                    "stationary_box": sensor_info["stationary_box"],
+                    "authentication_url": sensor_info["authentication_url"],
+                    "api_url": api_url,
+                    "authentication_method": sensor_info["authentication_method"],
+                    "api_method": sensor_info["api_method"],
+                    "sensor_mappings": sensor_info["sensor_mappings"],
+                }
+
+            for api_url in sensor_dicts:
+                sensor_dictionary = sensor_dicts[api_url]
+                shared_sensor_config = sensor_dictionary[next(iter(sensor_dictionary))]  # get the first sensor's config
+                generic_sensor_factory = GenericFactory(
+                    auth_url=shared_sensor_config["authentication_url"],
+                    auth_method=shared_sensor_config["authentication_method"],
+                    api_url=shared_sensor_config["api_url"],
+                    api_method=shared_sensor_config["api_method"],
+                    api_key=shared_sensor_config["api_method"].get("api_key_value", None),
+                    # api_url=shared_sensor_config["api_url"],
+                    # auth_params=(shared_sensor_config["authentication_method"] or {}).get("auth_params", {}),
+                    # api_key=shared_sensor_config["api_method"].get("api_key_value", None),
+                    # api_url_params=shared_sensor_config["api_method"].get("url_params", {}),
+                )
+                yield from self.fetch_data(generic_sensor_factory, start, end, sensor_dictionary)
         else:
             raise ValueError(f"Unsupported sensor type: {sensor_type}")
 

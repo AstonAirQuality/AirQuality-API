@@ -10,9 +10,12 @@ from middleware.file_check import FileSizeLimitMiddleware
 from routers.auth import authRouter
 from routers.background_tasks import backgroundTasksRouter
 from routers.logs import logsRouter
+from routers.observableProperties import observablePropertiesRouter
 from routers.sensorPlatform import sensorsRouter
+from routers.sensorPlatformConfig import sensorPlatformConfig
 from routers.sensorPlatformTypes import sensorsTypesRouter
 from routers.sensorSummaries import sensorSummariesRouter
+from routers.unitsOfMeasurement import unitsOfMeasurementRouter
 from routers.users import usersRouter
 
 load_dotenv()
@@ -29,6 +32,9 @@ app.include_router(sensorSummariesRouter, prefix="/sensor-summary", tags=["senso
 app.include_router(backgroundTasksRouter, prefix="/api-task", tags=["api-task"])
 app.include_router(usersRouter, prefix="/user", tags=["user"])
 app.include_router(logsRouter, prefix="/data-ingestion-logs", tags=["data-ingestion-logs"])
+app.include_router(observablePropertiesRouter, prefix="/observable-property", tags=["observable-property"])
+app.include_router(unitsOfMeasurementRouter, prefix="/unit-of-measurement", tags=["unit-of-measurement"])
+app.include_router(sensorPlatformConfig, prefix="/sensor-platform-config", tags=["sensor-platform-config"])
 
 origins = ["*"]
 app.add_middleware(GZipMiddleware, minimum_size=1000, compresslevel=9)

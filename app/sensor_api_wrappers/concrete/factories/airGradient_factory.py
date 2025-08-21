@@ -23,6 +23,13 @@ class AirGradientFactory(SensorFactory):
         """
         self.api_key = api_key
 
+    def login(self) -> str:
+        """Returns the API key for AirGradient.
+        :return: The API key as a string."""
+        if not self.api_key:
+            raise ValueError("API key must be provided to login.")
+        return self.api_key
+
     def get_sensors_two_day_limit(self, sensor_dict: dict[str, str], start: dt.datetime, end: dt.datetime) -> Iterator[AirGradientSensor]:
         """Fetches data from the AirGradient API with a two-day limit and returns built AirGradient sensor objects.
         Args:

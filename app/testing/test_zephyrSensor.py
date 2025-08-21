@@ -16,7 +16,7 @@ class Test_zephyrSensor(TestCase):
         """Setup the test environment once before all tests"""
         warnings.simplefilter("ignore", ResourceWarning)
         cls.expected_columns = [
-            SensorMeasurementsColumns.DATE.value,
+            SensorMeasurementsColumns.TIMESTAMP.value,
             SensorMeasurementsColumns.PM1.value,
             SensorMeasurementsColumns.PM2_5.value,
             SensorMeasurementsColumns.PM10.value,

@@ -19,7 +19,7 @@ from routers.sensorSummaries import upsert_sensorSummary
 from routers.services.crud.crud import CRUD
 from routers.services.firebase_notifications import addFirebaseNotifcationDataIngestionTask, clearFirebaseNotifcationDataIngestionTask, updateFirebaseNotifcationDataIngestionTask
 from routers.services.formatting import convertDateRangeStringToDate
-from routers.services.sensorPlatform_utils import deactivate_unsynced_sensor, get_lookupids_of_sensors, get_sensor_id_and_serialnum_from_lookup_id, set_last_updated
+from routers.services.sensorPlatform_utils import deactivate_unsynced_sensor, get_lookupids_of_sensors, get_sensor_info_from_lookup_id_and_type, set_last_updated
 from sensor_api_wrappers.sensorPlatform_factory_wrapper import SensorPlatformFactoryWrapper
 
 load_dotenv()
@@ -75,7 +75,7 @@ def upsert_sensor_summary_by_id_list(
         # for each sensor type, fetch the data from the sfw and write to the database
         for sensorType, sensorDataMapping in sensor_dict.items():
             for sensorSummary in sfw.fetch_sensor_data(sensorType, startDate, endDate, sensorDataMapping):
-                data_ingestion_logs = append_data_ingestion_logs(sensorSummary, data_ingestion_logs)
+                data_ingestion_logs = append_data_ingestion_logs(sensorSummary, data_ingestion_logs, sensorType)
     else:
         if type_of_id == "sensor_id":
             try:
@@ -103,12 +103,12 @@ def upsert_sensor_summary_by_id_list(
     return
 
 
-def append_data_ingestion_logs(sensorSummary: SchemaSensorSummary, data_ingestion_logs: list[SchemaDataIngestionLog]) -> list[SchemaDataIngestionLog]:
+def append_data_ingestion_logs(sensorSummary: SchemaSensorSummary, data_ingestion_logs: list[SchemaDataIngestionLog], sensorType: str) -> list[SchemaDataIngestionLog]:
     """append a data ingestion log to the data ingestion logs
     :param data_ingestion_logs: list of data ingestion logs
     :param sensorSummary: sensor summary object
     """
-    (sensorSummary.sensor_id, sensor_serial_number) = get_sensor_id_and_serialnum_from_lookup_id(str(sensorSummary.sensor_id))
+    (sensorSummary.sensor_id, sensor_serial_number) = get_sensor_info_from_lookup_id_and_type(lookup_id=str(sensorSummary.sensor_id), sensor_type=sensorType)
 
     # if the sensor has data we try to upsert a sensor summary into the database
     if sensorSummary.measurement_count > 0:
@@ -191,7 +191,7 @@ async def upload_sensor_data(sensor_ids: list[int], file: UploadFile, payload=De
                     # check if the file is a csv file
                     if check_file_type(file, ["text/csv"]):
                         for sensorSummary in sfw.upload_user_input_sensor_data(sensor_type=sensorType, sensor_dict=sensorDataMapping, file=file_content):
-                            data_ingestion_logs = append_data_ingestion_logs(sensorSummary=sensorSummary, data_ingestion_logs=data_ingestion_logs)
+                            data_ingestion_logs = append_data_ingestion_logs(sensorSummary=sensorSummary, data_ingestion_logs=data_ingestion_logs, sensorType=sensorType)
                 else:
                     raise ValueError(f"Unsupported sensor type: {sensorType}")
         return data_ingestion_logs

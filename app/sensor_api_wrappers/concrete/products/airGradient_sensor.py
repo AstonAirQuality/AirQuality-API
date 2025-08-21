@@ -3,8 +3,7 @@ from io import StringIO
 import numpy as np
 import pandas as pd
 from routers.services.enums import SensorMeasurementsColumns
-from sensor_api_wrappers.data_transfer_object.sensor_writeable import \
-    SensorWritable
+from sensor_api_wrappers.data_transfer_object.sensor_writeable import SensorWritable
 from sensor_api_wrappers.interfaces.sensor_product import SensorProduct
 
 
@@ -18,7 +17,7 @@ class AirGradientSensor(SensorProduct, SensorWritable):
         """
         super().__init__(sensor_id, dataframe, error)
         self.data_columns = [
-            SensorMeasurementsColumns.DATE.value,
+            SensorMeasurementsColumns.TIMESTAMP.value,
             SensorMeasurementsColumns.PM1.value,
             SensorMeasurementsColumns.PM2_5.value,
             SensorMeasurementsColumns.PM10.value,
@@ -78,7 +77,7 @@ class AirGradientSensor(SensorProduct, SensorWritable):
 
         # rename timestamp column to date and make a timestamp column
         df.rename(columns={"timestamp": "date"}, inplace=True)
-        df[SensorMeasurementsColumns.DATE.value] = pd.to_datetime(df["date"], unit="ns").astype("int64") // 10**9  # convert to seconds
+        df[SensorMeasurementsColumns.TIMESTAMP.value] = pd.to_datetime(df["date"], unit="ns").astype("int64") // 10**9  # convert to seconds
 
         df.set_index("date", drop=True, inplace=True)
 
@@ -127,14 +126,12 @@ class AirGradientSensor(SensorProduct, SensorWritable):
         df = df.infer_objects()
 
         # make a timestamp column from the UTC Date/Time column
-        df[SensorMeasurementsColumns.DATE.value] = pd.to_datetime(df["UTC Date/Time"], unit="ns").astype("int64") // 10**9
+        df[SensorMeasurementsColumns.TIMESTAMP.value] = pd.to_datetime(df["UTC Date/Time"], unit="ns").astype("int64") // 10**9
 
         df.set_index("UTC Date/Time", drop=True, inplace=True)
         # add latitude and longitude columns with NaN values, which will be filled by the stationary box later
         df["latitude"] = np.nan
         df["longitude"] = np.nan
-
-        print(df.columns.tolist())
 
         return AirGradientSensor(sensor_id, dataframe=df, error=None)
 

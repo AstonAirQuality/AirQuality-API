@@ -20,7 +20,7 @@ class PurpleAirSensor(SensorProduct, SensorWritable):
         """
         super().__init__(sensor_id, dataframe, error)
         self.data_columns = [
-            SensorMeasurementsColumns.DATE.value,
+            SensorMeasurementsColumns.TIMESTAMP.value,
             SensorMeasurementsColumns.PM1.value,
             SensorMeasurementsColumns.PM2_5.value,
             SensorMeasurementsColumns.PM10.value,
@@ -41,7 +41,9 @@ class PurpleAirSensor(SensorProduct, SensorWritable):
             SensorMeasurementsColumns.LONGITUDE.value,
         ]
         if dataframe is not None:
-            self.df = self.df[self.data_columns]
+            # filter the DataFrame to only include the data columns that exist in the dataframe
+            filter_columns = [col for col in self.data_columns if col in dataframe.columns]
+            self.df = self.df[filter_columns]
 
     @staticmethod
     def prepare_measurements(df: pd.DataFrame) -> pd.DataFrame:

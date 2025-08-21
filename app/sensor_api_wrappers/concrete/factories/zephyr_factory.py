@@ -19,6 +19,9 @@ class ZephyrFactory(SensorFactory):
         self.username = username
         self.password = password
 
+    def login(self) -> str:
+        pass
+
     def fetch_lookup_ids(self) -> Iterator[str]:
         """Fetches sensor ids from Earth sense API"""
         try:

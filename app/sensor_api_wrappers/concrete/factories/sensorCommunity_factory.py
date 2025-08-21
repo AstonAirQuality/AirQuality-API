@@ -16,9 +16,9 @@ class SensorCommunityFactory(SensorFactory):
         self.username = username
         self.password = password
 
-    # def login(self) -> requests.Session:
-    #     """Logs into the SensorCommunity API and returns a session object"""
-    #     pass
+    def login(self) -> requests.Session:
+        """Logs into the SensorCommunity API and returns a session object"""
+        pass
 
     def ExtractDataFromCsv(self, start: dt.datetime, end: dt.datetime, sensor_platform: dict[str, str]) -> dict[str, any]:
         """Extract data from sensorCommunity archives from a start-end daterange for each sensors in sensor_platforms
