@@ -120,11 +120,11 @@ class PurpleAirSensor(SensorProduct, SensorWritable):
 
         df.set_index("date", drop=True, inplace=True)
         # create a new timestamp column using utc timestamps
-        df["timestamp"] = df.index.astype("int64") // 10**9  # convert to seconds
+        df[SensorMeasurementsColumns.TIMESTAMP.value] = df.index.astype("int64") // 10**9  # convert to seconds
 
         # add latitude and longitude columns with NaN values
-        df["latitude"] = np.nan
-        df["longitude"] = np.nan
+        df[SensorMeasurementsColumns.LATITUDE.value] = np.nan
+        df[SensorMeasurementsColumns.LONGITUDE.value] = np.nan
 
         return df
 

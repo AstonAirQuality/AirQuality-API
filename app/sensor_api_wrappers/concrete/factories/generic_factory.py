@@ -100,7 +100,7 @@ class GenericFactory(SensorFactory):
                 url_params.pop("datetime_params", None)
 
                 # convert start and end dates to valid format
-                # e.g.  YYYY-MM-DDTHH:MM:SS.sss+00:000 or  YYYY-MM-DDTHH:MM:SSZ
+                # e.g.  YYYY-MM-DDTHH:MM:SS.sss+00:00 or  YYYY-MM-DDTHH:MM:SSZ
                 datetime_formatting = datetime_params.get("format", "%Y-%m-%dT%H:%M:%S.%f+00:00")
                 # if the format is timestamp, then use the timestamp directly
                 start_date_str = startDate.strftime(datetime_formatting) if datetime_params.get("format") != "timestamp" else startDate.timestamp()
@@ -131,14 +131,23 @@ class GenericFactory(SensorFactory):
                 # make url token or header authentication
                 if self.api_method.get("auth_type") == "url_token":
                     request_url += f"&{self.api_method.get('token_key', 'token')}={self.api_key}"
-                elif self.api_method.get("auth_type") == "header":
+                elif self.api_method.get("auth_type") == "header_auth":
                     self.__session.headers.update({"Authorization": f"Bearer {self.api_key}"})
+                elif self.api_method.get("auth_type") == "header_token":
+                    self.__session.headers.update({self.api_method.get("token_key", "x-api-token"): self.api_key})
+                    # print headers
+                    print(f"Request headers: {self.__session.headers}")
                 else:
                     # if no auth type is specified, assume it's a session-based authentication
                     pass
+                # update any additional headers
+                if additional_headers := self.api_method.get("headers", None):
+                    self.__session.headers.update(additional_headers)
+                    print(f"Request headers: {self.__session.headers}")
 
                 # make the API request to fetch sensor data
-                response = self.__session.get(request_url, headers=self.api_method.get("headers", None), timeout=30)  # wait up to 30 seconds for the API to respond
+                response = self.__session.get(url=request_url, headers=self.__session.headers, timeout=30)  # wait up to 30 seconds for the API to respond
+
                 response.raise_for_status()  # raise an error if the request failed
                 if "application/json" in response.headers.get("Content-Type", ""):
                     yield GenericSensor.from_json(sensor_lookupid, response.json(), sensor_dict[sensor_lookupid]["sensor_mappings"])

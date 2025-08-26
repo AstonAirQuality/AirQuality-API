@@ -3,7 +3,7 @@ from enum import Enum
 
 class SensorMeasurementsColumns(Enum):
     # all columns should be in camelCase
-    TIMESTAMP = "timestamp"  # save date as timestamp UTC
+    TIMESTAMP = "Timestamp"  # save date as timestamp UTC
     PM1 = "PM1"
     PM2_5 = "PM2.5"
     PM_4 = "PM4"  # SensorCommunity specific columns
@@ -33,21 +33,21 @@ class SensorMeasurementsColumns(Enum):
     VOC = "VOC"
     TVOC_RAW = "TVOCRaw"  # air gradient specific columns
     VOC_INDEX = "VOCIndex"  # air gradient specific columns
-    TEMPERATURE = "temperature"
-    AMBIENT_TEMPERATURE = "ambientTemperature"
-    HUMIDITY = "humidity"
-    AMBIENT_HUMIDITY = "ambientHumidity"
-    PRESSURE = "pressure"
-    AMBIENT_PRESSURE = "ambientPressure"
-    SCATTERING_COEFFICIENT = "scatteringCoefficient"
-    DECIVIEWS = "deciviews"
-    VISUAL_RANGE = "visualRange"
-    NOISE_LA_MAX = "noiseLAMax"  # SensorCommunity specific columns
-    NOISE_LA_MIN = "noiseLAMin"  # SensorCommunity specific columns
-    NOISE_LA_EQ = "noiseLAEq"  # SensorCommunity specific columns
-    NOISE_LA_EQ_DELOG = "noiseLAEqDelog"  # SensorCommunity specific columns
-    LATITUDE = "latitude"
-    LONGITUDE = "longitude"
+    TEMPERATURE = "Temperature"
+    AMBIENT_TEMPERATURE = "AmbientTemperature"
+    HUMIDITY = "Humidity"
+    AMBIENT_HUMIDITY = "AmbientHumidity"
+    PRESSURE = "Pressure"
+    AMBIENT_PRESSURE = "AmbientPressure"
+    SCATTERING_COEFFICIENT = "ScatteringCoefficient"
+    DECIVIEWS = "Deciviews"
+    VISUAL_RANGE = "VisualRange"
+    NOISE_LA_MAX = "NoiseLAMax"  # SensorCommunity specific columns
+    NOISE_LA_MIN = "NoiseLAMin"  # SensorCommunity specific columns
+    NOISE_LA_EQ = "NoiseLAEq"  # SensorCommunity specific columns
+    NOISE_LA_EQ_DELOG = "NoiseLAEqDelog"  # SensorCommunity specific columns
+    LATITUDE = "Latitude"
+    LONGITUDE = "Longitude"
 
 
 class ActiveReason(str, Enum):

@@ -48,12 +48,12 @@ class PlumeSensor(SensorProduct, SensorWritable):
         # fill in null timestamps by converting the index to timestamp
         self.df["filled_timestamps"] = self.df.index.astype(np.int64) // 10**9
         # merge timestamp and timestamps columns on null timestamps
-        self.df["timestamp"] = self.df["timestamp"].fillna(self.df["filled_timestamps"])
+        self.df[SensorMeasurementsColumns.TIMESTAMP.value] = self.df[SensorMeasurementsColumns.TIMESTAMP.value].fillna(self.df["filled_timestamps"])
         # drop filled_timestamps column
         self.df.drop(columns="filled_timestamps", inplace=True)
 
         # create a new datetime column using the timestamps in format YYYY-MM-DD HH:MM:SS
-        self.df["datetime"] = pd.to_datetime(self.df["timestamp"], unit="s")
+        self.df["datetime"] = pd.to_datetime(self.df[SensorMeasurementsColumns.TIMESTAMP.value], unit="s")
         # set the datetime column as the index
         self.df.set_index("datetime", inplace=True)
 
@@ -61,7 +61,7 @@ class PlumeSensor(SensorProduct, SensorWritable):
         self.df.rename(columns={"datetime": "date"}, inplace=True)
 
         # convert timestamp column to int
-        self.df["timestamp"] = self.df["timestamp"].astype(int)
+        self.df[SensorMeasurementsColumns.TIMESTAMP.value] = self.df[SensorMeasurementsColumns.TIMESTAMP.value].astype(int)
 
         # sort indexes
         self.df.sort_index(inplace=True)
@@ -103,7 +103,7 @@ class PlumeSensor(SensorProduct, SensorWritable):
             },
             inplace=True,
         )
-        df.insert(0, "date", pd.to_datetime(df["timestamp"], unit="s"))
+        df.insert(0, "date", pd.to_datetime(df[SensorMeasurementsColumns.TIMESTAMP.value], unit="s"))
         df["date"] = df["date"].dt.floor("Min")  # used to match datetime of measurement data to the datetime of location data
         df.set_index("date", drop=True, inplace=True)
         df = df[~df.index.duplicated(keep="first")]  # remove any duplicated index (this will remove the extra hour recorded for daylight saving)
@@ -157,7 +157,7 @@ class PlumeSensor(SensorProduct, SensorWritable):
         df.index.floor("60S")
 
         # drop rows with no location data
-        df = df[df["latitude"].notna()]
+        df = df[df[SensorMeasurementsColumns.LATITUDE.value].notna()]
 
         if df.empty:
             return None

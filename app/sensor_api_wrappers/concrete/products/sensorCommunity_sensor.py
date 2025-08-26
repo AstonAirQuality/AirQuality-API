@@ -105,8 +105,8 @@ class SensorCommunitySensor(SensorProduct, SensorWritable):
 
         # rename the index column and create a timestamp column from the index
         df.index.name = "date"
-        df["timestamp"] = df.index
-        df["timestamp"] = df["timestamp"].astype("int64") // 10**9
+        df[SensorMeasurementsColumns.TIMESTAMP.value] = df.index
+        df[SensorMeasurementsColumns.TIMESTAMP.value] = df[SensorMeasurementsColumns.TIMESTAMP.value].astype("int64") // 10**9
 
         df.rename(
             columns={
@@ -158,7 +158,7 @@ class SensorCommunitySensor(SensorProduct, SensorWritable):
         df = df.astype(float)
 
         # create unix timestamp column
-        df["timestamp"] = df.index.astype(np.int64) // 10**9
+        df[SensorMeasurementsColumns.TIMESTAMP.value] = df.index.astype(np.int64) // 10**9
 
         return SensorCommunitySensor(sensor_id, df, error=None)
 

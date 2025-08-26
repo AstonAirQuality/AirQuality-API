@@ -3,7 +3,7 @@ from os import environ as env
 from typing import Iterator
 
 # sensor summary
-from core.schema import Sensor as SchemaSensor
+from core.schema import SensorPlatform as SchemaSensor
 from core.schema import SensorSummary as SchemaSensorSummary
 from dotenv import load_dotenv
 from sensor_api_wrappers.concrete.factories.airGradient_factory import AirGradientFactory
@@ -58,7 +58,8 @@ class SensorPlatformFactoryWrapper:
         Returns:
             Iterator[SchemaSensorSummary]: An iterator yielding sensor summaries.
         """
-        for sensor in sensor_factory.get_sensors(start=start, end=end, sensor_dict=sensor_dict, *args):
+        # we use a copy because for some sensor platforms (purple air) we edit the dictionary on retry (pop off completed sensor tasks)
+        for sensor in sensor_factory.get_sensors(start=start, end=end, sensor_dict=sensor_dict.copy(), *args):
             if sensor is not None:
                 yield from sensor.create_sensor_summaries(sensor_dict[sensor.id]["stationary_box"])
 
@@ -83,7 +84,7 @@ class SensorPlatformFactoryWrapper:
         elif "purpleair" in sensor_type.lower():
             self.paf.login()
             # we use a copy because we edit the dictionary on retry (pop off completed sensor tasks)
-            yield from self.fetch_data(self.paf, start, end, sensor_dict.copy())
+            yield from self.fetch_data(self.paf, start, end, sensor_dict)
         elif "airgradient" in sensor_type.lower():
             yield from self.fetch_data(self.agf, start, end, sensor_dict)
         elif "generic" in sensor_type.lower():
@@ -111,10 +112,6 @@ class SensorPlatformFactoryWrapper:
                     api_url=shared_sensor_config["api_url"],
                     api_method=shared_sensor_config["api_method"],
                     api_key=shared_sensor_config["api_method"].get("api_key_value", None),
-                    # api_url=shared_sensor_config["api_url"],
-                    # auth_params=(shared_sensor_config["authentication_method"] or {}).get("auth_params", {}),
-                    # api_key=shared_sensor_config["api_method"].get("api_key_value", None),
-                    # api_url_params=shared_sensor_config["api_method"].get("url_params", {}),
                 )
                 yield from self.fetch_data(generic_sensor_factory, start, end, sensor_dictionary)
         else:

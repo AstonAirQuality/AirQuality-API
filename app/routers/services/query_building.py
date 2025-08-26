@@ -1,4 +1,4 @@
-from core.models import SensorSummaries as ModelSensorSummary
+from core.models import SensorSummaries as ModelSensorPlatformSummary
 from fastapi import HTTPException, status
 from routers.services.formatting import convertWKTtoWKB
 
@@ -16,10 +16,10 @@ def searchQueryFilters(filter_expressions: list[any], spatial_query_type: str, g
     :return: list of filter_expressions to apply to the query"""
 
     if sensor_ids:
-        filter_expressions.append(ModelSensorSummary.sensor_id.in_(sensor_ids))
+        filter_expressions.append(ModelSensorPlatformSummary.sensor_id.in_(sensor_ids))
 
     if spatial_query_type and geom is not None:
-        spatialQueryBuilder(filter_expressions, ModelSensorSummary, "geom", spatial_query_type, geom)
+        spatialQueryBuilder(filter_expressions, ModelSensorPlatformSummary, "geom", spatial_query_type, geom)
 
     return filter_expressions
 

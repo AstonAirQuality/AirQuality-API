@@ -3,7 +3,7 @@ import datetime as dt
 from enum import Enum
 
 from core.authentication import AuthHandler
-from core.models import SensorPlatformTypeConfig as ModelSensorPlatformConfig
+from core.models import SensorPlatformTypeConfig as ModelSensorPlatformPlatformConfig
 from core.schema import SensorTypeConfig as SchemaSensorPlatformConfig
 from fastapi import APIRouter, Depends, HTTPException, status
 from routers.services.crud.crud import CRUD
@@ -32,7 +32,7 @@ async def add_sensor_platform_config(
     if auth_handler.checkRoleAdmin(payload) == False:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authorized")
 
-    return CRUD().db_add(ModelSensorPlatformConfig, sensor_platform_config.dict())
+    return CRUD().db_add(ModelSensorPlatformPlatformConfig, sensor_platform_config.dict())
 
 
 #################################################################################################################################
@@ -45,7 +45,7 @@ async def get_sensor_platform_configs():
     Returns:
         List[SchemaSensorPlatformConfig]: A list of sensor platform configurations.
     """
-    return CRUD().db_get_with_model(ModelSensorPlatformConfig)
+    return CRUD().db_get_with_model(ModelSensorPlatformPlatformConfig)
 
 
 ##################################################################################################################################
@@ -70,7 +70,7 @@ async def update_sensor_platform_config(
     if auth_handler.checkRoleAdmin(payload) == False:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authorized")
 
-    return CRUD().db_update(ModelSensorPlatformConfig, [ModelSensorPlatformConfig.sensor_type_id == sensor_platform_type], sensor_platform_config.dict())
+    return CRUD().db_update(ModelSensorPlatformPlatformConfig, [ModelSensorPlatformPlatformConfig.sensor_type_id == sensor_platform_type], sensor_platform_config.dict())
 
 
 ##################################################################################################################################
@@ -93,4 +93,4 @@ async def delete_sensor_platform_config(
     if auth_handler.checkRoleAdmin(payload) == False:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authorized")
 
-    return CRUD().db_delete(ModelSensorPlatformConfig, [ModelSensorPlatformConfig.sensor_type_id == sensor_platform_type])
+    return CRUD().db_delete(ModelSensorPlatformPlatformConfig, [ModelSensorPlatformPlatformConfig.sensor_type_id == sensor_platform_type])

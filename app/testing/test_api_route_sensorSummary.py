@@ -3,9 +3,9 @@ import warnings
 import zipfile
 from unittest import TestCase
 
-from core.models import Sensors as ModelSensor
-from core.models import SensorSummaries as ModelSensorSummary
-from core.models import SensorTypes as ModelSensorType
+from core.models import SensorPlatforms as ModelSensorPlatform
+from core.models import SensorPlatformTypes as ModelSensorPlatformTypePlatform
+from core.models import SensorSummaries as ModelSensorPlatformSummary
 from fastapi.testclient import TestClient
 from main import app
 from routers.sensorSummaries import upsert_sensorSummary
@@ -54,9 +54,9 @@ class Test_Api_6_SensorSummary(TestCase):
     def tearDownClass(cls):
         """Tear down the test environment once after all tests"""
         # try:
-        #     cls.db.delete(cls.db.query(ModelSensorType).filter(ModelSensorType.id == cls.sensor_type_id).first())
-        #     cls.db.delete(cls.db.query(ModelSensor).filter(ModelSensor.id == cls.sensor_id).first())
-        #     cls.db.delete(cls.db.query(ModelSensorSummary).filter(ModelSensorSummary.sensor_id == cls.sensor_id).all())
+        #     cls.db.delete(cls.db.query(ModelSensorPlatformTypePlatform).filter(ModelSensorPlatformTypePlatform.id == cls.sensor_type_id).first())
+        #     cls.db.delete(cls.db.query(ModelSensorPlatform).filter(ModelSensorPlatform.id == cls.sensor_id).first())
+        #     cls.db.delete(cls.db.query(ModelSensorPlatformSummary).filter(ModelSensorPlatformSummary.sensor_id == cls.sensor_id).all())
         #     cls.db.commit()
         # except Exception as e:
         #     cls.db.rollback()

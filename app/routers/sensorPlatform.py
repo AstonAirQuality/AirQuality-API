@@ -3,11 +3,11 @@ import datetime as dt
 from enum import Enum
 
 from core.authentication import AuthHandler
-from core.models import Sensors as ModelSensor
-from core.models import SensorTypes as ModelSensorTypes
+from core.models import SensorPlatforms as ModelSensorPlatform
+from core.models import SensorPlatformTypes as ModelSensorPlatformTypePlatforms
 from core.models import Users as ModelUser
 from core.schema import PlumeSerialNumbers as SchemaPlumeSerialNumbers
-from core.schema import Sensor as SchemaSensor
+from core.schema import SensorPlatform as SchemaSensor
 from fastapi import APIRouter, Depends, HTTPException, Query, Response, status
 from routers.services.crud.crud import CRUD
 from routers.services.enums import ActiveReason
@@ -15,14 +15,14 @@ from routers.services.formatting import convertWKBtoWKT, format_sensor_joined_da
 from routers.services.query_building import joinQueryBuilder
 from sensor_api_wrappers.sensorPlatform_factory_wrapper import SensorPlatformFactoryWrapper
 
-sensorsRouter = APIRouter()
+sensorPlatformsRouter = APIRouter()
 auth_handler = AuthHandler()
 
 
 #################################################################################################################################
 #                                                  Create                                                                       #
 #################################################################################################################################
-@sensorsRouter.post("", response_model=SchemaSensor)
+@sensorPlatformsRouter.post("", response_model=SchemaSensor)
 def add_sensor(sensor: SchemaSensor, payload=Depends(auth_handler.auth_wrapper)):
     """Adds a sensor platform to the database using the sensor schema
     \n :param sensor: Sensor object to be added to the database
@@ -37,10 +37,10 @@ def add_sensor(sensor: SchemaSensor, payload=Depends(auth_handler.auth_wrapper))
     else:
         sensor.active_reason = ActiveReason.DEACTVATE_BY_USER.value
 
-    return CRUD().db_add(ModelSensor, sensor.dict())
+    return CRUD().db_add(ModelSensorPlatform, sensor.dict())
 
 
-@sensorsRouter.post("/plume-sensors")
+@sensorPlatformsRouter.post("/plume-sensors")
 def add_plume_sensors(serialnumbers: SchemaPlumeSerialNumbers, payload=Depends(auth_handler.auth_wrapper)):
     """Adds plume sensor platforms by scraping the plume dashboard to fetch the lookupids of the inputted serial numbers
     \n :param serialnumbers: list of serial numbers
@@ -71,7 +71,7 @@ def add_plume_sensors(serialnumbers: SchemaPlumeSerialNumbers, payload=Depends(a
                 "stationary_box": None,
             }
 
-            CRUD().db_add(ModelSensor, sensor)
+            CRUD().db_add(ModelSensorPlatform, sensor)
 
             # write successfully added sensors to the return dict
             addedSensors[key] = value
@@ -81,15 +81,15 @@ def add_plume_sensors(serialnumbers: SchemaPlumeSerialNumbers, payload=Depends(a
 #################################################################################################################################
 #                                                  Read                                                                         #
 #################################################################################################################################
-@sensorsRouter.get("")
+@sensorPlatformsRouter.get("")
 def get_sensors():
     """Returns all sensor platforms in the database
     \n :return: list of sensors"""
 
-    return CRUD().db_get_with_model(ModelSensor)
+    return CRUD().db_get_with_model(ModelSensorPlatform)
 
 
-@sensorsRouter.get("/joined")
+@sensorPlatformsRouter.get("/joined")
 def get_sensors_joined(
     columns: list[str] = Query(default=["id", "lookup_id", "serial_number", "active", "active_reason", "stationary_box", "time_updated"]),
     join_sensor_types: bool = Query(default=True),
@@ -106,15 +106,15 @@ def get_sensors_joined(
         join_dict[getattr(ModelUser, "username")] = "username"
         join_dict[getattr(ModelUser, "uid")] = "uid"
     if join_sensor_types:
-        join_dict[getattr(ModelSensorTypes, "name")] = "type_name"
+        join_dict[getattr(ModelSensorPlatformTypePlatforms, "name")] = "type_name"
 
-    fields = joinQueryBuilder(columns, ModelSensor, columns, join_dict)
+    fields = joinQueryBuilder(columns, ModelSensorPlatform, columns, join_dict)
 
-    return format_sensor_joined_data(CRUD().db_get_fields_using_filter_expression(None, fields, ModelSensor, [ModelSensorTypes, ModelUser], first=False))
+    return format_sensor_joined_data(CRUD().db_get_fields_using_filter_expression(None, fields, ModelSensorPlatform, [ModelSensorPlatformTypePlatforms, ModelUser], first=False))
 
 
 # get sensors joined paginated
-@sensorsRouter.get("/joined/{page}/{limit}")
+@sensorPlatformsRouter.get("/joined/{page}/{limit}")
 def get_sensors_joined_paginated(
     page: int,
     limit: int,
@@ -135,17 +135,19 @@ def get_sensors_joined_paginated(
         join_dict[getattr(ModelUser, "username")] = "username"
         join_dict[getattr(ModelUser, "uid")] = "uid"
     if join_sensor_types:
-        join_dict[getattr(ModelSensorTypes, "name")] = "type_name"
+        join_dict[getattr(ModelSensorPlatformTypePlatforms, "name")] = "type_name"
 
-    fields = joinQueryBuilder(columns, ModelSensor, columns, join_dict)
+    fields = joinQueryBuilder(columns, ModelSensorPlatform, columns, join_dict)
 
-    return format_sensor_joined_data(CRUD().db_get_fields_using_filter_expression(None, fields, ModelSensor, [ModelSensorTypes, ModelUser], first=False, page=page, limit=limit))
+    return format_sensor_joined_data(
+        CRUD().db_get_fields_using_filter_expression(None, fields, ModelSensorPlatform, [ModelSensorPlatformTypePlatforms, ModelUser], first=False, page=page, limit=limit)
+    )
 
 
 #################################################################################################################################
 #                                                  Update                                                                       #
 #################################################################################################################################
-@sensorsRouter.put("/{sensor_id}", response_model=SchemaSensor)
+@sensorPlatformsRouter.put("/{sensor_id}", response_model=SchemaSensor)
 def update_sensor(sensor_id: int, input_sensor: SchemaSensor, payload=Depends(auth_handler.auth_wrapper)):
     """Updates a sensor platform in the database by sensor id using the sensor schema
     \n :param sensor_id: id of the sensor to be updated
@@ -156,7 +158,7 @@ def update_sensor(sensor_id: int, input_sensor: SchemaSensor, payload=Depends(au
     if auth_handler.checkRoleAboveUser(payload) == False:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authorized")
 
-    sensor_to_update = CRUD().db_get_by_id(ModelSensor, sensor_id)
+    sensor_to_update = CRUD().db_get_by_id(ModelSensorPlatform, sensor_id)
     if sensor_to_update is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Sensor not found")
     else:
@@ -174,12 +176,12 @@ def update_sensor(sensor_id: int, input_sensor: SchemaSensor, payload=Depends(au
                     input_sensor.active_reason = ActiveReason.DEACTVATE_BY_USER.value
 
             CRUD().clear_db_session()
-            CRUD().db_update(ModelSensor, [ModelSensor.id == sensor_id], input_sensor.dict())
+            CRUD().db_update(ModelSensorPlatform, [ModelSensorPlatform.id == sensor_id], input_sensor.dict())
 
     return input_sensor
 
 
-@sensorsRouter.patch("/active-status")
+@sensorPlatformsRouter.patch("/active-status")
 def set_active_sensors(
     sensor_serialnumbers: list[str] = Query(default=[]),
     active_state: bool = True,
@@ -199,14 +201,14 @@ def set_active_sensors(
             active_reason = ActiveReason.ACTIVE_BY_USER.value
         else:
             active_reason = ActiveReason.DEACTVATE_BY_USER.value
-    CRUD().db_update(ModelSensor, [ModelSensor.serial_number.in_(sensor_serialnumbers)], {ModelSensor.active: active_state, ModelSensor.active_reason: active_reason})
+    CRUD().db_update(ModelSensorPlatform, [ModelSensorPlatform.serial_number.in_(sensor_serialnumbers)], {ModelSensorPlatform.active: active_state, ModelSensorPlatform.active_reason: active_reason})
     return dict.fromkeys(sensor_serialnumbers, active_state)
 
 
 #################################################################################################################################
 #                                                  Delete                                                                       #
 #################################################################################################################################
-@sensorsRouter.delete("/{sensor_id}")
+@sensorPlatformsRouter.delete("/{sensor_id}")
 def delete_sensor(sensor_id: int, payload=Depends(auth_handler.auth_wrapper)):
     """Deletes a sensor from the database
     \n :param sensor_id: id of the sensor to be deleted
@@ -216,4 +218,4 @@ def delete_sensor(sensor_id: int, payload=Depends(auth_handler.auth_wrapper)):
     if auth_handler.checkRoleAdmin(payload) == False:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authorized")
 
-    return CRUD().db_delete(ModelSensor, [ModelSensor.id == sensor_id])
+    return CRUD().db_delete(ModelSensorPlatform, [ModelSensorPlatform.id == sensor_id])

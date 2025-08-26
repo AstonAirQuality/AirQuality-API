@@ -82,8 +82,8 @@ class AirGradientSensor(SensorProduct, SensorWritable):
         df.set_index("date", drop=True, inplace=True)
 
         # add latitude and longitude columns with NaN values, which will be filled by the stationary box later
-        df["latitude"] = np.nan
-        df["longitude"] = np.nan
+        df[SensorMeasurementsColumns.LATITUDE.value] = np.nan
+        df[SensorMeasurementsColumns.LONGITUDE.value] = np.nan
 
         return AirGradientSensor(sensor_id, dataframe=df, error=None)
 
@@ -130,8 +130,8 @@ class AirGradientSensor(SensorProduct, SensorWritable):
 
         df.set_index("UTC Date/Time", drop=True, inplace=True)
         # add latitude and longitude columns with NaN values, which will be filled by the stationary box later
-        df["latitude"] = np.nan
-        df["longitude"] = np.nan
+        df[SensorMeasurementsColumns.LATITUDE.value] = np.nan
+        df[SensorMeasurementsColumns.LONGITUDE.value] = np.nan
 
         return AirGradientSensor(sensor_id, dataframe=df, error=None)
 

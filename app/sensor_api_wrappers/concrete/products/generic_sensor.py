@@ -47,9 +47,9 @@ class GenericSensor(SensorProduct, SensorWritable):
 
         # add latitude and longitude columns with NaN values if not present
         if "latitude" not in df.columns:
-            df["latitude"] = np.nan
+            df[SensorMeasurementsColumns.LATITUDE.value] = np.nan
         if "longitude" not in df.columns:
-            df["longitude"] = np.nan
+            df[SensorMeasurementsColumns.LONGITUDE.value] = np.nan
 
         # filter df to only include the keys from the column_mappings
         relevant_columns = list(column_mappings.values()) + [

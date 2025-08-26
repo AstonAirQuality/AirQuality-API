@@ -10,6 +10,7 @@ from typing import Any, Iterator, Tuple
 import numpy as np
 import pandas as pd
 from core.schema import SensorSummary as SchemaSensorSummary
+from routers.services.enums import SensorMeasurementsColumns
 from sensor_api_wrappers.data_transfer_object.sensorDTO import SensorDTO
 
 
@@ -89,14 +90,14 @@ class SensorWritable(SensorDTO):
         :return: geometry string
         """
         try:
-            if math.isnan(df["latitude"].min()):
+            if math.isnan(df[SensorMeasurementsColumns.LATITUDE.value].min()):
                 raise AssertionError("No location data found")
 
-            min_y = df["latitude"].min()
-            max_y = df["latitude"].max()
+            min_y = df[SensorMeasurementsColumns.LATITUDE.value].min()
+            max_y = df[SensorMeasurementsColumns.LATITUDE.value].max()
 
-            min_x = df["longitude"].min()
-            max_x = df["longitude"].max()
+            min_x = df[SensorMeasurementsColumns.LONGITUDE.value].min()
+            max_x = df[SensorMeasurementsColumns.LONGITUDE.value].max()
 
             # if there is only one location, then create a bounding box of 0.0001 degrees
             if min_y == max_y and min_x == max_x:
@@ -143,18 +144,18 @@ class SensorWritable(SensorDTO):
         boundingBoxString = boxGeometry
 
         # if the dataframe has no location data, then replace the dataframe with the given coordinates
-        if not df.columns.__contains__("latitude") or math.isnan(df["latitude"].min()):
-            df["latitude"] = centerPoint_lat
-            df["longitude"] = centerPoint_long
+        if not df.columns.__contains__(SensorMeasurementsColumns.LATITUDE.value) or math.isnan(df[SensorMeasurementsColumns.LATITUDE.value].min()):
+            df[SensorMeasurementsColumns.LATITUDE.value] = centerPoint_lat
+            df[SensorMeasurementsColumns.LONGITUDE.value] = centerPoint_long
         else:
             # check if the center point is within the threshold of the min coordinates, if so then replace the coordinates with the stationary box coordinates
-            if self.haversine(centerPoint_long, centerPoint_lat, df["longitude"].min(), df["latitude"].min()) < threshold:
-                df["latitude"] = centerPoint_lat
-                df["longitude"] = centerPoint_long
+            if self.haversine(centerPoint_long, centerPoint_lat, df[SensorMeasurementsColumns.LONGITUDE.value].min(), df[SensorMeasurementsColumns.LATITUDE.value].min()) < threshold:
+                df[SensorMeasurementsColumns.LATITUDE.value] = centerPoint_lat
+                df[SensorMeasurementsColumns.LONGITUDE.value] = centerPoint_long
             # check if the center point is within the threshold of the max coordinates, if so then replace the coordinates with the stationary box coordinates
-            elif self.haversine(centerPoint_long, centerPoint_lat, df["longitude"].max(), df["latitude"].max()) < threshold:
-                df["latitude"] = centerPoint_lat
-                df["longitude"] = centerPoint_long
+            elif self.haversine(centerPoint_long, centerPoint_lat, df[SensorMeasurementsColumns.LONGITUDE.value].max(), df[SensorMeasurementsColumns.LATITUDE.value].max()) < threshold:
+                df[SensorMeasurementsColumns.LATITUDE.value] = centerPoint_lat
+                df[SensorMeasurementsColumns.LONGITUDE.value] = centerPoint_long
             # if locations are not within the threshold then generate a new bounding box
             else:
                 boundingBoxString = self.generate_geomertyString(df)
@@ -210,7 +211,7 @@ class SensorWritable(SensorDTO):
 
                 # drop the day column to save memory (we don't need this anymore)
                 df_day_subset.drop("day", axis=1, inplace=True)
-                df_day_subset.set_index("timestamp", inplace=True)
+                df_day_subset.set_index(SensorMeasurementsColumns.TIMESTAMP.value, inplace=True)
 
                 data[timestampKey] = df_day_subset
 

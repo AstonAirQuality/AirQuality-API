@@ -11,9 +11,9 @@ from routers.auth import authRouter
 from routers.background_tasks import backgroundTasksRouter
 from routers.logs import logsRouter
 from routers.observableProperties import observablePropertiesRouter
-from routers.sensorPlatform import sensorsRouter
+from routers.sensorPlatform import sensorPlatformsRouter
 from routers.sensorPlatformConfig import sensorPlatformConfig
-from routers.sensorPlatformTypes import sensorsTypesRouter
+from routers.sensorPlatformTypes import sensorPlatformTypesRouter
 from routers.sensorSummaries import sensorSummariesRouter
 from routers.unitsOfMeasurement import unitsOfMeasurementRouter
 from routers.users import usersRouter
@@ -26,8 +26,8 @@ openapi_prefix = f"/{stage}" if stage else "/"
 app = FastAPI(title="Aston Air Quality API", openapi_tags=tags_metadata, description=description, root_path=openapi_prefix)
 
 app.include_router(authRouter, prefix="/auth", tags=["auth"])
-app.include_router(sensorsRouter, prefix="/sensor-platform", tags=["sensor"])
-app.include_router(sensorsTypesRouter, prefix="/sensor-platform-type", tags=["sensor-type"])
+app.include_router(sensorPlatformsRouter, prefix="/sensor-platform", tags=["sensor"])
+app.include_router(sensorPlatformTypesRouter, prefix="/sensor-platform-type", tags=["sensor-type"])
 app.include_router(sensorSummariesRouter, prefix="/sensor-summary", tags=["sensor-summary"])
 app.include_router(backgroundTasksRouter, prefix="/api-task", tags=["api-task"])
 app.include_router(usersRouter, prefix="/user", tags=["user"])

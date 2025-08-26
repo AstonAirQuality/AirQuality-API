@@ -1,6 +1,6 @@
 import requests
-from core.models import Sensors as ModelSensor
-from core.models import SensorTypes as ModelSensorType
+from core.models import SensorPlatforms as ModelSensorPlatform
+from core.models import SensorPlatformTypes as ModelSensorPlatformTypePlatform
 from fastapi.testclient import TestClient
 
 # sqlalchemy dependacies
@@ -24,13 +24,13 @@ def database_config():
     return db
 
 
-def setUpSensorType(db, name, description, properties):
+def setUpSensorType(db, name, description, sensor_metadata):
     """Setup a sensor type in the database"""
     try:
-        result = db.query(ModelSensorType).filter(ModelSensorType.name == name).first()
+        result = db.query(ModelSensorPlatformTypePlatform).filter(ModelSensorPlatformTypePlatform.name == name).first()
         # if the sensor type does not exist then add it to the database and get the id
         if result is None:
-            sensorType = ModelSensorType(name=name, description=description, properties=properties)
+            sensorType = ModelSensorPlatformTypePlatform(name=name, description=description, sensor_metadata=sensor_metadata)
             db.add(sensorType)
             db.commit()
             return sensorType.id
@@ -44,10 +44,10 @@ def setUpSensorType(db, name, description, properties):
 def setUpSensor(db, lookup_id, serial_number, type_id, active, user_id, stationary_box):
     """Setup a sensor in the database"""
     try:
-        result = db.query(ModelSensor).filter(ModelSensor.type_id == type_id and ModelSensor.lookup_id == lookup_id).first()
+        result = db.query(ModelSensorPlatform).filter(ModelSensorPlatform.type_id == type_id and ModelSensorPlatform.lookup_id == lookup_id).first()
         # if the sensor type does not exist then add it to the database and get the id
         if result is None:
-            sensor = ModelSensor(lookup_id=lookup_id, serial_number=serial_number, type_id=type_id, active=active, user_id=user_id, stationary_box=stationary_box)
+            sensor = ModelSensorPlatform(lookup_id=lookup_id, serial_number=serial_number, type_id=type_id, active=active, user_id=user_id, stationary_box=stationary_box)
             db.add(sensor)
             db.commit()
             return sensor.id

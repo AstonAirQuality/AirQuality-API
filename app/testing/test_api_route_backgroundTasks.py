@@ -9,25 +9,20 @@ from unittest import TestCase
 from unittest.mock import Mock, patch
 
 from core.models import Logs as ModelLog
-from core.models import Sensors as ModelSensor
-from core.models import SensorSummaries as ModelSensorSummary
-from core.models import SensorTypes as ModelSensorType
+from core.models import SensorPlatforms as ModelSensorPlatform
+from core.models import SensorPlatformTypes as ModelSensorPlatformTypePlatform
+from core.models import SensorSummaries as ModelSensorPlatformSummary
 from dotenv import load_dotenv
 from fastapi.testclient import TestClient
 from main import app
 from sensor_api_wrappers.concrete.factories.plume_factory import PlumeFactory
-from sensor_api_wrappers.concrete.products.airGradient_sensor import \
-    AirGradientSensor
+from sensor_api_wrappers.concrete.products.airGradient_sensor import AirGradientSensor
 from sensor_api_wrappers.concrete.products.plume_sensor import PlumeSensor
-from sensor_api_wrappers.concrete.products.purpleAir_sensor import \
-    PurpleAirSensor
-from sensor_api_wrappers.concrete.products.sensorCommunity_sensor import \
-    SensorCommunitySensor
+from sensor_api_wrappers.concrete.products.purpleAir_sensor import PurpleAirSensor
+from sensor_api_wrappers.concrete.products.sensorCommunity_sensor import SensorCommunitySensor
 from sensor_api_wrappers.concrete.products.zephyr_sensor import ZephyrSensor
-from sensor_api_wrappers.sensorPlatform_factory_wrapper import \
-    SensorPlatformFactoryWrapper
-from testing.application_config import (authenticate_client, database_config,
-                                        setUpSensor, setUpSensorType)
+from sensor_api_wrappers.sensorPlatform_factory_wrapper import SensorPlatformFactoryWrapper
+from testing.application_config import authenticate_client, database_config, setUpSensor, setUpSensorType
 
 
 class Test_Api_7_BackgroundTasks(TestCase):
@@ -49,7 +44,7 @@ class Test_Api_7_BackgroundTasks(TestCase):
             db=cls.db,
             name="Plume",
             description="test_plume",
-            properties={
+            sensor_metadata={
                 "NO2": "ppb",
                 "VOC": "ppb",
                 "pm10": "ppb",
@@ -67,7 +62,7 @@ class Test_Api_7_BackgroundTasks(TestCase):
             db=cls.db,
             name="Zephyr",
             description="test_zephyr",
-            properties={
+            sensor_metadata={
                 "NO": "µg/m³",
                 "NO2": "µg/m³",
                 "O3": "µg/m³",
@@ -89,7 +84,7 @@ class Test_Api_7_BackgroundTasks(TestCase):
             db=cls.db,
             name="SensorCommunity",
             description="test_sensorCommunity",
-            properties={
+            sensor_metadata={
                 "NO2": "µg/m³",
                 "VOC": "µg/m³",
                 "pm10": "µg/m³",
@@ -140,7 +135,7 @@ class Test_Api_7_BackgroundTasks(TestCase):
             db=cls.db,
             name="PurpleAir",
             description="test_purpleAir",
-            properties={
+            sensor_metadata={
                 "pm1.0_atm_a": "µg/m³",
                 "pm1.0_atm_b": "µg/m³",
                 "pm2.5_atm_a": "µg/m³",
@@ -172,7 +167,7 @@ class Test_Api_7_BackgroundTasks(TestCase):
             db=cls.db,
             name="AirGradient",
             description="test_airGradient",
-            properties={
+            sensor_metadata={
                 "pm01": "µg/m³",
                 "pm02": "µg/m³",
                 "pm10": "µg/m³",
@@ -244,7 +239,7 @@ class Test_Api_7_BackgroundTasks(TestCase):
 
         # test that the sensor summary was added to the database
         try:
-            res = self.db.query(ModelSensorSummary).filter(ModelSensorSummary.sensor_id == self.plume_sensor_id).first()
+            res = self.db.query(ModelSensorPlatformSummary).filter(ModelSensorPlatformSummary.sensor_id == self.plume_sensor_id).first()
             self.assertIsNotNone(res)
         except Exception as e:
             self.db.rollback()
@@ -264,7 +259,7 @@ class Test_Api_7_BackgroundTasks(TestCase):
 
         # test that the sensor summary was added to the database
         try:
-            res = self.db.query(ModelSensorSummary).filter(ModelSensorSummary.sensor_id == self.zephyr_sensor_id).first()
+            res = self.db.query(ModelSensorPlatformSummary).filter(ModelSensorPlatformSummary.sensor_id == self.zephyr_sensor_id).first()
             self.assertIsNotNone(res)
         except Exception as e:
             self.db.rollback()
@@ -284,7 +279,7 @@ class Test_Api_7_BackgroundTasks(TestCase):
 
         # test that the sensor summary was added to the database
         try:
-            res = self.db.query(ModelSensorSummary).filter(ModelSensorSummary.sensor_id == self.sensorCommunity_sensor_id).first()
+            res = self.db.query(ModelSensorPlatformSummary).filter(ModelSensorPlatformSummary.sensor_id == self.sensorCommunity_sensor_id).first()
             self.assertIsNotNone(res)
         except Exception as e:
             self.db.rollback()
@@ -305,7 +300,7 @@ class Test_Api_7_BackgroundTasks(TestCase):
 
         # test that the sensor summary was added to the database
         try:
-            res = self.db.query(ModelSensorSummary).filter(ModelSensorSummary.sensor_id == self.purpleAir_sensor_id).first()
+            res = self.db.query(ModelSensorPlatformSummary).filter(ModelSensorPlatformSummary.sensor_id == self.purpleAir_sensor_id).first()
             self.assertIsNotNone(res)
         except Exception as e:
             self.db.rollback()
@@ -326,7 +321,7 @@ class Test_Api_7_BackgroundTasks(TestCase):
 
         # test that the sensor summary was added to the database
         try:
-            res = self.db.query(ModelSensorSummary).filter(ModelSensorSummary.sensor_id == self.airGradient_sensor_id).first()
+            res = self.db.query(ModelSensorPlatformSummary).filter(ModelSensorPlatformSummary.sensor_id == self.airGradient_sensor_id).first()
             self.assertIsNotNone(res)
         except Exception as e:
             self.db.rollback()
@@ -350,7 +345,7 @@ class Test_Api_7_BackgroundTasks(TestCase):
 
         # test that the sensor summary was added to the database
         try:
-            res = self.db.query(ModelSensorSummary).filter(ModelSensorSummary.sensor_id == self.plume_sensor_id).first()
+            res = self.db.query(ModelSensorPlatformSummary).filter(ModelSensorPlatformSummary.sensor_id == self.plume_sensor_id).first()
             self.assertIsNotNone(res)
         except Exception as e:
             self.db.rollback()

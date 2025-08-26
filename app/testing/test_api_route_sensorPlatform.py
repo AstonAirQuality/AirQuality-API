@@ -3,8 +3,8 @@ import warnings
 from unittest import TestCase
 from unittest.mock import patch
 
-from core.models import Sensors as ModelSensor
-from core.models import SensorTypes as ModelSensorType
+from core.models import SensorPlatforms as ModelSensorPlatform
+from core.models import SensorPlatformTypes as ModelSensorPlatformTypePlatform
 from fastapi.testclient import TestClient
 from main import app
 from sensor_api_wrappers.sensorPlatform_factory_wrapper import SensorPlatformFactoryWrapper
@@ -34,7 +34,7 @@ class Test_Api_2_SensorPlatform(TestCase):
     def tearDownClass(cls):
         """Tear down the test environment once after all tests"""
         # try:
-        #     cls.db.delete(cls.db.query(ModelSensor).filter(ModelSensor.id == cls.sensor_id).first())
+        #     cls.db.delete(cls.db.query(ModelSensorPlatform).filter(ModelSensorPlatform.id == cls.sensor_id).first())
         #     cls.db.commit()
         # except Exception as e:
         #     cls.db.rollback()
@@ -72,7 +72,7 @@ class Test_Api_2_SensorPlatform(TestCase):
         self.assertEqual(response.json(), sensor)
 
         # check that the sensor was added to the database
-        db_sensor = self.db.query(ModelSensor).filter(ModelSensor.lookup_id == "test_post_sensor").first()
+        db_sensor = self.db.query(ModelSensorPlatform).filter(ModelSensorPlatform.lookup_id == "test_post_sensor").first()
         self.assertEqual(db_sensor.lookup_id, "test_post_sensor")
 
     @patch.object(SensorPlatformFactoryWrapper, "fetch_plume_platform_lookupids", return_value={"02:00:00:00:48:13": 19651})
@@ -87,7 +87,7 @@ class Test_Api_2_SensorPlatform(TestCase):
         self.assertEqual(response.json(), {"02:00:00:00:48:13": 19651})
 
         # check that the sensor was added to the database
-        db_sensor = self.db.query(ModelSensor).filter(ModelSensor.lookup_id == "19651").first()
+        db_sensor = self.db.query(ModelSensorPlatform).filter(ModelSensorPlatform.lookup_id == "19651").first()
         self.assertEqual(db_sensor.lookup_id, "19651")
 
     @patch.object(SensorPlatformFactoryWrapper, "fetch_plume_platform_lookupids", return_value={"02:00:00:00:48:13": 19651})
@@ -95,7 +95,7 @@ class Test_Api_2_SensorPlatform(TestCase):
         """Test the post sensor route of the API."""
 
         # check that the sensor already exists in the database
-        db_sensor = self.db.query(ModelSensor).filter(ModelSensor.serial_number == "02:00:00:00:48:13").first()
+        db_sensor = self.db.query(ModelSensorPlatform).filter(ModelSensorPlatform.serial_number == "02:00:00:00:48:13").first()
         self.assertEqual(db_sensor.serial_number, "02:00:00:00:48:13")
 
         plume_serial_numbers = {"serial_numbers": ["02:00:00:00:48:13"]}
@@ -104,7 +104,7 @@ class Test_Api_2_SensorPlatform(TestCase):
 
         self.db.delete(db_sensor)
         self.db.commit()
-        db_sensor = self.db.query(ModelSensor).filter(ModelSensor.serial_number == "02:00:00:00:48:13").first()
+        db_sensor = self.db.query(ModelSensorPlatform).filter(ModelSensorPlatform.serial_number == "02:00:00:00:48:13").first()
         self.assertIsNone(db_sensor)
 
     def test_5_get_sensor(self):
@@ -133,7 +133,7 @@ class Test_Api_2_SensorPlatform(TestCase):
         self.assertEqual(response.json(), sensor)
 
         # check that the sensor was updated in the database
-        db_sensor = self.db.query(ModelSensor).filter(ModelSensor.serial_number == "test_sensor").first()
+        db_sensor = self.db.query(ModelSensorPlatform).filter(ModelSensorPlatform.serial_number == "test_sensor").first()
         self.assertIsNotNone(db_sensor.stationary_box)
 
     def test_8_patch_sensor_active_state(self):
@@ -143,7 +143,7 @@ class Test_Api_2_SensorPlatform(TestCase):
         self.assertEqual(response.status_code, 200)
 
         # check that the sensor was updated in the database
-        db_sensor = self.db.query(ModelSensor).filter(ModelSensor.serial_number == "test_sensor").first()
+        db_sensor = self.db.query(ModelSensorPlatform).filter(ModelSensorPlatform.serial_number == "test_sensor").first()
         self.assertIsNotNone(db_sensor)
         self.assertEqual(db_sensor.active, False)
 
@@ -151,7 +151,7 @@ class Test_Api_2_SensorPlatform(TestCase):
         """Test the delete sensor route of the API."""
 
         # create a sensor to delete
-        sensor = ModelSensor(lookup_id="test_delete_sensor", serial_number="test_delete_sensor", type_id=self.sensor_type_id, active=True, user_id=None, stationary_box=None)
+        sensor = ModelSensorPlatform(lookup_id="test_delete_sensor", serial_number="test_delete_sensor", type_id=self.sensor_type_id, active=True, user_id=None, stationary_box=None)
         self.db.add(sensor)
         self.db.commit()
         delete_sensor_id = sensor.id
@@ -161,7 +161,7 @@ class Test_Api_2_SensorPlatform(TestCase):
         self.assertEqual(response.status_code, 200)
 
         # check that the sensor was deleted from the database
-        db_sensor = self.db.query(ModelSensor).filter(ModelSensor.id == delete_sensor_id).first()
+        db_sensor = self.db.query(ModelSensorPlatform).filter(ModelSensorPlatform.id == delete_sensor_id).first()
         self.assertIsNone(db_sensor)
 
 

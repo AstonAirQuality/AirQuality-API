@@ -6,6 +6,7 @@ import shapely.wkt
 from core.schema import GeoJsonExport
 from fastapi import HTTPException, status
 from geoalchemy2.shape import WKBElement, from_shape, to_shape
+from routers.services.enums import SensorMeasurementsColumns
 from sensor_api_wrappers.data_transfer_object.sensor_readable import SensorReadable
 
 
@@ -154,8 +155,8 @@ def format_sensor_summary_to_csv(query_result: any, columns: list[str]) -> str:
             df = df[[col.value for col in columns if col.value in df.columns]]
 
         # if "timestamp" column exists, use it otherwise use the index
-        if "timestamp" in df.columns:
-            return df.set_index("timestamp").to_csv(index=True, header=True)
+        if SensorMeasurementsColumns.TIMESTAMP.value in df.columns:
+            return df.set_index(SensorMeasurementsColumns.TIMESTAMP.value).to_csv(index=True, header=True)
         else:
             return df.to_csv(index=True, header=True)
 

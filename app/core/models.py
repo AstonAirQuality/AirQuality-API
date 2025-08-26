@@ -34,24 +34,26 @@ class Users(Base):
     role = Column(String(50), nullable=False)
 
 
-class SensorTypes(Base):
+class SensorPlatformTypes(Base):
     """SensorTypes table extends Base class from database.py
     :id (Integer), primary key
     :sensortype_name (String),
-    :description (String)"""
+    :description (String)
+    :sensor_metadata (JSON) - to be a csvw
+    """
 
-    __tablename__ = "SensorTypes"
+    __tablename__ = "SensorPlatformTypes"
     id = Column(Integer, primary_key=True)
     name = Column(String(50), nullable=False)
     description = Column(String(), nullable=False)
-    properties = Column(JSON, nullable=False)  # to be a csvw
+    sensor_metadata = Column(JSON, nullable=False)  # to be a csvw
 
     def columns_iter():
-        for c in SensorTypes.__getattribute__("__table__").columns:
+        for c in SensorPlatformTypes.__getattribute__("__table__").columns:
             yield c.name
 
 
-class Sensors(Base):
+class SensorPlatforms(Base):
     """Sensors table extends Base class from database.py
     :id (Integer): primary key
     :lookup_id (String), unique
@@ -64,7 +66,7 @@ class Sensors(Base):
     :user_id (Integer), foreign key
     :type_id (Integer), foreign key"""
 
-    __tablename__ = "Sensors"
+    __tablename__ = "SensorPlatforms"
     id = Column(Integer, primary_key=True, index=True, nullable=False)
     lookup_id = Column(String(50), nullable=True)
     serial_number = Column(String(50), unique=True)
@@ -74,9 +76,9 @@ class Sensors(Base):
     time_updated = Column(DateTime, nullable=True)
     stationary_box = Column(Geometry(geometry_type="POLYGON", srid=4326, spatial_index=True), unique=False, nullable=True)
     user_id = Column(String(50), ForeignKey("Users.uid"), nullable=True)
-    type_id = Column(Integer, ForeignKey("SensorTypes.id"), nullable=False)
+    type_id = Column(Integer, ForeignKey("SensorPlatformTypes.id"), nullable=False)
 
-    sensorTypeFK = relationship("SensorTypes")
+    sensorTypeFK = relationship("SensorPlatformTypes")
     userFK = relationship("Users")
 
     def to_json(self):
@@ -109,10 +111,10 @@ class SensorSummaries(Base):
     measurement_count = Column(Integer, nullable=False)
     measurement_data = Column(JSON, nullable=False)
     stationary = Column(Boolean, nullable=False)
-    sensor_id = Column(Integer, ForeignKey("Sensors.id"), primary_key=True, nullable=False)
+    sensor_id = Column(Integer, ForeignKey("SensorPlatforms.id"), primary_key=True, nullable=False)
 
     # relationship to sensors table
-    SensorId_fk = relationship("Sensors")
+    SensorId_fk = relationship("SensorPlatforms")
 
     def to_json(self):
         return {
@@ -129,7 +131,7 @@ class SensorPlatformTypeConfig(Base):
     """SensorPlatformTypeConfig table extends Base class from database.py
     stores configuration for generic sensor platform types
     Args:
-        sensor_type_id (Integer): foreign key to SensorTypes table
+        sensor_type_id (Integer): foreign key to SensorPlatformTypes table
         authentication_url (String): URL for authentication
         authentication_method (JSON): JSON object containing authentication method details
         api_url (String): URL for the API endpoint for fetching sensor data of the platform type
@@ -138,14 +140,14 @@ class SensorPlatformTypeConfig(Base):
     """
 
     __tablename__ = "SensorPlatformTypeConfig"
-    sensor_type_id = Column(Integer, ForeignKey("SensorTypes.id"), primary_key=True, nullable=False)
+    sensor_type_id = Column(Integer, ForeignKey("SensorPlatformTypes.id"), primary_key=True, nullable=False)
     authentication_url = Column(String(), nullable=True)
     authentication_method = Column(JSON, nullable=True)
     api_url = Column(String(), nullable=False)
     api_method = Column(JSON, nullable=False)
     sensor_mappings = Column(JSON, nullable=False)
 
-    SensorTypeFK = relationship("SensorTypes")
+    SensorTypeFK = relationship("SensorPlatformTypes")
 
 
 class ObservableProperties(Base):

@@ -27,7 +27,7 @@ async def add_observable_property(
     if auth_handler.checkRoleAdmin(payload) == False:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authorized")
 
-    return CRUD().db_add(observable_property, observable_property.dict())
+    return CRUD().db_add(ModelObservableProperties, observable_property.dict())
 
 
 #################################################################################################################################
@@ -69,7 +69,7 @@ async def update_observable_property(
     if auth_handler.checkRoleAdmin(payload) == False:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authorized")
 
-    return CRUD().db_update(ModelObservableProperties, [observable_property["name"] == observable_property_name], observable_property.dict())
+    return CRUD().db_update(ModelObservableProperties, [ModelObservableProperties.name == observable_property_name], observable_property.dict())
 
 
 ##################################################################################################################################

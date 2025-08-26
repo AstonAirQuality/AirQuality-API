@@ -67,13 +67,13 @@ class Test_plumeSensor(TestCase):
 
         # asserts
         self.assertIsNotNone(sensor)
-        self.assertTrue("timestamp" in sensor.df.columns)
+        self.assertTrue(SensorMeasurementsColumns.TIMESTAMP.value in sensor.df.columns)
         for col in ["latitude", "longitude"]:
             self.assertTrue(col in sensor.df.columns)
             break
 
         # test for null locations
-        self.assertEqual(len(sensor.df), len(sensor.df[sensor.df["longitude"].notna()]))
+        self.assertEqual(len(sensor.df), len(sensor.df[sensor.df[SensorMeasurementsColumns.LONGITUDE.value].notna()]))
 
         # don't test for duplicate rows because we round the datetime to the nearest minute (this is to match the datetime of the measurement data)
 

@@ -3,9 +3,9 @@ import sys
 from typing import Iterator
 
 # dependencies for hidden routes
-from core.models import Sensors as ModelSensor
-from core.models import SensorSummaries as ModelSensorSummary
-from core.models import SensorTypes as ModelSensorType
+from core.models import SensorPlatforms as ModelSensorPlatform
+from core.models import SensorPlatformTypes as ModelSensorPlatformTypePlatform
+from core.models import SensorSummaries as ModelSensorPlatformSummary
 from core.schema import SensorSummary as SchemaSensorSummary
 
 # dependencies for exposed routes
@@ -61,6 +61,7 @@ def get_sensorSummaries(
             example="PM1,PM2_5,PM10",
         ): ([col for col in measurement_columns.split(",")] if measurement_columns else [])
     ),
+    deserialize: bool = Query(False, description="if true then the measurement_data field will be deserialized to a json object"),
     join_sensor_type: bool = Query(False, description="if true then the sensor type will be joined to the query"),
     spatial_query_type: spatialQueryType = Query(None),
     geom: str = Query(None, description="format: WKT string. **Required if spatial_query_type is provided**"),
@@ -77,6 +78,7 @@ def get_sensorSummaries(
         end (str): End date of the query in the format dd-mm-yyyy.
         columns str: list of columns to return from the sensor summaries table
         measurement_columns str: list of sensor measurements columns to return from the sensor summaries measurement_data field
+        deserialize (bool): if true then the measurement_data field will be deserialized to a json object
         join_sensor_type (bool): if true then the sensor type will be joined to the query
         spatial_query_type (spatialQueryType): type of spatial query to perform (e.g intersects, contains, within ) - see spatialQueryBuilder for more info
         geom (str): geometry to use in the spatial query (e.g POINT(0 0), POLYGON((0 0, 0 1, 1 1, 1 0, 0 0)) ) - see spatialQueryBuilder for more info
@@ -92,24 +94,24 @@ def get_sensorSummaries(
     """
 
     (timestampStart, timestampEnd) = convertDateRangeStringToTimestamp(start, end, max_days=30)
-    if measurement_columns:
-        deserialize = True  # if measurement columns are provided then we need to deserialize the measurement data
-    else:
-        deserialize = False  # if no measurement columns are provided then we don't need to deserialize the measurement data
+
+    # if measurement columns are provided then we need to deserialize the measurement data.
+    deserialize = True if len(measurement_columns) > 0 else deserialize
 
     try:
         fields = []
-        model = ModelSensorSummary
+        model = ModelSensorPlatformSummary
         join_models = None
         for col in columns:
-            fields.append(getattr(ModelSensorSummary, col))
+            fields.append(getattr(ModelSensorPlatformSummary, col))
 
         if join_sensor_type:
-            fields.append(getattr(ModelSensorType, "name").label("type_name"))
-            fields.append(getattr(ModelSensor, "id").label("sensor_id"))
-            join_models = [ModelSensor, ModelSensorType]
+            fields.append(getattr(ModelSensorPlatformTypePlatform, "id").label("type_id"))
+            fields.append(getattr(ModelSensorPlatformTypePlatform, "name").label("type_name"))
+            fields.append(getattr(ModelSensorPlatform, "id").label("sensor_id"))
+            join_models = [ModelSensorPlatform, ModelSensorPlatformTypePlatform]
 
-        filter_expressions = searchQueryFilters([ModelSensorSummary.timestamp >= timestampStart, ModelSensorSummary.timestamp <= timestampEnd], spatial_query_type, geom, sensor_ids)
+        filter_expressions = searchQueryFilters([ModelSensorPlatformSummary.timestamp >= timestampStart, ModelSensorPlatformSummary.timestamp <= timestampEnd], spatial_query_type, geom, sensor_ids)
         query_result = CRUD().db_get_fields_using_filter_expression(filter_expressions, fields, model, join_models)
 
         if validate_json_file_size(sys.getsizeof(query_result)):
@@ -177,15 +179,15 @@ def get_sensorSummaries_geojson_export(
     fields = []
     columns = ["geom", "stationary", "measurement_data"]
     for col in columns:
-        fields.append(getattr(ModelSensorSummary, col))
+        fields.append(getattr(ModelSensorPlatformSummary, col))
 
-    fields.append(getattr(ModelSensorType, "name").label("type_name"))
-    fields.append(getattr(ModelSensor, "id").label("sensor_id"))
+    fields.append(getattr(ModelSensorPlatformTypePlatform, "name").label("type_name"))
+    fields.append(getattr(ModelSensorPlatform, "id").label("sensor_id"))
 
     try:
-        filter_expressions = searchQueryFilters([ModelSensorSummary.timestamp >= timestampStart, ModelSensorSummary.timestamp <= timestampEnd], spatial_query_type, geom, sensor_ids)
-        join_models = [ModelSensor, ModelSensorType]
-        query_result = CRUD().db_get_fields_using_filter_expression(filter_expressions, fields, ModelSensorSummary, join_models)
+        filter_expressions = searchQueryFilters([ModelSensorPlatformSummary.timestamp >= timestampStart, ModelSensorPlatformSummary.timestamp <= timestampEnd], spatial_query_type, geom, sensor_ids)
+        join_models = [ModelSensorPlatform, ModelSensorPlatformTypePlatform]
+        query_result = CRUD().db_get_fields_using_filter_expression(filter_expressions, fields, ModelSensorPlatformSummary, join_models)
         results = format_sensor_summary_data(query_result, deserialize=False)
 
     except HTTPException as e:
@@ -239,12 +241,15 @@ def get_sensorSummaries_csv_export(
         fields = []
         join_models = None
 
-        fields.append(getattr(ModelSensorSummary, "measurement_data").label("measurement_data"))
+        fields.append(getattr(ModelSensorPlatformSummary, "measurement_data").label("measurement_data"))
 
         filter_expressions = searchQueryFilters(
-            filter_expressions=[ModelSensorSummary.timestamp >= timestampStart, ModelSensorSummary.timestamp <= timestampEnd], spatial_query_type=None, geom=None, sensor_ids=[sensor_id]
+            filter_expressions=[ModelSensorPlatformSummary.timestamp >= timestampStart, ModelSensorPlatformSummary.timestamp <= timestampEnd],
+            spatial_query_type=None,
+            geom=None,
+            sensor_ids=[sensor_id],
         )
-        query_result = CRUD().db_get_fields_using_filter_expression(filter_expressions, fields, ModelSensorSummary, join_models)
+        query_result = CRUD().db_get_fields_using_filter_expression(filter_expressions, fields, ModelSensorPlatformSummary, join_models)
         response = StreamingResponse(
             iter([format_sensor_summary_to_csv(query_result, measurement_columns)]),
             media_type="text/csv",
@@ -258,10 +263,11 @@ def get_sensorSummaries_csv_export(
 
 
 #################################################################################################################################
-#                                                  Hiden Routes                                                                 #
+#                                                  Hidden Routes                                                                 #
 #################################################################################################################################
 
-# from sensor_api_wrappers.data_transfer_object.sensor_measurements import SensorMeasurementsColumns as SensorMeasurementsColumns
+# from routers.services.enums import NewSensorMeasurementsColumns as NewSensorMeasurementsColumns
+# from routers.services.enums import SensorMeasurementsColumns as OldSensorMeasurementsColumns
 
 
 # @sensorSummariesRouter.post("/fix-sensorSummaries", status_code=status.HTTP_200_OK)
@@ -273,16 +279,16 @@ def get_sensorSummaries_csv_export(
 
 #     try:
 #         sensor_summaries = CRUD().db_get_fields_using_filter_expression(
-#             filter_expressions=[ModelSensorSummary.sensor_id >= 64, ModelSensorSummary.sensor_id <= 66],
+#             # filter_expressions=[ModelSensorPlatformSummary.sensor_id >= 64, ModelSensorPlatformSummary.sensor_id <= 66],
 #             fields=[
-#                 ModelSensorSummary.timestamp,
-#                 ModelSensorSummary.sensor_id,
-#                 ModelSensorSummary.geom,
-#                 ModelSensorSummary.measurement_count,
-#                 ModelSensorSummary.measurement_data,
-#                 ModelSensorSummary.stationary,
+#                 ModelSensorPlatformSummary.timestamp,
+#                 ModelSensorPlatformSummary.sensor_id,
+#                 ModelSensorPlatformSummary.geom,
+#                 ModelSensorPlatformSummary.measurement_count,
+#                 ModelSensorPlatformSummary.measurement_data,
+#                 ModelSensorPlatformSummary.stationary,
 #             ],
-#             model=ModelSensorSummary,
+#             model=ModelSensorPlatformSummary,
 #             join_models=None,
 #             first=False,
 #             # page=i + 1,
@@ -290,27 +296,41 @@ def get_sensorSummaries_csv_export(
 #         )
 
 #         for sensor_summary in sensor_summaries:
-#             # # read sensor_summary as a ModelSensorSummary object
-#             sensor_summary = ModelSensorSummary(**sensor_summary)
-#             if sensor_summary.sensor_id <= 64 or sensor_summary.sensor_id >= 66:  # sensorcommuity sensor 64 to 66
-#                 # skip every non sensorcommuity sensor
-#                 continue
+#             # # read sensor_summary as a ModelSensorPlatformSummary object
+#             sensor_summary = ModelSensorPlatformSummary(**sensor_summary)
+#             # if sensor_summary.sensor_id <= 64 or sensor_summary.sensor_id >= 66:  # sensorcommuity sensor 64 to 66
+#             #     # skip every non sensorcommuity sensor
+#             #     continue
 
 #             measurement_data = sensor_summary.measurement_data
-#             # keep measurement_data as a string and just replace the old column names with the new ones
-#             # replace certain values
-#             replacements = [
-#                 (SensorMeasurementsColumns.PM1.value, SensorMeasurementsColumns.PM1_RAW.value),
-#                 (SensorMeasurementsColumns.PM2_5.value, SensorMeasurementsColumns.PM2_5_RAW.value),
-#                 (SensorMeasurementsColumns.PM10.value, SensorMeasurementsColumns.PM10_RAW.value),
-#                 (SensorMeasurementsColumns.HUMIDITY.value, SensorMeasurementsColumns.AMBIENT_HUMIDITY.value),
-#                 (SensorMeasurementsColumns.TEMPERATURE.value, SensorMeasurementsColumns.AMBIENT_TEMPERATURE.value),
-#                 (SensorMeasurementsColumns.PRESSURE.value, SensorMeasurementsColumns.AMBIENT_PRESSURE.value),
-#             ]
+#             # replacements are all columns including unchanged ones to ensure consistency
+
+#             # Create (old, new) pairs for columns that exist in both enums
+#             # replacements = []
+#             # for name, old_col in OldSensorMeasurementsColumns.__members__.items():
+#             #     new_col = NewSensorMeasurementsColumns.__members__.get(name)
+#             #     if new_col:
+#             #         replacements.append((old_col.value, new_col.value))
+
+#             # # Add (None, new) for new columns not present in old columns
+#             # for name, new_col in NewSensorMeasurementsColumns.__members__.items():
+#             #     if name not in OldSensorMeasurementsColumns.__members__:
+#             #         replacements.append((None, new_col.value))
+
+#             # # keep measurement_data as a string and just replace the old column names with the new ones
+#             # # replace certain values
+#             # replacements = [
+#             #     (SensorMeasurementsColumns.PM1.value, SensorMeasurementsColumns.PM1_RAW.value),
+#             #     (SensorMeasurementsColumns.PM2_5.value, SensorMeasurementsColumns.PM2_5_RAW.value),
+#             #     (SensorMeasurementsColumns.PM10.value, SensorMeasurementsColumns.PM10_RAW.value),
+#             #     (SensorMeasurementsColumns.HUMIDITY.value, SensorMeasurementsColumns.AMBIENT_HUMIDITY.value),
+#             #     (SensorMeasurementsColumns.TEMPERATURE.value, SensorMeasurementsColumns.AMBIENT_TEMPERATURE.value),
+#             #     (SensorMeasurementsColumns.PRESSURE.value, SensorMeasurementsColumns.AMBIENT_PRESSURE.value),
+#             # ]
 #             for old, new in replacements:
 #                 measurement_data = measurement_data.replace(old, new)
 
-#             filters = [ModelSensorSummary.timestamp == sensor_summary.timestamp, ModelSensorSummary.sensor_id == sensor_summary.sensor_id]
+#             filters = [ModelSensorPlatformSummary.timestamp == sensor_summary.timestamp, ModelSensorPlatformSummary.sensor_id == sensor_summary.sensor_id]
 #             data = {
 #                 "geom": sensor_summary.geom,
 #                 "measurement_count": sensor_summary.measurement_count,
@@ -319,7 +339,7 @@ def get_sensorSummaries_csv_export(
 #             }
 
 #             # update the sensor summary with the new measurement_data
-#             CRUD().db_update(ModelSensorSummary, filter_expressions=filters, data=data)
+#             CRUD().db_update(ModelSensorPlatformSummary, filter_expressions=filters, data=data)
 
 #         return {"message": "Sensor summaries updated successfully"}
 #     except HTTPException as e:
@@ -338,7 +358,7 @@ def add_sensorSummary(sensorSummary: SchemaSensorSummary):
     :param sensorSummary: sensor summary to add
     :return: sensor summary added"""
 
-    sensorSummary = ModelSensorSummary(
+    sensorSummary = ModelSensorPlatformSummary(
         timestamp=sensorSummary.timestamp,
         sensor_id=sensorSummary.sensor_id,
         geom=sensorSummary.geom,
@@ -347,7 +367,7 @@ def add_sensorSummary(sensorSummary: SchemaSensorSummary):
         stationary=sensorSummary.stationary,
     )
 
-    CRUD().db_add(ModelSensorSummary, sensorSummary)
+    CRUD().db_add(ModelSensorPlatformSummary, sensorSummary)
 
     # converting wkb element to wkt string
     # sensorSummary.geom = convertWKBtoWKT(sensorSummary.geom)
@@ -365,7 +385,7 @@ def update_sensorSummary(sensorSummary: SchemaSensorSummary):
     :param sensorSummary: sensor summary to update
     :return: updated sensor summary"""
 
-    filters = [ModelSensorSummary.timestamp == sensorSummary.timestamp, ModelSensorSummary.sensor_id == sensorSummary.sensor_id]
+    filters = [ModelSensorPlatformSummary.timestamp == sensorSummary.timestamp, ModelSensorPlatformSummary.sensor_id == sensorSummary.sensor_id]
     data = {
         "geom": sensorSummary.geom,
         "measurement_count": sensorSummary.measurement_count,
@@ -373,7 +393,7 @@ def update_sensorSummary(sensorSummary: SchemaSensorSummary):
         "stationary": sensorSummary.stationary,
     }
 
-    CRUD().db_update(ModelSensorSummary, filters, data)
+    CRUD().db_update(ModelSensorPlatformSummary, filters, data)
 
     # converting wkb element to wkt string
     # sensorSummary.geom = convertWKBtoWKT(sensorSummary.geom)
@@ -389,7 +409,7 @@ def upsert_sensorSummary(sensorSummary: SchemaSensorSummary):
     :return: upserted sensor summary"""
 
     try:
-        CRUD().db_add(ModelSensorSummary, sensorSummary.dict())
+        CRUD().db_add(ModelSensorPlatformSummary, sensorSummary.dict())
     except HTTPException as e:
         if e.status_code == status.HTTP_409_CONFLICT:
             # update existing sensorSummary

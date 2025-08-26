@@ -1,19 +1,19 @@
 # dependancies:
 from core.authentication import AuthHandler
-from core.models import SensorTypes as ModelSensorType
-from core.schema import SensorType as SchemaSensorType
+from core.models import SensorPlatformTypes as ModelSensorPlatformTypePlatform
+from core.schema import SensorPlatformType as SchemaSensorType
 from fastapi import APIRouter, Depends, HTTPException, status
 from routers.services.crud.crud import CRUD
 
-sensorsTypesRouter = APIRouter()
+sensorPlatformTypesRouter = APIRouter()
 auth_handler = AuthHandler()
 
 
 #################################################################################################################################
 #                                                  Create                                                                       #
 #################################################################################################################################
-# example properties: "{\"NO2\":\"ppb\",\"VOC\":\"ppb\",\"pm10\":\"ppb\",\"pm2.5\":\"ppb\",\"pm1\":\"ppb\"}"
-@sensorsTypesRouter.post("", response_model=SchemaSensorType)
+# example sensor_metadata: "{\"NO2\":\"ppb\",\"VOC\":\"ppb\",\"pm10\":\"ppb\",\"pm2.5\":\"ppb\",\"pm1\":\"ppb\"}"
+@sensorPlatformTypesRouter.post("", response_model=SchemaSensorType)
 def add_sensorType(sensorType: SchemaSensorType, payload=Depends(auth_handler.auth_wrapper)):
     """create a sensor type using the sensor type schema
     \n :param sensorType: sensor type schema
@@ -22,30 +22,30 @@ def add_sensorType(sensorType: SchemaSensorType, payload=Depends(auth_handler.au
     if auth_handler.checkRoleAdmin(payload) == False:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authorized")
 
-    return CRUD().db_add(ModelSensorType, sensorType.dict())
+    return CRUD().db_add(ModelSensorPlatformTypePlatform, sensorType.dict())
 
 
 #################################################################################################################################
 #                                                  Read                                                                         #
 #################################################################################################################################
-@sensorsTypesRouter.get("")
+@sensorPlatformTypesRouter.get("")
 def get_sensorTypes():
     """read all sensor types and return a json of sensor types
     \n :return: sensor types"""
-    return CRUD().db_get_with_model(ModelSensorType)
+    return CRUD().db_get_with_model(ModelSensorPlatformTypePlatform)
 
 
-@sensorsTypesRouter.get("/{page}/{limit}")
+@sensorPlatformTypesRouter.get("/{page}/{limit}")
 def get_sensorTypes_paginated(page: int, limit: int):
     """read all sensor types and return a json of sensor types
     \n :return: sensor types"""
-    return CRUD().db_get_with_model(ModelSensorType, page=page, limit=limit)
+    return CRUD().db_get_with_model(ModelSensorPlatformTypePlatform, page=page, limit=limit)
 
 
 #################################################################################################################################
 #                                                  Update                                                                       #
 #################################################################################################################################
-@sensorsTypesRouter.put("/{sensorType_id}", response_model=SchemaSensorType)
+@sensorPlatformTypesRouter.put("/{sensorType_id}", response_model=SchemaSensorType)
 def update_sensorType(sensorType_id: int, sensorType: SchemaSensorType, payload=Depends(auth_handler.auth_wrapper)):
     """update a sensor type using the sensor type schema
     \n :param sensorType_id: sensor type id
@@ -54,13 +54,13 @@ def update_sensorType(sensorType_id: int, sensorType: SchemaSensorType, payload=
     if auth_handler.checkRoleAdmin(payload) == False:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authorized")
 
-    return CRUD().db_update(ModelSensorType, [ModelSensorType.id == sensorType_id], sensorType.dict())
+    return CRUD().db_update(ModelSensorPlatformTypePlatform, [ModelSensorPlatformTypePlatform.id == sensorType_id], sensorType.dict())
 
 
 #################################################################################################################################
 #                                                  Delete                                                                       #
 #################################################################################################################################
-@sensorsTypesRouter.delete("/{sensorType_id}")
+@sensorPlatformTypesRouter.delete("/{sensorType_id}")
 def delete_sensorType(sensorType_id: int, payload=Depends(auth_handler.auth_wrapper)):
     """delete a sensor type using the sensor type id
     \n :param sensorType_id: sensor type id
@@ -68,4 +68,4 @@ def delete_sensorType(sensorType_id: int, payload=Depends(auth_handler.auth_wrap
     if auth_handler.checkRoleAdmin(payload) == False:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authorized")
 
-    return CRUD().db_delete(ModelSensorType, [ModelSensorType.id == sensorType_id])
+    return CRUD().db_delete(ModelSensorPlatformTypePlatform, [ModelSensorPlatformTypePlatform.id == sensorType_id])

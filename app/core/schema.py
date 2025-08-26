@@ -65,7 +65,7 @@ class SensorSummary(BaseModel):
         return v
 
 
-class Sensor(BaseModel):
+class SensorPlatform(BaseModel):
     """Sensor Schema extends BaseModel used to validate form data from the API
     :lookup_id (str)
     :serial_number (str)
@@ -105,20 +105,49 @@ class Sensor(BaseModel):
         return v
 
 
-class SensorType(BaseModel):
+class SensorPlatformType(BaseModel):
     """SensorType Schema extends BaseModel used to validate form data from the API
     :name (str)
     :description (str)
-    :properties (Dict[str, str])
+    :sensor_metadata (Dict[str, str])
     """
 
     name: str
     description: str
-    properties: Dict[str, object]
+    sensor_metadata: Dict[str, object]
 
     class Config:
         orm_mode = True
         read_with_orm_mode = True
+
+    @validator("sensor_metadata", pre=True, always=True)
+    def sensor_metadata_must_be_valid_csvw(cls, v):
+        """Validate that sensor_metadata is a valid CSVW JSON
+        :param v: sensor_metadata
+        :return: v if valid, raise HTTPException if not"""
+        try:
+            if isinstance(v, str):
+                v = json.loads(v)
+            if not isinstance(v, dict):
+                raise ValueError("sensor_metadata must be a valid JSON object")
+
+            if "columns" not in v["tableSchema"] or not isinstance(v["tableSchema"]["columns"], list) or len(v["tableSchema"]["columns"]) == 0:
+                raise ValueError("sensor_metadata must contain a 'columns' key with a non-empty list")
+            for column in v["tableSchema"]["columns"]:
+                if not isinstance(column, dict):
+                    raise ValueError("each column in sensor_metadata must be a JSON object")
+                if "name" not in column or not isinstance(column["name"], str):
+                    raise ValueError("each column in sensor_metadata must contain a 'name' key of type string")
+                if "datatype" not in column or not isinstance(column["datatype"], str):
+                    raise ValueError("each column in sensor_metadata must contain a 'datatype' key of type string")
+                # if a processing step is defined, it must be a list of dictionaries
+                if "http://www.w3.org/ns/sosa/usedProcedure" in column:
+                    if not isinstance(column["http://www.w3.org/ns/sosa/usedProcedure"], list) or not all(isinstance(proc, dict) for proc in column["http://www.w3.org/ns/sosa/usedProcedure"]):
+                        raise ValueError("the 'http://www.w3.org/ns/sosa/usedProcedure' key in each column must be a list of JSON objects")
+
+        except Exception as e:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"metadata must be a valid CSVW JSON: {e}")
+        return v
 
 
 class SensorTypeConfig(BaseModel):
@@ -135,7 +164,7 @@ class SensorTypeConfig(BaseModel):
 
     sensor_type_id: int
     authentication_url: Optional[str] = None
-    authentication_method: Optional[Dict[str, str]] = None
+    authentication_method: Optional[Dict[str, object]] = None
     api_url: str
     api_method: Dict[str, object]
     sensor_mappings: Dict[str, str]

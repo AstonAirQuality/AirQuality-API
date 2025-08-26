@@ -2,7 +2,7 @@ import unittest
 import warnings
 from unittest import TestCase
 
-from core.models import SensorTypes as ModelSensorType
+from core.models import SensorPlatformTypes as ModelSensorPlatformTypePlatform
 from fastapi.testclient import TestClient
 from main import app
 from testing.application_config import authenticate_client, database_config
@@ -42,14 +42,14 @@ class Test_Api_1_Sensor_Type(TestCase):
     def test_2_post_sensor_type(self):
         """Test the post sensor type route of the API."""
 
-        sensorType = {"name": "test_sensor_type", "description": "test_sensor_type", "properties": {"NO2": "ppb", "VOC": "ppb", "pm10": "ppb", "pm2.5": "ppb", "pm1": "ppb"}}
+        sensorType = {"name": "test_sensor_type", "description": "test_sensor_type", "sensor_metadata": {"NO2": "ppb", "VOC": "ppb", "pm10": "ppb", "pm2.5": "ppb", "pm1": "ppb"}}
 
         response = self.client.post("/sensor-platform-type", json=sensorType)
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json(), sensorType)
 
         # check that the sensor was added to the database
-        db_sensor_type = self.db.query(ModelSensorType).filter(ModelSensorType.name == "test_sensor_type").first()
+        db_sensor_type = self.db.query(ModelSensorPlatformTypePlatform).filter(ModelSensorPlatformTypePlatform.name == "test_sensor_type").first()
         self.assertEqual(db_sensor_type.name, "test_sensor_type")
 
     def test_3_get_sensor_type(self):
@@ -67,32 +67,32 @@ class Test_Api_1_Sensor_Type(TestCase):
     def test_5_put_sensor_type(self):
         """Test the put sensor type route of the API."""
 
-        sensorType = {"name": "test_sensor_type", "description": "updated description", "properties": {"NO2": "ppb", "VOC": "ppb", "pm10": "ppb", "pm2.5": "ppb", "pm1": "ppb"}}
+        sensorType = {"name": "test_sensor_type", "description": "updated description", "sensor_metadata": {"NO2": "ppb", "VOC": "ppb", "pm10": "ppb", "pm2.5": "ppb", "pm1": "ppb"}}
 
         response = self.client.put("/sensor-platform-type/1", json=sensorType)
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json(), sensorType)
 
         # check that the sensor was updated to the database
-        db_sensor_type = self.db.query(ModelSensorType).filter(ModelSensorType.id == 1).first()
+        db_sensor_type = self.db.query(ModelSensorPlatformTypePlatform).filter(ModelSensorPlatformTypePlatform.id == 1).first()
         self.assertEqual(db_sensor_type.description, "updated description")
 
     def test_6_delete_sensor_type(self):
         """Test the delete sensor type route of the API."""
 
         # create a sensor type to delete
-        sensor_type = ModelSensorType(name="delete_test", description="test", properties={"NO2": "ppb", "VOC": "ppb", "pm10": "ppb", "pm2.5": "ppb", "pm1": "ppb"})
+        sensor_type = ModelSensorPlatformTypePlatform(name="delete_test", description="test", sensor_metadata={"NO2": "ppb", "VOC": "ppb", "pm10": "ppb", "pm2.5": "ppb", "pm1": "ppb"})
         self.db.add(sensor_type)
         self.db.commit()
 
         # get the id of the sensor type
-        sensor_type_id = self.db.query(ModelSensorType).filter(ModelSensorType.name == "delete_test").first().id
+        sensor_type_id = self.db.query(ModelSensorPlatformTypePlatform).filter(ModelSensorPlatformTypePlatform.name == "delete_test").first().id
 
         response = self.client.delete(f"/sensor-type/{sensor_type_id}")
         self.assertEqual(response.status_code, 200)
 
         # check that the sensor was deleted from the database
-        db_sensor_type = self.db.query(ModelSensorType).filter(ModelSensorType.name == "test").first()
+        db_sensor_type = self.db.query(ModelSensorPlatformTypePlatform).filter(ModelSensorPlatformTypePlatform.name == "test").first()
         self.assertIsNone(db_sensor_type)
 
 

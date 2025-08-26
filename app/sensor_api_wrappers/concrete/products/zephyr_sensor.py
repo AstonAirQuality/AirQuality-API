@@ -74,8 +74,8 @@ class ZephyrSensor(SensorProduct, SensorWritable):
         # if latitude and longitude are not present then ...
         # add the columns with NaN values, which will be filled by the stationary box later
         if "latitude" not in df.columns or "longitude" not in df.columns:
-            df["latitude"] = np.nan
-            df["longitude"] = np.nan
+            df[SensorMeasurementsColumns.LATITUDE.value] = np.nan
+            df[SensorMeasurementsColumns.LONGITUDE.value] = np.nan
 
         return df
 
