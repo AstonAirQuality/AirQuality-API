@@ -8,6 +8,7 @@ from typing import Any, Iterator, Tuple
 import numpy as np
 import pandas as pd
 from core.schema import SensorSummary as SchemaSensorSummary
+from routers.services.enums import SensorMeasurementsColumns
 from sensor_api_wrappers.data_transfer_object.sensorDTO import SensorDTO
 
 
@@ -149,7 +150,7 @@ class SensorReadable(SensorDTO):
 
         # TODO refactor into a function
         # set column name as timestamp and datatype to integer
-        df.index.name = "timestamp"
+        df.index.name = SensorMeasurementsColumns.TIMESTAMP.value
 
         # add date col and set to index
         df.insert(0, "date", pd.to_datetime(df.index, unit="s", errors="coerce"))
@@ -157,7 +158,7 @@ class SensorReadable(SensorDTO):
         df.set_index("date", drop=True, inplace=True)
 
         # amend dtypes for timestamp, latitude and longitude
-        df = df.astype({"timestamp": "int64", "latitude": "float64", "longitude": "float64"})
+        df = df.astype({SensorMeasurementsColumns.TIMESTAMP.value: "int64", SensorMeasurementsColumns.LATITUDE.value: "float64", SensorMeasurementsColumns.LONGITUDE.value: "float64"})
 
         # add bounding box to dataframe for stationary sensors
         if boundingBox:

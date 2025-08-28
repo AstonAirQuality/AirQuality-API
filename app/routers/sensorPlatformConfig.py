@@ -39,12 +39,14 @@ async def add_sensor_platform_config(
 #                                                  Read                                                                         #
 #################################################################################################################################
 @sensorPlatformConfig.get("", response_model=list[SchemaSensorPlatformConfig], status_code=status.HTTP_200_OK)
-async def get_sensor_platform_configs():
+async def get_sensor_platform_configs(payload=Depends(auth_handler.auth_wrapper)):
     """
     Retrieve a list of all sensor platform configurations.
     Returns:
         List[SchemaSensorPlatformConfig]: A list of sensor platform configurations.
     """
+    if auth_handler.checkRoleAdmin(payload) == False:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authorized")
     return CRUD().db_get_with_model(ModelSensorPlatformPlatformConfig)
 
 

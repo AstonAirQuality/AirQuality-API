@@ -59,7 +59,7 @@ class SensorPlatformFactoryWrapper:
             Iterator[SchemaSensorSummary]: An iterator yielding sensor summaries.
         """
         # we use a copy because for some sensor platforms (purple air) we edit the dictionary on retry (pop off completed sensor tasks)
-        for sensor in sensor_factory.get_sensors(start=start, end=end, sensor_dict=sensor_dict.copy(), *args):
+        for sensor in sensor_factory.get_sensors(sensor_dict.copy(), start, end, *args):
             if sensor is not None:
                 yield from sensor.create_sensor_summaries(sensor_dict[sensor.id]["stationary_box"])
 

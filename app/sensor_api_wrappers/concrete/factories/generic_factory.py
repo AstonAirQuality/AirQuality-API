@@ -129,21 +129,23 @@ class GenericFactory(SensorFactory):
 
                 # headers for the request
                 # make url token or header authentication
+                # self.api_key = "+Bo1oavVShwaT19kE6HMgfrh1gr100Fn0aE4p+hDYynDLCqL5t3tH/alqg6D0P5RCD17xQJRLyBYWPt72c5LJ63DchmS+HKd+lbVKVYfvMu6muYEbpP0i1/r8prc9CqeYMsuqqTyXtjPLKNTC4QKqA=="
                 if self.api_method.get("auth_type") == "url_token":
                     request_url += f"&{self.api_method.get('token_key', 'token')}={self.api_key}"
                 elif self.api_method.get("auth_type") == "header_auth":
                     self.__session.headers.update({"Authorization": f"Bearer {self.api_key}"})
                 elif self.api_method.get("auth_type") == "header_token":
                     self.__session.headers.update({self.api_method.get("token_key", "x-api-token"): self.api_key})
-                    # print headers
-                    print(f"Request headers: {self.__session.headers}")
                 else:
                     # if no auth type is specified, assume it's a session-based authentication
                     pass
                 # update any additional headers
                 if additional_headers := self.api_method.get("headers", None):
                     self.__session.headers.update(additional_headers)
-                    print(f"Request headers: {self.__session.headers}")
+
+                # remove user-agent and connection headers if they exist to avoid potential issues
+                self.__session.headers.pop("User-Agent", None)
+                self.__session.headers.pop("Connection", None)
 
                 # make the API request to fetch sensor data
                 response = self.__session.get(url=request_url, headers=self.__session.headers, timeout=30)  # wait up to 30 seconds for the API to respond

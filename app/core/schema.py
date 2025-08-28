@@ -131,19 +131,23 @@ class SensorPlatformType(BaseModel):
             if not isinstance(v, dict):
                 raise ValueError("sensor_metadata must be a valid JSON object")
 
-            if "columns" not in v["tableSchema"] or not isinstance(v["tableSchema"]["columns"], list) or len(v["tableSchema"]["columns"]) == 0:
-                raise ValueError("sensor_metadata must contain a 'columns' key with a non-empty list")
-            for column in v["tableSchema"]["columns"]:
-                if not isinstance(column, dict):
-                    raise ValueError("each column in sensor_metadata must be a JSON object")
-                if "name" not in column or not isinstance(column["name"], str):
-                    raise ValueError("each column in sensor_metadata must contain a 'name' key of type string")
-                if "datatype" not in column or not isinstance(column["datatype"], str):
-                    raise ValueError("each column in sensor_metadata must contain a 'datatype' key of type string")
-                # if a processing step is defined, it must be a list of dictionaries
-                if "http://www.w3.org/ns/sosa/usedProcedure" in column:
-                    if not isinstance(column["http://www.w3.org/ns/sosa/usedProcedure"], list) or not all(isinstance(proc, dict) for proc in column["http://www.w3.org/ns/sosa/usedProcedure"]):
-                        raise ValueError("the 'http://www.w3.org/ns/sosa/usedProcedure' key in each column must be a list of JSON objects")
+            # check if it is a csvw metadata
+            if v.get("url", None) == "http://www.w3.org/ns/csvw":
+                if "columns" not in v["tableSchema"] or not isinstance(v["tableSchema"]["columns"], list) or len(v["tableSchema"]["columns"]) == 0:
+                    raise ValueError("sensor_metadata must contain a 'columns' key with a non-empty list")
+                for column in v["tableSchema"]["columns"]:
+                    if not isinstance(column, dict):
+                        raise ValueError("each column in sensor_metadata must be a JSON object")
+                    if "name" not in column or not isinstance(column["name"], str):
+                        raise ValueError("each column in sensor_metadata must contain a 'name' key of type string")
+                    if "datatype" not in column or not isinstance(column["datatype"], str):
+                        raise ValueError("each column in sensor_metadata must contain a 'datatype' key of type string")
+                    # if a processing step is defined, it must be a list of dictionaries
+                    if "http://www.w3.org/ns/sosa/usedProcedure" in column:
+                        if not isinstance(column["http://www.w3.org/ns/sosa/usedProcedure"], list) or not all(isinstance(proc, dict) for proc in column["http://www.w3.org/ns/sosa/usedProcedure"]):
+                            raise ValueError("the 'http://www.w3.org/ns/sosa/usedProcedure' key in each column must be a list of JSON objects")
+
+            # else it is a different format so it just needs to be a valid json object
 
         except Exception as e:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"metadata must be a valid CSVW JSON: {e}")

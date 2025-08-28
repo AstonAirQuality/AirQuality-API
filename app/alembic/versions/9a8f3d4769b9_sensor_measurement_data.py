@@ -420,8 +420,8 @@ def upgrade():
         [
             {
                 "id": -1,  # assuming -1 is the id for Air Gradient sensor type
-                "name": "Generic-AG",
-                "description": "A generic sensor type for Air Gradient sensors",
+                "name": "Generic-PA",
+                "description": "A generic sensor type for Purple air sensors",
                 "properties": {
                     "@context": "http://www.w3.org/ns/csvw",
                     "tableSchema": {
@@ -465,10 +465,10 @@ def upgrade():
             {
                 "id": -1,  # placeholder id for the generic sensor
                 "type_id": -1,  # assuming 6 is the id for Air Gradient sensor type
-                "lookup_id": "163763",  # test air gradient sensor
-                "serial_number": "AG-1234567890",  # test serial number
+                "lookup_id": "263101",  # test air gradient sensor
+                "serial_number": "G-PA-1",  # test serial number
                 "active": True,
-                "time_created": "2025-08-19 08:58:49.360885+00",  # current time
+                "time_created": "2025-08-28 08:58:49.360885+00",  # current time
                 "time_updated": None,
                 "stationary_box": None,  # assuming no stationary box for this test sensor
                 "user_id": None,  # assuming no user for this test sensor
@@ -492,29 +492,30 @@ def upgrade():
                 "sensor_type_id": -1,  # assuming 5 is the id for Air Gradient sensor type
                 "authentication_url": None,
                 "authentication_method": None,
-                "api_url": "https://api.airgradient.com/public/api/v1/locations/{sensor_id}/measures/raw",
+                "api_url": "https://api.purpleair.com/v1/sensors/{sensor_id}/history/csv",
                 "api_method": {
-                    "auth_type": "url_token",
-                    "token_key": "token",
-                    "api_key_value": os.getenv("AIR_GRADIENT_API_KEY", "YOUR_API_KEY"),
-                    "url_params": {"datetime_params": {"format": "%Y%m%dT%H%M%SZ", "start_key": "from", "end_key": "to"}},
-                    "headers": {"Content-Type": "application/json"},
+                    "auth_type": "header_token",
+                    "token_key": "X-API-Key",
+                    "api_key_value": os.getenv("PURPLE_AIR_API_KEY", "YOUR_API_KEY"),
+                    "url_params": {
+                        "datetime_params": {"format": "%Y-%m-%dT%H:%M:%S.%f+00:00", "start_key": "start_timestamp", "end_key": "end_timestamp"},
+                        "fields": "pm1.0_atm_a,pm1.0_atm_b,pm2.5_atm_a,pm2.5_atm_b,pm10.0_atm_a,pm10.0_atm_b,temperature,humidity,pressure,voc,scattering_coefficient,deciviews,visual_range",
+                        "average": "0",
+                    },
+                    "headers": {"referer": "https://map.purpleair.com/", "accept": "text/plain", "accept-encoding": "gzip, deflate, br, zstd"},
                 },
                 "sensor_mappings": {
-                    "pm01": "PM1 Raw",
-                    "pm25": "PM2.5 Raw",
-                    "pm10": "PM10 Raw",
-                    "pm01_corrected": "PM1",
-                    "pm25_corrected": "PM2.5",
-                    "pm10_corrected": "PM10",
-                    "pm003Count": "PM0.3 Count",
-                    "atmp_corrected": "Temperature",
-                    "rhum_corrected": "Humidity",
-                    "rco2": "CO2",
-                    "tvoc": "VOC",
-                    "tvocIndex": "VOC Index",
-                    "noxIndex": "NOx Index",
-                    "UTC Date/Time": "datetime",  # this is not needed as the date column will be inferred
+                    "time_stamp": "Timestamp",
+                    "humidity": "RelativeHumidity",
+                    "temperature": "RelativeTemperature",
+                    "pressure": "RelativePressure",
+                    "voc": "VOC",
+                    "pm1.0_atm_a": "PM1_A",
+                    "pm1.0_atm_b": "PM1_B",
+                    "pm2.5_atm_a": "PM2.5_A",
+                    "pm2.5_atm_b": "PM2.5_B",
+                    "pm10.0_atm_a": "PM10_A",
+                    "pm10.0_atm_b": "PM10_B",
                 },
             }
         ],

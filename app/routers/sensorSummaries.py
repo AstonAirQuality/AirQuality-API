@@ -62,7 +62,7 @@ def get_sensorSummaries(
         ): ([col for col in measurement_columns.split(",")] if measurement_columns else [])
     ),
     deserialize: bool = Query(False, description="if true then the measurement_data field will be deserialized to a json object"),
-    join_sensor_type: bool = Query(False, description="if true then the sensor type will be joined to the query"),
+    include_sensor_metadata: bool = Query(False, description="if true then the sensor metadata will be joined to the query"),
     spatial_query_type: spatialQueryType = Query(None),
     geom: str = Query(None, description="format: WKT string. **Required if spatial_query_type is provided**"),
     sensor_ids: str = Depends(
@@ -79,7 +79,7 @@ def get_sensorSummaries(
         columns str: list of columns to return from the sensor summaries table
         measurement_columns str: list of sensor measurements columns to return from the sensor summaries measurement_data field
         deserialize (bool): if true then the measurement_data field will be deserialized to a json object
-        join_sensor_type (bool): if true then the sensor type will be joined to the query
+        include_sensor_metadata (bool): if true then the sensor metadata will be joined to the query
         spatial_query_type (spatialQueryType): type of spatial query to perform (e.g intersects, contains, within ) - see spatialQueryBuilder for more info
         geom (str): geometry to use in the spatial query (e.g POINT(0 0), POLYGON((0 0, 0 1, 1 1, 1 0, 0 0)) ) - see spatialQueryBuilder for more info
         sensor_ids str: list of sensor integer ids to filter by if none then all sensors that match the above filters will be returned
@@ -98,6 +98,10 @@ def get_sensorSummaries(
     # if measurement columns are provided then we need to deserialize the measurement data.
     deserialize = True if len(measurement_columns) > 0 else deserialize
 
+    # add Timestamp by default if not already included
+    if len(measurement_columns) > 1 and SensorMeasurementsColumns.TIMESTAMP.value not in measurement_columns:
+        measurement_columns.append(SensorMeasurementsColumns.TIMESTAMP.value)
+
     try:
         fields = []
         model = ModelSensorPlatformSummary
@@ -105,11 +109,14 @@ def get_sensorSummaries(
         for col in columns:
             fields.append(getattr(ModelSensorPlatformSummary, col))
 
-        if join_sensor_type:
-            fields.append(getattr(ModelSensorPlatformTypePlatform, "id").label("type_id"))
-            fields.append(getattr(ModelSensorPlatformTypePlatform, "name").label("type_name"))
-            fields.append(getattr(ModelSensorPlatform, "id").label("sensor_id"))
-            join_models = [ModelSensorPlatform, ModelSensorPlatformTypePlatform]
+        if include_sensor_metadata:
+            fields.append(getattr(ModelSensorPlatformTypePlatform, "sensor_metadata").label("sensor_metadata"))
+
+        # always include these sensor_type and sensor_id fields for context
+        fields.append(getattr(ModelSensorPlatformTypePlatform, "id").label("type_id"))
+        fields.append(getattr(ModelSensorPlatformTypePlatform, "name").label("type_name"))
+        fields.append(getattr(ModelSensorPlatform, "id").label("sensor_id"))
+        join_models = [ModelSensorPlatform, ModelSensorPlatformTypePlatform]
 
         filter_expressions = searchQueryFilters([ModelSensorPlatformSummary.timestamp >= timestampStart, ModelSensorPlatformSummary.timestamp <= timestampEnd], spatial_query_type, geom, sensor_ids)
         query_result = CRUD().db_get_fields_using_filter_expression(filter_expressions, fields, model, join_models)
@@ -117,11 +124,11 @@ def get_sensorSummaries(
         if validate_json_file_size(sys.getsizeof(query_result)):
             # if the query result is too large then return a streaming response
             return StreamingResponse(
-                generate_json_stream(format_sensor_summary_data(query_result, deserialize, columns=measurement_columns)),
+                generate_json_stream(format_sensor_summary_data(query_result, deserialize, columns=measurement_columns, format_sensor_metadata=include_sensor_metadata)),
                 media_type="application/json",
             )
         else:
-            return format_sensor_summary_data(query_result, deserialize, columns=measurement_columns)
+            return format_sensor_summary_data(query_result, deserialize, columns=measurement_columns, format_sensor_metadata=include_sensor_metadata)
             # return ORJSONResponse(format_sensor_summary_data(query_result, deserialize))
 
     except HTTPException as e:

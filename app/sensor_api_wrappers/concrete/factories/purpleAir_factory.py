@@ -102,7 +102,6 @@ class PurpleAirFactory(SensorFactory):
                 url = "https://map.purpleair.com/v1/sensors/{sensor_id}/history/csv?fields={fields}&start_timestamp={start_date}&end_timestamp={end_date}&average={averaging_id}".format(
                     sensor_id=sensor_id, fields=fields_str, start_date=start_date_str, end_date=end_date_str, averaging_id=0
                 )
-                print(url)
 
                 headers = {
                     "accept": "text/plain",
@@ -155,23 +154,23 @@ class PurpleAirFactory(SensorFactory):
                 yield PurpleAirSensor(sensor_lookupid, dataframe=None, error=str(e))
 
 
-if __name__ == "__main__":
-    from os import environ as env
+# if __name__ == "__main__":
+#     from os import environ as env
 
-    from dotenv import load_dotenv
+#     from dotenv import load_dotenv
 
-    load_dotenv()
+#     load_dotenv()
 
-    pf = PurpleAirFactory(token_url=env["PURPLE_AIR_TOKEN_URL"], referer_url=env["PURPLE_AIR_REFERER_URL"], api_key=env["PURPLE_AIR_API_KEY"])
-    pf.login()
-    print(f"Logged in with API key: {pf.api_key}")
+#     pf = PurpleAirFactory(token_url=env["PURPLE_AIR_TOKEN_URL"], referer_url=env["PURPLE_AIR_REFERER_URL"], api_key=env["PURPLE_AIR_API_KEY"])
+#     pf.login()
+#     print(f"Logged in with API key: {pf.api_key}")
 
-    sensor_dict = {"263101,outdoor": {"stationary_box": None, "time_updated": None}}
+#     sensor_dict = {"263101,outdoor": {"stationary_box": None, "time_updated": None}}
 
-    sensors = pf.get_sensors(sensor_dict, dt.datetime(2025, 8, 12), dt.datetime(2025, 8, 13))
+#     sensors = pf.get_sensors(sensor_dict, dt.datetime(2025, 8, 12), dt.datetime(2025, 8, 13))
 
-    for sensor in sensors:
-        print(sensor.df.head(-1))
-        # write df to csv file
-        sensor.df.to_csv(f"/testing/test_data/purple_air_sensor_{sensor.id}.csv")
-        break
+#     for sensor in sensors:
+#         print(sensor.df.head(-1))
+#         # write df to csv file
+#         # sensor.df.to_csv(f"/testing/test_data/purple_air_sensor_{sensor.id}.csv")
+#         break

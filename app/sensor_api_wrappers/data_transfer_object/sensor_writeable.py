@@ -192,7 +192,7 @@ class SensorWritable(SensorDTO):
 
         # using the dates which are already supplied. This strategy in the line below converts them and rounds down to date using 'd' flag
         # This strategy (line below) will keep just the date
-        df["day"] = pd.to_datetime(df.index, dayfirst=True, errors="coerce").date
+        df.loc[:, "day"] = pd.to_datetime(df.index, dayfirst=True, errors="coerce").date
 
         # remove any duplicate dates or only extract the unique ones
         the_unique_dates = df["day"].unique()

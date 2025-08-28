@@ -20,6 +20,7 @@ class GenericSensor(SensorProduct, SensorWritable):
     @staticmethod
     def prepare_mesaurements(df: pd.DataFrame, column_mappings: dict) -> pd.DataFrame:
         """Prepares the measurements dataframe by renaming columns and ensuring required columns are present."""
+
         # rename columns to match the SensorMeasurementsColumns enum
         df.rename(
             columns=column_mappings,
@@ -46,9 +47,9 @@ class GenericSensor(SensorProduct, SensorWritable):
         df[SensorMeasurementsColumns.TIMESTAMP.value] = pd.to_datetime(df.index, unit="ns").astype("int64") // 10**9
 
         # add latitude and longitude columns with NaN values if not present
-        if "latitude" not in df.columns:
+        if SensorMeasurementsColumns.LATITUDE.value not in df.columns:
             df[SensorMeasurementsColumns.LATITUDE.value] = np.nan
-        if "longitude" not in df.columns:
+        if SensorMeasurementsColumns.LONGITUDE.value not in df.columns:
             df[SensorMeasurementsColumns.LONGITUDE.value] = np.nan
 
         # filter df to only include the keys from the column_mappings
@@ -58,7 +59,10 @@ class GenericSensor(SensorProduct, SensorWritable):
             SensorMeasurementsColumns.LONGITUDE.value,
         ]
 
+        # Remove duplicate timestamp columns if present
         filter_columns = [col for col in relevant_columns if col in df.columns]
+        # Remove duplicate columns by keeping only the first occurrence
+        filter_columns = list(dict.fromkeys(filter_columns))
         df = df[filter_columns]
 
         return df

@@ -164,19 +164,33 @@ def format_sensor_summary_to_csv(query_result: any, columns: list[str]) -> str:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Could not format results as CSV: {e}")
 
 
-def format_sensor_summary_data(query_result: any, deserialize: bool = True, columns: list[str] = None) -> list[dict]:
+def format_sensor_summary_data(query_result: any, deserialize: bool = True, columns: list[str] = None, format_sensor_metadata: bool = False) -> list[dict]:
     """Format the sensor summary data (converts geometry to WKT, renames timestamp, and deserializes measurement data if needed)
 
     Args:
         query_result (any): The query result to format
         deserialize (bool): Whether to deserialize the measurement data (default is True)
         columns (list[str]): List of columns to include in the result (default is None, which means all columns)
+        format_sensor_metadata (bool): Whether to format the sensor metadata (default is False)
     Returns:
         list: A list of formatted sensor summary data as dictionaries
     """
     results = []
     for row in query_result:
         row_as_dict = dict(row._mapping)
+
+        try:
+            if format_sensor_metadata and "sensor_metadata" in row_as_dict and row_as_dict["sensor_metadata"] is not None and len(columns) > 0:
+                # filter the sensor metadata to only include the specified columns
+                if "tableSchema" in row_as_dict["sensor_metadata"] and "columns" in row_as_dict["sensor_metadata"]["tableSchema"]:
+                    filtered_columns = []
+                    for column in row_as_dict["sensor_metadata"]["tableSchema"]["columns"]:
+                        if "name" in column and column["name"] in columns:
+                            filtered_columns.append(column)
+                    row_as_dict["sensor_metadata"]["tableSchema"]["columns"] = filtered_columns
+        except Exception as e:
+            pass  # if any error occurs, just return the full metadata without filtering
+
         if "geom" in row_as_dict:
             row_as_dict["geom"] = convertWKBtoWKT(row_as_dict["geom"])
 

@@ -35,6 +35,17 @@ def get_sensorTypes():
     return CRUD().db_get_with_model(ModelSensorPlatformTypePlatform)
 
 
+@sensorPlatformTypesRouter.get("/sensor_metadata/{id}")
+def get_sensorType_metadata(id: int):
+    """read a sensor type's metadata using the sensor type id
+    \n :param id: sensor type id
+    \n :return: sensor type metadata"""
+    result = CRUD().db_get_fields_using_filter_expression([ModelSensorPlatformTypePlatform.id == id], [ModelSensorPlatformTypePlatform.sensor_metadata], ModelSensorPlatformTypePlatform, first=True)
+    if not result:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Sensor type not found")
+    return result[0]
+
+
 @sensorPlatformTypesRouter.get("/{page}/{limit}")
 def get_sensorTypes_paginated(page: int, limit: int):
     """read all sensor types and return a json of sensor types
