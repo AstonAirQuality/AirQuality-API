@@ -257,6 +257,11 @@ def get_sensorSummaries_csv_export(
             sensor_ids=[sensor_id],
         )
         query_result = CRUD().db_get_fields_using_filter_expression(filter_expressions, fields, ModelSensorPlatformSummary, join_models)
+        if not query_result:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="No sensor summaries found for the given parameters.",
+            )
         response = StreamingResponse(
             iter([format_sensor_summary_to_csv(query_result, measurement_columns)]),
             media_type="text/csv",

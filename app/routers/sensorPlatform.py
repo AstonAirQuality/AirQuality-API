@@ -89,6 +89,22 @@ def get_sensors():
     return CRUD().db_get_with_model(ModelSensorPlatform)
 
 
+# @sensorPlatformsRouter.get("/static-sensors")
+# def get_static_sensors():
+#     """Returns all static sensor platforms in the database
+#     \n :return: list of static sensors"""
+
+#     fields = [ModelSensorPlatform.id, ModelSensorPlatform.stationary_box]
+#     sensors = CRUD().db_get_fields_using_filter_expression([ModelSensorPlatform.stationary_box != None], fields, ModelSensorPlatform, first=False)
+#     sensor_dicts = []
+#     for sensor in sensors:
+#         sensor_dict = dict(sensor)
+#         if sensor_dict["stationary_box"] is not None:
+#             sensor_dict["stationary_box"] = convertWKBtoWKT(sensor_dict["stationary_box"])
+#         sensor_dicts.append(sensor_dict)
+#     return sensor_dicts
+
+
 @sensorPlatformsRouter.get("/joined")
 def get_sensors_joined(
     columns: list[str] = Query(default=["id", "lookup_id", "serial_number", "active", "active_reason", "stationary_box", "time_updated"]),

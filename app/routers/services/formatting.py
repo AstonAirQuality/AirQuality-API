@@ -152,7 +152,7 @@ def format_sensor_summary_to_csv(query_result: any, columns: list[str]) -> str:
         df = SensorReadable.JsonStringToDataframe(query_result[0]["measurement_data"], boundingBox=None)
         if columns:
             # filter the dataframe to only include the specified columns
-            df = df[[col.value for col in columns if col.value in df.columns]]
+            df = df[[col for col in columns if col in df.columns]]
 
         # if "timestamp" column exists, use it otherwise use the index
         if SensorMeasurementsColumns.TIMESTAMP.value in df.columns:
