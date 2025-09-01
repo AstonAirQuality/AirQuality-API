@@ -61,6 +61,7 @@ def upgrade():
     # ### end Alembic commands ###
 
     # insert some example units
+    # https://www.qudt.org/doc/DOC_VOCAB-UNITS.html
     op.bulk_insert(
         sa.table(
             "UnitsOfMeasurement",
@@ -69,16 +70,16 @@ def upgrade():
             sa.column("symbol", sa.String()),
         ),
         [
-            {"name": "grams per cubic meter", "url": "http://qudt.org/vocab/unit/GRAM-PER-CUBIC-METER", "symbol": "g/m³"},
+            {"name": "grams per cubic meter", "url": "http://qudt.org/vocab/unit/GM-PER-M3", "symbol": "g/m³"},
             {"name": "micrograms per m3", "url": "http://qudt.org/vocab/unit/MicroGM-PER-M3", "symbol": "µg/m³"},
             {"name": "degrees centigrade", "url": "http://qudt.org/vocab/unit/DEG_C", "symbol": "°"},
-            {"name": "degrees kelvin", "url": "http://qudt.org/vocab/unit/KELVIN", "symbol": "K"},
+            {"name": "degrees kelvin", "url": "http://qudt.org/vocab/unit/K", "symbol": "K"},
             {"name": "percent", "url": "http://qudt.org/vocab/unit/PERCENT", "symbol": "%"},
             {"name": "pascal", "url": "http://qudt.org/vocab/unit/PA", "symbol": "Pa"},
             {"name": "decimal degree", "url": "http://qudt.org/vocab/unit/DEG", "symbol": "°"},
-            {"name": "decibel", "url": "http://qudt.org/vocab/unit/DECIBEL", "symbol": "dB"},
-            {"name": "parts per million", "url": "http://qudt.org/vocab/unit/PARTS-PER-MILLION", "symbol": "ppm"},
-            {"name": "parts per billion", "url": "http://qudt.org/vocab/unit/PARTS-PER-BILLION", "symbol": "ppb"},
+            {"name": "decibel", "url": "http://qudt.org/vocab/unit/DeciB_M", "symbol": "dB"},
+            {"name": "parts per million", "url": "http://qudt.org/vocab/unit/PPM", "symbol": "ppm"},
+            {"name": "parts per billion", "url": "http://qudt.org/vocab/unit/PPB", "symbol": "ppb"},
         ],
     )
 
