@@ -7,13 +7,16 @@ from core.models import SensorPlatforms as ModelSensorPlatform
 from core.models import SensorPlatformTypes as ModelSensorPlatformTypePlatform
 from core.models import SensorSummaries as ModelSensorPlatformSummary
 from core.schema import SensorSummary as SchemaSensorSummary
-
 # dependencies for exposed routes
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from fastapi.responses import StreamingResponse
 from routers.services.crud.crud import CRUD
-from routers.services.enums import SensorMeasurementsColumns, averagingMethod, sensorSummaryColumns, spatialQueryType
-from routers.services.formatting import convertDateRangeStringToTimestamp, format_sensor_summary_data, format_sensor_summary_to_csv, sensorSummariesToGeoJson
+from routers.services.enums import (SensorMeasurementsColumns, averagingMethod,
+                                    sensorSummaryColumns, spatialQueryType)
+from routers.services.formatting import (convertDateRangeStringToTimestamp,
+                                         format_sensor_summary_data,
+                                         format_sensor_summary_to_csv,
+                                         sensorSummariesToGeoJson)
 from routers.services.query_building import searchQueryFilters
 from routers.services.validation import validate_json_file_size
 
@@ -99,7 +102,7 @@ def get_sensorSummaries(
     deserialize = True if len(measurement_columns) > 0 else deserialize
 
     # add Timestamp by default if not already included
-    if len(measurement_columns) > 1 and SensorMeasurementsColumns.TIMESTAMP.value not in measurement_columns:
+    if SensorMeasurementsColumns.TIMESTAMP.value not in measurement_columns:
         measurement_columns.append(SensorMeasurementsColumns.TIMESTAMP.value)
 
     try:

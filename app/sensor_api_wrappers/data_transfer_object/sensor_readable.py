@@ -1,7 +1,6 @@
 # dependacies
 import json
 import math
-
 # Dependancies for Haversine formula
 from typing import Any, Iterator, Tuple
 
@@ -158,7 +157,16 @@ class SensorReadable(SensorDTO):
         df.set_index("date", drop=True, inplace=True)
 
         # amend dtypes for timestamp, latitude and longitude
-        df = df.astype({SensorMeasurementsColumns.TIMESTAMP.value: "int64", SensorMeasurementsColumns.LATITUDE.value: "float64", SensorMeasurementsColumns.LONGITUDE.value: "float64"})
+        # Define expected dtypes for columns if present
+        dtype_map = {
+            SensorMeasurementsColumns.TIMESTAMP.value: "Int64",
+            SensorMeasurementsColumns.LATITUDE.value: "float64",
+            SensorMeasurementsColumns.LONGITUDE.value: "float64",
+        }
+        # Only apply dtype conversion to columns that exist in the DataFrame
+        existing_dtype_map = {col: dtype for col, dtype in dtype_map.items() if col in df.columns}
+        if existing_dtype_map:
+            df = df.astype(existing_dtype_map, errors="ignore")
 
         # add bounding box to dataframe for stationary sensors
         if boundingBox:
