@@ -206,6 +206,7 @@ The following steps are requried for both local and docker setups.
 ## Additional Information
 - [Database Migrations](.github/resources/further-instructions/DatabaseMigrations.md)
 - [Deployment](.github/resources/further-instructions/Deployment.md)
+- [RDS to EC2 Migration Instructions](.github/resources/further-instructions/RDS_TO_EC2.md)
 
 <!-- CONTACT -->
 ## Contact
